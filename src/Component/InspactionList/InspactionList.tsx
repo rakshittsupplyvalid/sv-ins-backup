@@ -1,63 +1,109 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    TouchableOpacity,
+    ActivityIndicator,
+    RefreshControl
+} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
 import useForm from '../../Common/UseForm';
 
-const InspectionList = ({ navigation }: any) => {
+
+interface InspectionItem {
+    id: number;
+    locationName: string;
+    vendorName: string;
+    createdOn: string;
+    totalPhysicalQuantity: number;
+    totalProcuerQuantity: number;
+    additionalComments?: string;
+}
+
+const PAGE_SIZE = 5;
+
+const InspectionList = ({ navigation }: { navigation: any }) => {
     const { state, updateState } = useForm();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-  const navigateToDrawer = (item: any) => {
-    navigation.navigate('Inspection List Details', { 
-        id: item.id,
-        locationName: item.locationName,
-        // Add any other values you want to pass
-        vendorName: item.vendorName,
-      
-        
-    });
-};
+    const navigateToDrawer = (item: InspectionItem) => {
+        navigation.navigate('Inspection List Details', {
+            id: item.id,
+            locationName: item.locationName,
+            vendorName: item.vendorName,
+        });
 
-    const fetchInspectionList = async () => {
+
+    };
+    const fetchInspectionList = async (pageNumber: number, isRefreshing = false) => {
+        if (!hasMore && !isRefreshing) return;
+
         try {
-            const response = await apiClient.get(`/api/InspectionReport/list`);
+            if (isRefreshing) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
+
+            const response = await apiClient.get(
+                `/api/InspectionReport/list?PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`
+            );
+
+            const receivedItems = response.data || [];
+
+            setHasMore(receivedItems.length >= PAGE_SIZE);
+
             updateState({
                 fielddata: {
                     ...state.fielddata,
-                    InspectionList: response.data,
-                }
-
+                    InspectionList: isRefreshing || pageNumber === 1
+                        ? receivedItems
+                        : [...(state.fielddata?.InspectionList || []), ...receivedItems],
+                },
             });
 
-            console.log('Inspection List:', response.data);
-        } catch (error) {
-            console.error('API error:', error);
+            setError(null);
+        } catch (err) {
+            console.error('API error:', err);
+            setError('Failed to fetch inspection reports. Please try again.');
+            setHasMore(false);
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
     };
 
+    const handleLoadMore = () => {
+        if (!loading && hasMore && !refreshing) {
+            setPage(prevPage => prevPage + 1);
+        }
+    };
+
     const handleRefresh = () => {
-        setRefreshing(true);
-        fetchInspectionList();
+        setPage(1);
+        setHasMore(true);
+        fetchInspectionList(1, true);
     };
 
     useEffect(() => {
-        fetchInspectionList();
-    }, []);
+        fetchInspectionList(page);
+    }, [page]);
 
     const formatNumber = (num: number) => {
-        // Format large numbers with commas and fixed decimal places
         return num?.toLocaleString('en-US', {
             minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+            maximumFractionDigits: 2,
         }) || '0.00';
     };
 
-    const renderItem = ({ item }: { item: any }) => (
+    const renderItem = ({ item }: { item: InspectionItem }) => (
         <TouchableOpacity
             onPress={() => navigateToDrawer(item)}
             style={styles.card}
@@ -65,7 +111,6 @@ const InspectionList = ({ navigation }: any) => {
         >
             <View style={styles.cardContent}>
                 <View style={styles.cardHeader}>
-
                     <View style={styles.statusBadge}>
                         <MaterialIcons name="date-range" size={16} color="#856404" />
                         <Text style={styles.statusText}>
@@ -78,8 +123,6 @@ const InspectionList = ({ navigation }: any) => {
                                 hour12: true,
                             })}
                         </Text>
-
-
                     </View>
                 </View>
 
@@ -98,8 +141,6 @@ const InspectionList = ({ navigation }: any) => {
                         <Text style={styles.valueText}>{item.vendorName}</Text>
                     </View>
                 </View>
-
-
 
                 <View style={styles.quantityContainer}>
                     <View style={styles.quantityBox}>
@@ -144,14 +185,6 @@ const InspectionList = ({ navigation }: any) => {
         </TouchableOpacity>
     );
 
-    if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#4a6da7" />
-            </View>
-        );
-    }
-
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -162,19 +195,68 @@ const InspectionList = ({ navigation }: any) => {
                 </View>
             </View>
 
+            {error && (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                    <TouchableOpacity onPress={handleRefresh}>
+                        <Text style={styles.retryText}>Retry</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             <FlatList
                 data={state?.fielddata?.InspectionList || []}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={
-                    <View style={styles.emptyState}>
-                        <MaterialIcons name="find-in-page" size={48} color="#dee2e6" />
-                        <Text style={styles.emptyText}>No inspection reports found</Text>
-                    </View>
+                    loading ? (
+                        <ActivityIndicator size="large" color="#4a6da7" />
+                    ) : (
+                        <View style={styles.emptyState}>
+                            <MaterialIcons name="find-in-page" size={48} color="#dee2e6" />
+                            <Text style={styles.emptyText}>No inspection reports found</Text>
+                            {error && (
+                                <TouchableOpacity onPress={handleRefresh} style={styles.retryButton}>
+                                    <Text style={styles.retryButtonText}>Retry</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    )
                 }
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        colors={['#4a6da7']}
+                        tintColor="#4a6da7"
+                    />
+                }
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={
+                    loading && page > 1 ? (
+                        <ActivityIndicator size="small" color="#4a6da7" style={styles.footerLoader} />
+                    ) : hasMore && !refreshing && !error && state?.fielddata?.InspectionList?.length > 0 ? (
+                        <TouchableOpacity
+                            onPress={handleLoadMore}
+                            style={styles.loadMoreButton}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <ActivityIndicator size="small" color="white" />
+                            ) : (
+                                <Text style={styles.loadMoreText}>Load More</Text>
+                            )}
+                        </TouchableOpacity>
+                    ) : state?.fielddata?.InspectionList?.length > 0 ? (
+                        <Text style={styles.noMoreText}>No more reports to show</Text>
+                    ) : null
+                }
+                initialNumToRender={5}
+                maxToRenderPerBatch={5}
+                windowSize={10}
+                removeClippedSubviews={true}
                 showsVerticalScrollIndicator={false}
             />
         </View>
@@ -185,11 +267,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#ffffff',
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     header: {
         flexDirection: 'row',
@@ -239,11 +316,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 16,
     },
-    cardTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#343a40',
-    },
     statusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -263,13 +335,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 8,
     },
-    detailText: {
+    rowContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        flex: 1,
         marginLeft: 8,
+    },
+    labelText: {
+        fontWeight: 'bold',
         fontSize: 14,
         color: '#495057',
-        backgroundColor: '#f8f9fa',
-        width: '50%',
-
+    },
+    valueText: {
+        fontSize: 14,
+        color: '#495057',
+        maxWidth: '60%',
+        textAlign: 'right',
     },
     quantityContainer: {
         flexDirection: 'row',
@@ -283,7 +364,7 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 8,
         width: '48%',
-        minHeight: 60, // Ensure consistent height
+        minHeight: 60,
     },
     quantityIconWrapper: {
         justifyContent: 'center',
@@ -302,7 +383,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#4a6da7',
         marginTop: 4,
-        flexShrink: 1, // Allow text to shrink if needed
+        flexShrink: 1,
     },
     commentsContainer: {
         flexDirection: 'row',
@@ -340,26 +421,50 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#adb5bd',
     },
-    rowContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        flex: 1,
-        marginLeft: 8,
-        width: '60%', // optional, prevents overflow
+    errorContainer: {
+        padding: 16,
+        backgroundColor: '#f8d7da',
+        marginHorizontal: 16,
+        borderRadius: 8,
+        alignItems: 'center',
     },
-
-    labelText: {
+    errorText: {
+        color: '#721c24',
+        marginBottom: 8,
+    },
+    retryText: {
+        color: '#721c24',
         fontWeight: 'bold',
-        fontSize: 14,
-        color: '#495057',
     },
-
-    valueText: {
-        fontSize: 14,
-        color: '#495057',
-        maxWidth: '60%', // optional, prevents overflow
-        textAlign: 'right',
-    }
+    retryButton: {
+        marginTop: 16,
+        padding: 8,
+        backgroundColor: '#dc3545',
+        borderRadius: 4,
+    },
+    retryButtonText: {
+        color: 'white',
+    },
+    footerLoader: {
+        marginVertical: 16,
+    },
+    loadMoreButton: {
+        padding: 12,
+        backgroundColor: '#4a6da7',
+        borderRadius: 8,
+        alignItems: 'center',
+        marginVertical: 16,
+        marginHorizontal: 16,
+    },
+    loadMoreText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    noMoreText: {
+        textAlign: 'center',
+        color: '#6c757d',
+        marginVertical: 16,
+    },
 });
 
 export default InspectionList;

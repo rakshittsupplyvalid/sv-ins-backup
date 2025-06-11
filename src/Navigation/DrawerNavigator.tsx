@@ -83,7 +83,7 @@ export default function DrawerNavigator() {
         drawerActiveTintColor: '#818589',
         drawerInactiveTintColor: 'black',
         drawerLabelStyle: {
-          fontFamily: 'Poppins-Regular', // Apply Poppins to all drawer labels
+          fontFamily: 'Poppins-Regular', 
           fontSize: 16,
         },
       }}

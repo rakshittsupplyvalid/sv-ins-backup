@@ -77,10 +77,11 @@ const LoginApp = ({ navigation }: any) => {
 
     setIsLoading(true);
     try {
-      const response = await apiClient.post('/api/login/user', {
-        mobileNo,
-        password,
-      });
+      const payload = {
+        mobileNo: '9634958888',
+        password: 'Password@123'
+      }
+      const response = await apiClient.post('/api/login/user', payload);
 
       if (response.status !== 200) {
         throw new Error(response.data?.message || 'Login failed');
@@ -132,7 +133,7 @@ const LoginApp = ({ navigation }: any) => {
         onChangeText={(text) => handleChange('mobileNo', text)}
         maxLength={10}
       />
-        <TextInput
+      <TextInput
         style={styles.input}
         placeholder="Password"
         placeholderTextColor="#a0aec0"
@@ -147,7 +148,7 @@ const LoginApp = ({ navigation }: any) => {
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
       )}
-      <Text style={styles.forgotPassword}>Forgot Password?</Text>
+      <Text style={styles.forgotPassword} onPress={() => navigation.navigate('ForgetPassword')}>Forgot Password?</Text>
     </View>
   );
 };

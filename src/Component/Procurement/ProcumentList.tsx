@@ -50,6 +50,9 @@ const ProcumentList = () => {
   const [selectedStatus, setSelectedStatus] = useState(status || 'ALL');
   const [data, setData] = useState<ProcurementItem[]>([]);
   const [loading, setLoading] = useState(false);
+   const [refreshing, setRefreshing] = useState(false);
+      const [page, setPage] = useState(1);
+      const [hasMore, setHasMore] = useState(true);
 
 
   
@@ -76,6 +79,10 @@ const ProcumentList = () => {
       setLoading(false);
     }
   };
+
+
+
+  
 
   useEffect(() => {
     fetchStatusData(selectedStatus);

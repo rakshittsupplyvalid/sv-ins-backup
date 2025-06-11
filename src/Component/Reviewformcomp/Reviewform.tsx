@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Image, ActivityIndicator, FlatList, Button, Linking } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Image, ActivityIndicator, FlatList, Button, Linking, Alert } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import CommonPicker from '../../CommonCompoent/CommonPicker';
 import useForm from '../../Common/UseForm';
@@ -9,6 +9,10 @@ import ViewShot from 'react-native-view-shot';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { PermissionsAndroid } from 'react-native';
 import apiClient from '../../service/api/apiInterceptors';
+import { useIsFocused } from '@react-navigation/native';
+import { encrypt, decrypt } from '../../utils/encryptDecrypt';
+import { validateStepOne, validateSteptwo, validateStepthree , validateStepFour  , validateStepFive} from '../../FormValidation/Formvalidates';
+
 
 
 type ImageAsset = {
@@ -40,7 +44,9 @@ const ReviewForm = () => {
   const [formattedAddress, setFormattedAddress] = useState('');
   const [chawlList, setChawlList] = useState<Chawl[]>([]);
   const [binList, setBinList] = useState<Chawl[]>([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
-  const [capturedImageUri, setCapturedImageUri] = useState<string | null>(null);
+  const [capturedImageUri, setCapturedImageUri] = useState<ImageAsset[]>([]);
+   const isFocused = useIsFocused();
+
 
 
 
@@ -52,6 +58,17 @@ const ReviewForm = () => {
     const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
     Linking.openURL(url);
   };
+
+
+  // Test your encryption independently
+  // (Remove misplaced interceptor code from component)
+
+    useEffect(() => {
+    if (isFocused) {
+      updateState({ form: {}, hidden: { ...state.hidden, currentStep: 1 } });  // Directly updating the state
+    }
+  }, [isFocused]);
+
 
 
   useEffect(() => {
@@ -74,7 +91,9 @@ const ReviewForm = () => {
   useEffect(() => {
     if (state.form.option2) { // Only call if option1 has a value
       Storage();
-    } else {
+    }
+
+    else {
       // Clear FPO data if no federation is selected
       updateState({
         fielddata: {
@@ -84,6 +103,15 @@ const ReviewForm = () => {
       });
     }
   }, [state.form.option2]);
+
+
+  useEffect(() => {
+    if (state.form.option3) {
+      console.log("📤 User selected storageId:", state.form.option3); // Log the selected ID
+      StorageById(state.form.option3);
+    }
+  }, [state.form.option3]);
+
 
   const federationDropdown = () => {
     const url = `/api/group?FederationType=FEDERATION`;
@@ -142,6 +170,35 @@ const ReviewForm = () => {
       console.log("Error fetching data:", error);
     });
   };
+
+  const StorageById = (storageId: string) => {
+    const url = `/api/storagelocation/${storageId}`; // ✅ dynamic path
+
+    apiClient.get(url)
+      .then((res) => {
+        if (res?.data) {
+          console.log("✅ StorageById API response:", res.data);
+
+          updateState({
+            fielddata: {
+              ...state.fielddata,
+              Storagebyid: res.data
+            },
+            form: {
+              ...state.form,
+              quanityfoundsystem: res.data.totalStockMT?.toString() || ''
+            }
+          });
+
+        } else {
+          console.log("⚠️ No data found in API response.");
+        }
+      })
+      .catch((error) => {
+        console.error("❌ Error fetching storage data:", error);
+      });
+  };
+
 
 
   const qualityOptions = [
@@ -268,11 +325,26 @@ const ReviewForm = () => {
   };
 
   const captureScreenshot = async () => {
-    if (viewShotRef.current && typeof viewShotRef.current.capture === 'function') {
-      const uri = await viewShotRef.current.capture();
-      setCapturedImageUri(uri);
+    try {
+      if (viewShotRef.current && typeof viewShotRef.current.capture === 'function') {
+        const uri = await viewShotRef.current.capture();
+        if (uri) {
+          const screenshotImage = {
+            uri,
+            fileName: `screenshot_${Date.now()}.jpg`,
+            type: 'image/jpeg',
+          };
+          setCapturedImageUri((prev) => [...prev, screenshotImage]);
+        }
+      }
+    } catch (error) {
+      console.error('Error capturing screenshot:', error);
     }
   };
+
+
+
+
 
   const handleChawlCountChange = (val: string) => {
     const numericValue = val.replace(/[^0-9]/g, '');
@@ -401,7 +473,7 @@ const ReviewForm = () => {
 
 
 
-      imageUri.forEach((image, index) => {
+      capturedImageUri.forEach((image, index) => {
         formData.append('Files', {
           uri: image.uri,
           name: image.fileName || `image_${index}.jpg`,
@@ -511,7 +583,74 @@ const ReviewForm = () => {
 
   };
 
+  // Modify your nextStep function to include validation
   const nextStep = () => {
+    // Validate current step before proceeding
+    if (currentStep === 1) {
+      const validation = validateStepOne(state.form);
+      if (!validation.isValid) {
+        // Show error message to user (you can use an Alert or set it in state to display in UI)
+        Alert.alert('Validation Error', validation.message);
+        return; // Don't proceed to next step
+      }
+    }
+
+    if (currentStep === 2) {
+      const validation = validateSteptwo(state.form);
+      if (!validation.isValid) {
+        // Show error message to user (you can use an Alert or set it in state to display in UI)
+        Alert.alert('Validation Error', validation.message);
+        return; // Don't proceed to next step
+
+      }
+
+
+    }
+
+    if (currentStep === 3) {
+
+
+      const validation = validateStepthree(state.form);
+
+
+
+      if (!validation.isValid) {
+        Alert.alert('Validation Error', validation.message); // multiple messages will show here
+        return;
+      }
+    }
+
+
+     if (currentStep === 4) {
+      const validation = validateStepFour(state.form);
+      if (!validation.isValid) {
+        // Show error message to user (you can use an Alert or set it in state to display in UI)
+        Alert.alert('Validation Error', validation.message);
+        return; // Don't proceed to next step
+
+      }
+
+
+    }
+
+     
+     if (currentStep === 5) {
+      const validation = validateStepFive(state.form);
+      if (!validation.isValid) {
+        // Show error message to user (you can use an Alert or set it in state to display in UI)
+        Alert.alert('Validation Error', validation.message);
+        return; // Don't proceed to next step
+
+      }
+
+
+    }
+
+
+
+
+
+
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     }
@@ -1011,17 +1150,20 @@ const ReviewForm = () => {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Total Quantity Found (Physical)</Text>
+              <Text style={styles.label}>Total Quantity Found (MT)</Text>
+
               <TextInput
                 style={styles.input}
-                placeholder="Enter Total Quantity Found"
+                placeholder="Enter Total Quantity Found in MT"
                 placeholderTextColor="#999"
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 value={state.form.quanityfound || ''}
                 onChangeText={(val) =>
                   updateState({ form: { ...state.form, quanityfound: val } })
                 }
               />
+
+
             </View>
 
 
@@ -1034,13 +1176,13 @@ const ReviewForm = () => {
                 keyboardType="numeric"
                 value={state.form.quanityfoundsystem || ''}
                 onChangeText={(val) =>
-                  updateState({ form: { ...state.form, quanityfound: val } })
+                  updateState({ form: { ...state.form, quanityfoundsystem: val } })
                 }
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Deposited Quantity in Chawls and Bins</Text>
+              <Text style={styles.label}>Deposited Quantity in Chawls and Bins (MT)</Text>
 
               <TextInput
                 style={styles.input}
@@ -1210,7 +1352,9 @@ const ReviewForm = () => {
             <Text style={styles.stepIndicator}>Step {currentStep} of {totalSteps}</Text>
             <Text style={styles.sectionTitle}>Additional Information</Text>
 
-            <View style={styles.buttoncontent}>
+            <View style={
+
+              styles.buttoncontent}>
               <TouchableOpacity style={styles.camerabutton} onPress={requestCameraPermission}>
                 <MaterialIcons name="add-a-photo" size={30} color="white" />
                 <Text style={styles.buttonText}>Pick from Camera</Text>
@@ -1220,24 +1364,62 @@ const ReviewForm = () => {
 
             </View>
 
+
             <View>
-              
+              {imageUri.map((img, index) => (
+                <TouchableOpacity key={index}>
+                  <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.8 }}>
+                    <View style={styles.imageContainer}>
+                      <Image source={{ uri: img.uri }} style={styles.image} />
+
+
+                      {/* Overlay for Location & Address */}
+                      <View style={styles.overlay}>
+                        {location && address ? (
+                          <>
+                            <Text style={styles.overlayText}>
+                              Latitude: {location.latitude}, Longitude: {location.longitude}
+                            </Text>
+                            <Text style={styles.overlayText}>{formattedAddress}</Text>
+                          </>
+                        ) : (
+                          <ActivityIndicator size="small" color="#ffffff" />
+                        )}
+                      </View>
+                    </View>
+                  </ViewShot>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View>
+
               <View>
 
 
                 {/* Capture Button */}
-                <TouchableOpacity onPress={captureScreenshot} style={{ marginVertical: 10 }}>
+                {/* <TouchableOpacity onPress={captureScreenshot} style={{ marginVertical: 10 }}>
                   <Text style={{ color: 'blue' }}>Capture Screenshot</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
-                {/* Show Captured Screenshot */}
-                {capturedImageUri && (
-                  <Image source={{ uri: capturedImageUri }} style={{
-                    width: '100%',
-                    height: 187,
-                    resizeMode: 'cover'
-                  }} />
+                {capturedImageUri.length > 0 && (
+                  <View>
+                    {capturedImageUri.map((img, index) => (
+                      <Image
+                        key={index}
+                        source={{ uri: img.uri }}
+                        style={{
+                          width: '100%',
+                          height: 187,
+                          resizeMode: 'cover',
+                          marginBottom: 10,
+                        }}
+                      />
+                    ))}
+                  </View>
                 )}
+
+
 
               </View>
             </View>
