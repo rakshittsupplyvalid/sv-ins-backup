@@ -1,12 +1,10 @@
 // src/screens/LoginApp.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import {
   View,
   TextInput,
-  Button,
   Alert,
   ActivityIndicator,
-  StyleSheet,
   Text,
   TouchableOpacity,
   Image,
@@ -15,13 +13,18 @@ import {
 
 import Storage from '../../utils/Storage';
 import apiClient from '../../service/api/apiInterceptors';
+
 import useForm from '../../Common/UseForm';
 import styles from './LoginStyles'
+import { useDisableBackHandler } from '../../service/useDisableBackHandler'
 
 
 const LoginApp = ({ navigation }: any) => {
   const { state, updateState } = useForm();
   const [isLoading, setIsLoading] = useState(false);
+
+    useDisableBackHandler(true);
+
 
 
   useEffect(() => {
@@ -65,17 +68,17 @@ const LoginApp = ({ navigation }: any) => {
   const handleLogin = async () => {
     const { mobileNo, password } = state.form;
 
-    if (!mobileNo || !password) {
-      Alert.alert('Error', 'Please enter both mobile number and password');
-      return;
-    }
+    // if (!mobileNo || !password) {
+    //   Alert.alert('Error', 'Please enter both mobile number and password');
+    //   return;
+    // }
 
-    if (mobileNo.length !== 10) {
-      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
-      return;
-    }
+    // if (mobileNo.length !== 10) {
+    //   Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
+    //   return;
+    // }
 
-    setIsLoading(true);
+    // setIsLoading(true);
     try {
       const payload = {
         mobileNo: '9634958888',
@@ -111,11 +114,36 @@ const LoginApp = ({ navigation }: any) => {
     }
   };
 
+ 
+  
+  // const handleLogin = async () => {
+  //   if (!mobileNo || !password) {
+  //     Alert.alert('Error', 'Please enter both mobileNo and password');
+  //     return;
+  //   }
+
+  //   try {
+  //     const payload = {
+  //       mobileNo,
+  //       password,
+  //     };
+  //     const response = await apiClient.post('/login/user', payload);
+  //     console.log('Login response:', response.data);
+
+  //     navigation.navigate('Dashboard', { userData: response.data });
+  //     //  navigation.navigate('Dashboard');
+  //   } catch (error) {
+  // console.log('Login errors', error, (error as Error)?.stack);
+  //     Alert.alert('Login Failed', 'Please check your credentials');
+  //   }
+  // };
+
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F79B00" />
       <Image
-        source={require('../../../assets/logo.jpg')}
+        source={require('../../../assets/image.jpg')}
         style={{
           width: 250,
           height: 250,
@@ -131,6 +159,8 @@ const LoginApp = ({ navigation }: any) => {
         keyboardType="number-pad"
         value={state.form?.mobileNo || ''}
         onChangeText={(text) => handleChange('mobileNo', text)}
+      
+   
         maxLength={10}
       />
       <TextInput
@@ -140,6 +170,8 @@ const LoginApp = ({ navigation }: any) => {
         secureTextEntry
         value={state.form?.password || ''}
         onChangeText={(text) => handleChange('password', text)}
+         
+   
       />
       {isLoading ? (
         <ActivityIndicator style={styles.loader} size="large" color="#4f46e5" />

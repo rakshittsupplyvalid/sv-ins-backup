@@ -9,6 +9,7 @@ import Dashboard from '../Dashboard/DashboardScreen';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Storage from '../utils/Storage';
 import { useNavigation } from '@react-navigation/native';
+
 // import pdf from '../Component/Reviewformcomp/Rough';
 const Drawer = createDrawerNavigator();
 
@@ -73,8 +74,7 @@ export default function DrawerNavigator() {
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
-          fontFamily: 'Poppins-SemiBold', // Apply Poppins to all headers
-          fontSize: 18,
+          fontFamily: 'Poppins-SemiBold', 
         },
         drawerStyle: { 
           backgroundColor: '#FFFFFF', 
@@ -123,6 +123,9 @@ export default function DrawerNavigator() {
   }}
 />
 
+
+ 
+
 {/* <Drawer.Screen
   name="Pdf"
   component={pdf}
@@ -138,8 +141,15 @@ export default function DrawerNavigator() {
       {/* Hidden Screens (No Drawer Items) */}
       <Drawer.Screen
         name="InspectionList"
-        component={InspectionList }
-        options={{ drawerItemStyle: { display: 'none' } }}
+        component={InspectionList}
+          options={{
+    drawerIcon: ({ color, size }) => (
+      <Icon name="list-alt" size={size} color={color} />
+       
+    ),
+       drawerItemStyle: { display: 'none' },
+  }}
+    
       />
       <Drawer.Screen
         name="Inspection List Details"

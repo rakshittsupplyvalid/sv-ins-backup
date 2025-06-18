@@ -83,7 +83,7 @@ const ForgetPassword: React.FC<ForgetPasswordProps> = ({ navigation, route }) =>
   <StatusBar backgroundColor="#F6A001" barStyle="light-content" />
   
   <View style={styles.logoContainer}>
-    <Image source={require('../../../assets/logo.jpg')} style={styles.logoImage} />
+    <Image source={require('../../../assets/image.jpg')} style={styles.logoImage} />
     <Text style={styles.heading}>Forgot Password</Text>
   </View>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,10 @@ import { Picker } from '@react-native-picker/picker';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
+const PAGE_SIZE = 5;
 
 type ProcurementItem = {
   id: string;
@@ -55,6 +57,16 @@ const ProcumentList = () => {
       const [hasMore, setHasMore] = useState(true);
 
 
+       useFocusEffect(
+          useCallback(() => {
+            setPage(1);
+            setHasMore(true);
+            setData([]);
+          }, [])
+        );
+      
+
+
   
     useEffect(() => {
     if (status) {
@@ -64,15 +76,27 @@ const ProcumentList = () => {
 
   useEffect(() => {
     console.log("Received status from Dashboard:", status);
-    fetchStatusData(status);
+    fetchStatusData(status , 1);
   }, [status]);
 
-  const fetchStatusData = async (status: string) => {
+const fetchStatusData = async (status: string, pageNumber: number) => {
+    if (!hasMore && pageNumber !== 1) return;
+    
     setLoading(true);
     try {
-      const response = await apiClient.get(`/api/procurement/list?ApprovalStatus=${status}`);
-      setData(response.data);
-      console.log('Fetched data:', response.data);
+      const response = await apiClient.get(
+        `/api/procurement/list?ApprovalStatus=${status}&PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`
+      );
+      
+      if (response.data.length > 0) {
+        if (pageNumber === 1) {
+          setData(response.data);
+        } else {
+          setData(prevData => [...prevData, ...response.data]);
+        }
+      } else {
+        setHasMore(false);
+      }
     } catch (error) {
       console.error('API error:', error);
     } finally {
@@ -80,13 +104,21 @@ const ProcumentList = () => {
     }
   };
 
-
-
-  
-
   useEffect(() => {
-    fetchStatusData(selectedStatus);
-  }, [selectedStatus]);
+    fetchStatusData(selectedStatus, page);
+  }, [page, selectedStatus]);
+
+  const handleLoadMore = () => {
+    if (!loading && hasMore) {
+      setPage(prevPage => prevPage + 1);
+    }
+  };
+
+  const handleRefresh = () => {
+    setPage(1);
+    setHasMore(true);
+    fetchStatusData(selectedStatus, 1);
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -248,25 +280,32 @@ const ProcumentList = () => {
         </View>
       </View>
 
-      {loading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#4361ee" />
-        </View>
-      ) : (
-        <FlatList
-          data={data}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Icon name="info-outline" size={40} color="#adb5bd" />
-              <Text style={styles.emptyText}>No procurement records found</Text>
-            </View>
-          }
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+    <FlatList
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={(item, index) => index.toString()}
+            contentContainerStyle={styles.listContent}
+            // ListEmptyComponent={
+            //   !loading
+            //     ? (
+            //       <View style={styles.emptyContainer}>
+            //         <Icon name="info-outline" size={40} color="#adb5bd" />
+            //         <Text style={styles.emptyText}>No procurement records found</Text>
+            //       </View>
+            //     )
+            //     : null
+            // }
+            ListFooterComponent={
+              loading && page > 1 ? (
+                <ActivityIndicator size="large" color="#4361ee" />
+              ) : null
+            }
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            showsVerticalScrollIndicator={false}
+          />
     </View>
   );
 };

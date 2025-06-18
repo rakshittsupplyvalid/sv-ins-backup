@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../service/api/apiInterceptors';
+import { useDisableBackHandler } from '../service/useDisableBackHandler';
 
 
 
@@ -13,6 +14,8 @@ const Dashboard = ({ navigation }: any) => {
   const [insepectionData, setInsepectionData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+    useDisableBackHandler(true);
 
   const fetchData = async () => {
     setLoading(true);
@@ -261,4 +264,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Dashboard;
+export default Dashboard

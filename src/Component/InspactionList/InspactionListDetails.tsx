@@ -1093,7 +1093,7 @@ const closeEditModal = () => {
       ))}
 
       {/* Files */}
-      <TouchableOpacity 
+      {/* <TouchableOpacity 
         style={styles.sectionHeader} 
         onPress={() => toggleSection('files')}
         activeOpacity={0.8}
@@ -1126,7 +1126,54 @@ const closeEditModal = () => {
             </TouchableOpacity>
           ))}
         </View>
-      )}
+      )} */}
+
+
+
+      <TouchableOpacity 
+  style={styles.sectionHeader} 
+  onPress={() => toggleSection('files')}
+  activeOpacity={0.8}
+>
+  <Text style={styles.sectionTitle}>Attachments ({inspectionData.files?.length || 0})</Text>
+  <Icon 
+    name={expandedSection === 'files' ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
+    size={24} 
+    color="#495057" 
+  />
+</TouchableOpacity>
+
+{expandedSection === 'files' && (
+  <View style={styles.imagesContainer}>
+    {inspectionData.files?.map((file: string, index: number) => (
+      <Image
+        key={index}
+        source={{ uri: `https://dev-backend-2025.epravaha.com${file}` }}
+        style={styles.image}
+        resizeMode="cover"
+      />
+    ))}
+  </View>
+)}
+
+
+{expandedSection === 'files' && (
+  <View style={styles.imagesContainer}>
+    {inspectionData.files?.map((file: string, index: number) => (
+      <TouchableOpacity 
+        key={index} 
+        onPress={() => console.log("Image clicked")} // Optional: Add action later
+        activeOpacity={0.7}
+      >
+        <Image
+          source={{ uri: `https://dev-backend-2025.epravaha.com${file}` }}
+          style={styles.image}
+          resizeMode="cover"
+        />
+      </TouchableOpacity>
+    ))}
+  </View>
+)}
 
       {/* Edit Modal */}
       <Modal

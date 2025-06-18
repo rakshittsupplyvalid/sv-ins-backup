@@ -30,36 +30,43 @@ export function validateSteptwo(formData: any) {
   };
 }
 
-
 export function validateStepthree(formData: any) {
-  const rawValue = formData.quanityfound;
-  const rawValuesecond = formData.Depositedfound;
+  const errors = {
+    quanityfound: '',
+    Depositedfound: '',
+  };
 
-  const valueStr = String(rawValue || '').trim();
-  const valueStrSecond = String(rawValuesecond || '').trim();
+  // Helper function to validate a single field
+  const validateField = (value: any, fieldName: string) => {
+    const valueStr = String(value || '').trim();
+    
+    // Remove commas for validation (allows 1,000.00 or 1000.00)
+    const numericStr = valueStr.replace(/,/g, '');
+    
+    // Allow numbers with optional decimal up to 5 places
+    // Also ensures there's at least one digit before the decimal
+    const decimalRegex = /^\d+(\.\d{1,5})?$/;
+    
+    if (!valueStr) {
+      return `${fieldName} is required`;
+    }
+    
+    if (!decimalRegex.test(numericStr)) {
+      return `${fieldName} must be in valid MT format (e.g., 1, 1.0, or 2.57367)`;
+    }
+    
+    return '';
+  };
 
-  // Allow numbers with optional decimal up to 5 places (e.g. 1, 2.5, 3.12345)
-  const decimalRegex = /^\d+(\.\d{1,5})?$/;
+  errors.quanityfound = validateField(formData.quanityfound, 'Quantity Found');
+  errors.Depositedfound = validateField(formData.Depositedfound, 'Deposited Found');
 
-  const errors: string[] = [];
-
-//   if (!valueStr) {
-//     errors.push('Please enter the Quantity Found.');
-//   } 
-  if (!decimalRegex.test(valueStr)) {
-    errors.push('Quantity Found must be in valid MT format (e.g. 1.00000 or 2.57367).');
-  }
-
-//   if (!valueStrSecond) {
-//     errors.push('Please enter the Deposited Found.');
-//   } 
- if (!decimalRegex.test(valueStrSecond)) {
-    errors.push('Deposited Found must be in valid MT format (e.g. 1.00000 or 2.57367).');
-  }
+  const isValid = !errors.quanityfound && !errors.Depositedfound;
 
   return {
-    isValid: errors.length === 0,
-    message: errors.join('\n'),
+    isValid,
+    message: isValid ? '' : errors.quanityfound || errors.Depositedfound,
+    errors // Return all errors if you want to display them separately
   };
 }
 

@@ -6,11 +6,14 @@ import {
     FlatList,
     TouchableOpacity,
     ActivityIndicator,
-    RefreshControl
+    RefreshControl,
+    Button
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
 import useForm from '../../Common/UseForm';
+import { DrawerParamList } from '../../Type/DrawerParam';
+import { useRoute, RouteProp } from '@react-navigation/native';
 
 
 interface InspectionItem {
@@ -23,7 +26,18 @@ interface InspectionItem {
     additionalComments?: string;
 }
 
+
+type RouteParams = {
+  params: {
+    id: string;
+  
+
+  };
+};
+
 const PAGE_SIZE = 5;
+
+type InspactionListRouteProp = RouteProp<DrawerParamList, 'InspectionList'>;
 
 const InspectionList = ({ navigation }: { navigation: any }) => {
     const { state, updateState } = useForm();
@@ -32,6 +46,27 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const route = useRoute<InspactionListRouteProp>();
+  const storageId = route.params?.storageId;
+    const [showButton, setShowButton] = useState(false);
+
+
+    useEffect(() => {
+    if (storageId) {
+      setShowButton(true); // Show button only if storageId exists
+    } else {
+      setShowButton(false); // Hide button if no storageId
+    }
+  }, [storageId]); // Re-run effect whenever storageId changes
+
+  const handleButtonPress = () => {
+    if (storageId) {
+      navigation.navigate('Review Form', { storageId });
+    }
+  };
+
+  
+
 
     const navigateToDrawer = (item: InspectionItem) => {
         navigation.navigate('Inspection List Details', {
@@ -41,44 +76,52 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
         });
 
 
-    };
+    } ;
+   
+
     const fetchInspectionList = async (pageNumber: number, isRefreshing = false) => {
-        if (!hasMore && !isRefreshing) return;
+    if (!hasMore && !isRefreshing) return;
 
-        try {
-            if (isRefreshing) {
-                setRefreshing(true);
-            } else {
-                setLoading(true);
-            }
-
-            const response = await apiClient.get(
-                `/api/InspectionReport/list?PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`
-            );
-
-            const receivedItems = response.data || [];
-
-            setHasMore(receivedItems.length >= PAGE_SIZE);
-
-            updateState({
-                fielddata: {
-                    ...state.fielddata,
-                    InspectionList: isRefreshing || pageNumber === 1
-                        ? receivedItems
-                        : [...(state.fielddata?.InspectionList || []), ...receivedItems],
-                },
-            });
-
-            setError(null);
-        } catch (err) {
-            console.error('API error:', err);
-            setError('Failed to fetch inspection reports. Please try again.');
-            setHasMore(false);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
+    try {
+        if (isRefreshing) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
         }
-    };
+
+        // Build the base URL
+        let url = `/api/InspectionReport/list?PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
+        
+        // Add StorageLocationId to the URL if it exists
+        if (storageId) {
+            url = `/api/InspectionReport/list?StorageLocationId=${storageId}&PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
+        }
+
+        const response = await apiClient.get(url);
+
+        const receivedItems = response.data || [];
+
+        setHasMore(receivedItems.length >= PAGE_SIZE);
+
+        updateState({
+            fielddata: {
+                ...state.fielddata,
+                InspectionList: isRefreshing || pageNumber === 1
+                    ? receivedItems
+                    : [...(state.fielddata?.InspectionList || []), ...receivedItems],
+            },
+        });
+
+        setError(null);
+    } catch (err) {
+        console.error('API error:', err);
+        setError('Failed to fetch inspection reports. Please try again.');
+        setHasMore(false);
+    } finally {
+        setLoading(false);
+        setRefreshing(false);
+    }
+};
 
     const handleLoadMore = () => {
         if (!loading && hasMore && !refreshing) {
@@ -194,6 +237,17 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
                     <Text style={styles.subtitle}>Recent inspection activities</Text>
                 </View>
             </View>
+
+
+               <View style={{ padding: 20 }}>
+        {showButton && (
+        <Button
+          title="Go to Review Form"
+          onPress={handleButtonPress}
+        />
+        )}
+       
+    </View>
 
             {error && (
                 <View style={styles.errorContainer}>

@@ -9,9 +9,9 @@ import ViewShot from 'react-native-view-shot';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { PermissionsAndroid } from 'react-native';
 import apiClient from '../../service/api/apiInterceptors';
-import { useIsFocused } from '@react-navigation/native';
-import { encrypt, decrypt } from '../../utils/encryptDecrypt';
-import { validateStepOne, validateSteptwo, validateStepthree , validateStepFour  , validateStepFive} from '../../FormValidation/Formvalidates';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { encrypt, decrypt } from '../../utils/encryptDecrypt_not_used';
+import { validateStepOne, validateSteptwo, validateStepthree, validateStepFour, validateStepFive } from '../../FormValidation/Formvalidates';
 
 
 
@@ -20,6 +20,8 @@ type ImageAsset = {
   fileName: string;
   type: string;
 };
+
+
 
 type Chawl = {
   isCopiedFromFirst: boolean | undefined;
@@ -34,9 +36,14 @@ type Chawl = {
   };
 };
 
+import { StackNavigationProp } from '@react-navigation/stack';
+import { DrawerParamList } from '../../Type/DrawerParam';
+
+
 const ReviewForm = () => {
   const { state, updateState } = useForm();
   const [currentStep, setCurrentStep] = useState(1);
+  const navigation = useNavigation<StackNavigationProp<DrawerParamList>>();
   const [imageUri, setImageUri] = useState<ImageAsset[]>([]);
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [screenshoturi, setscreenshoturi] = useState<ImageAsset[]>([]);
@@ -45,7 +52,9 @@ const ReviewForm = () => {
   const [chawlList, setChawlList] = useState<Chawl[]>([]);
   const [binList, setBinList] = useState<Chawl[]>([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
   const [capturedImageUri, setCapturedImageUri] = useState<ImageAsset[]>([]);
-   const isFocused = useIsFocused();
+  const [showInspectionButton, setShowInspectionButton] = useState(false);
+  const [selectedStorageId, setSelectedStorageId] = useState('');
+  const isFocused = useIsFocused();
 
 
 
@@ -60,15 +69,47 @@ const ReviewForm = () => {
   };
 
 
-  // Test your encryption independently
-  // (Remove misplaced interceptor code from component)
 
-    useEffect(() => {
-    if (isFocused) {
-      updateState({ form: {}, hidden: { ...state.hidden, currentStep: 1 } });  // Directly updating the state
-    }
-  }, [isFocused]);
 
+ // Update your useEffect for isFocused
+useEffect(() => {
+  if (isFocused) {
+    // Reset all form states
+    updateState({
+      form: {
+        option1: '',
+        option2: '',
+        option3: '',
+        Farmers: '',
+        quanityfound: '',
+        Depositedfound: '',
+        Weighmentslip: '',
+        stockQuality: '',
+        staffBehavior: '',
+        additionalComments: '',
+        noOfChawls: '',
+        noofbins: '',
+        deterioration: '',
+        quanityfoundsystem: '',
+        assayingDone: '',
+        laborRegister: '',
+        inspectionStatus: '',
+        chawlDimensions: [],
+        binDimensions: []
+      },
+      hidden: { ...state.hidden, currentStep: 1 }
+    });
+    
+    // Reset local states
+    setCurrentStep(1);
+    setImageUri([]);
+    setCapturedImageUri([]);
+    setChawlList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
+    setBinList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
+    setShowInspectionButton(false);
+    setSelectedStorageId('');
+  }
+}, [isFocused]);
 
 
   useEffect(() => {
@@ -200,6 +241,12 @@ const ReviewForm = () => {
   };
 
 
+  const handleCheckInspection = () => {
+    // Navigate to InspectionCheck screen with the selected ID
+    navigation.navigate('InspectionList', { 
+      storageId: selectedStorageId,
+    });
+  };
 
   const qualityOptions = [
     { label: 'Select Quality', value: '' },
@@ -607,21 +654,18 @@ const ReviewForm = () => {
 
     }
 
-    if (currentStep === 3) {
+    // Usage in your component
+if (currentStep === 3) {
+  const validation = validateStepthree(state.form);
+
+  if (!validation.isValid) {
+    Alert.alert('Validation Error', validation.message);
+    return;
+  }
+}
 
 
-      const validation = validateStepthree(state.form);
-
-
-
-      if (!validation.isValid) {
-        Alert.alert('Validation Error', validation.message); // multiple messages will show here
-        return;
-      }
-    }
-
-
-     if (currentStep === 4) {
+    if (currentStep === 4) {
       const validation = validateStepFour(state.form);
       if (!validation.isValid) {
         // Show error message to user (you can use an Alert or set it in state to display in UI)
@@ -633,8 +677,8 @@ const ReviewForm = () => {
 
     }
 
-     
-     if (currentStep === 5) {
+
+    if (currentStep === 5) {
       const validation = validateStepFive(state.form);
       if (!validation.isValid) {
         // Show error message to user (you can use an Alert or set it in state to display in UI)
@@ -720,6 +764,17 @@ const ReviewForm = () => {
                 updateState({
                   form: { ...state.form, option3: value },
                 });
+
+
+                if (value) {
+                  setSelectedStorageId(value);
+                  setShowInspectionButton(true);
+                }
+
+
+                else {
+                  setShowInspectionButton(false);
+                }
               }}
               items={[
                 { label: 'Select Storage location', value: '' },
@@ -729,6 +784,15 @@ const ReviewForm = () => {
                 })) || []),
               ]}
             />
+
+            {showInspectionButton && (
+              <Button
+                title="Check Inspection Status"
+                onPress={handleCheckInspection}
+
+              />
+            )}
+
 
             {state.form.option3 && (
               (() => {
