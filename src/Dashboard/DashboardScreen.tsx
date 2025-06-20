@@ -10,12 +10,14 @@ import { useDisableBackHandler } from '../service/useDisableBackHandler';
 const Dashboard = ({ navigation }: any) => {
   const [data, setData] = useState<any>(null);
   const [pendingData, setPendingData] = useState<any>(null);
+
   const [rejectedData, setRejectedData] = useState<any>(null);
   const [insepectionData, setInsepectionData] = useState<any>(null);
+  const [remainingData, setRemainingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-    useDisableBackHandler(true);
+  useDisableBackHandler(true);
 
   const fetchData = async () => {
     setLoading(true);
@@ -31,6 +33,7 @@ const Dashboard = ({ navigation }: any) => {
       setData(approvedRes.data);
       setPendingData(pendingRes.data);
       setRejectedData(rejectedRes.data);
+
     } catch (err) {
       setError('Failed to fetch data');
       console.error('API Error:', err);
@@ -58,9 +61,31 @@ const Dashboard = ({ navigation }: any) => {
     }
   };
 
+
+  const remainingcount
+    = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await apiClient.get('/api/InspectionReport/remainingcount');
+        if (response.status === 200) {
+          setRemainingData(response.data);
+        } else {
+          setError('Failed to fetch inspection count');
+        }
+      } catch (err) {
+        setError('Failed to fetch inspection count');
+        console.error('API Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
   useEffect(() => {
     fetchData();
     Inspectiondata();
+     remainingcount();
   }, []);
 
   const handleCardPress = (status: string) => {
@@ -87,7 +112,7 @@ const Dashboard = ({ navigation }: any) => {
       value: pendingData || '0',
       icon: 'pending',
       color: '#FF9800',
-       bgColor: '#ffffff',
+      bgColor: '#ffffff',
       status: 'PENDING'
     },
     {
@@ -105,9 +130,21 @@ const Dashboard = ({ navigation }: any) => {
       value: insepectionData || '0',
       icon: 'remove-red-eye',
       color: '#2196F3',
-       bgColor: '#ffffff',
+      bgColor: '#ffffff',
       status: 'ALL'
-    }
+    },
+
+
+   {
+  id: 5,
+  title: 'Remaining Inspection Report',
+  value: remainingData,
+  icon: 'pending-actions', 
+  color: '#F44336',
+  bgColor: '#ffffff', 
+  status: 'ALL'
+}
+
   ];
 
   const screenWidth = Dimensions.get('window').width;
@@ -138,7 +175,7 @@ const Dashboard = ({ navigation }: any) => {
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
-    
+
       <View style={styles.grid}>
         {cards.map((card) => (
           <TouchableOpacity
@@ -150,10 +187,12 @@ const Dashboard = ({ navigation }: any) => {
             <View style={styles.cardHeader}>
               <View style={[styles.iconContainer, { backgroundColor: `${card.color}20` }]}>
                 <MaterialIcons name={card.icon} size={24} color={card.color} />
+
               </View>
             </View>
             <Text style={styles.cardTitle}>{card.title}</Text>
             <Text style={[styles.cardValue, { color: card.color }]}>{card.value}</Text>
+
             <View style={styles.cardFooter}>
               <Text style={styles.viewText}>View Details</Text>
               <MaterialIcons name="chevron-right" size={20} color={card.color} />
@@ -169,6 +208,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#f5f5f5',
+
     minHeight: '100%',
     justifyContent: 'center'
   },
@@ -183,18 +223,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 16,
+    gap: 12, 
   },
   card: {
     borderRadius: 16,
-    padding: 20,
+    padding: 17,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
-   
+    backgroundColor: 'red',
+
+    height : 180, // Adjust height as needed
+
   },
   cardHeader: {
     flexDirection: 'row',
@@ -212,7 +255,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 8,
+    
     fontWeight: '500',
   },
   cardValue: {

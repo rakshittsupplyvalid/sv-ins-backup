@@ -44,14 +44,16 @@ const ReviewForm = () => {
   const { state, updateState } = useForm();
   const [currentStep, setCurrentStep] = useState(1);
   const navigation = useNavigation<StackNavigationProp<DrawerParamList>>();
-  const [imageUri, setImageUri] = useState<ImageAsset[]>([]);
+
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [screenshoturi, setscreenshoturi] = useState<ImageAsset[]>([]);
   const [address, setAddress] = useState<Location.LocationGeocodedAddress | null>(null);
   const [formattedAddress, setFormattedAddress] = useState('');
   const [chawlList, setChawlList] = useState<Chawl[]>([]);
   const [binList, setBinList] = useState<Chawl[]>([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
-  const [capturedImageUri, setCapturedImageUri] = useState<ImageAsset[]>([]);
+   const [imageUri, setImageUri] = useState<ImageAsset[]>([]);
+    const [screenshots, setScreenshots] = useState<ImageAsset[]>([]);
+ 
   const [showInspectionButton, setShowInspectionButton] = useState(false);
   const [selectedStorageId, setSelectedStorageId] = useState('');
   const isFocused = useIsFocused();
@@ -60,7 +62,7 @@ const ReviewForm = () => {
 
 
 
-  const viewShotRef = useRef<ViewShot>(null);
+const viewShotRefs = useRef<Array<ViewShot | null>>([]);
   const totalSteps = 6;
 
   const openInGoogleMaps = (lat: number, lng: number) => {
@@ -103,7 +105,7 @@ useEffect(() => {
     // Reset local states
     setCurrentStep(1);
     setImageUri([]);
-    setCapturedImageUri([]);
+
     setChawlList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
     setBinList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
     setShowInspectionButton(false);
@@ -316,69 +318,64 @@ useEffect(() => {
     }
   };
 
-  const openCamera = async () => {
-    launchCamera(
-      {
-        mediaType: 'photo',
-        includeBase64: false,
-        cameraType: 'back',
-        quality: 0.4,
-        maxWidth: 700,
-        maxHeight: 700,
-      },
-      async (response: ImagePickerResponse) => {
-        if (response.didCancel) {
-          console.log('User cancelled image picker');
-        } else if (response.errorMessage) {
-          console.log('ImagePicker Error: ', response.errorMessage);
-        } else if (response.assets && response.assets.length > 0) {
-          const capturedImage = response.assets[0];
+  
 
-          const image = {
-            uri: capturedImage.uri ?? '',
-            fileName: capturedImage.fileName || `photo_${Date.now()}.jpg`,
-            type: capturedImage.type || 'image/jpeg',
-          };
 
-          // Save captured image in state
-          setImageUri((prevImages) => [...prevImages, image]);
+    const openCamera = async () => {
+    launchCamera({ mediaType: 'photo' }, (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorMessage) {
+        Alert.alert('Error', response.errorMessage);
+      } else if (response.assets && response.assets.length > 0) {
+        const asset = response.assets[0];
+        const newImage: ImageAsset = {
+          uri: asset.uri!,
+          fileName: asset.fileName || `image_${Date.now()}.jpg`,
+          type: asset.type || 'image/jpeg'
+        };
+        const newIndex = imageUri.length;
 
-          await fetchLocation();
+        // Add image to list
+        setImageUri((prev) => {
+          const updatedList = [...prev, newImage];
 
-          // Delay screenshot by 1 second
-          setTimeout(async () => {
-            try {
-              if (viewShotRef.current) {
-                console.log('Capturing screenshot...');
-                let screenshot: string | undefined;
-                if (viewShotRef.current && typeof viewShotRef.current.capture === 'function') {
-                  screenshot = await viewShotRef.current.capture();
-                }
+          // fetchLocation should not be awaited inside setState callback
+          fetchLocation();
 
-                if (screenshot) {
-                  console.log('Screenshot 1234:', screenshot);
+          // Delay screenshot till image is rendered
+          setTimeout(() => {
+            captureSingleScreenshot(newIndex);
+          }, 1000); // 1 second delay for ViewShot to mount
 
-                  const screenshotImage = {
-                    uri: screenshot,
-                    fileName: `screenshot_${Date.now()}.jpg`,
-                    type: 'image/jpeg',
-                  };
-
-                  setscreenshoturi((prevImages) => [...prevImages, screenshotImage]);
-                } else {
-                  console.log('Screenshot capture failed.');
-                }
-              } else {
-                console.log('viewShotRef is null.');
-              }
-            } catch (error) {
-              console.error('Error capturing screenshot:', error);
-            }
-          }, 1000);
-        }
+          return updatedList;
+        });
       }
-    );
+    });
   };
+
+
+
+   const captureSingleScreenshot = async (index: number) => {
+      try {
+        const ref = viewShotRefs.current[index];
+        if (ref && typeof ref.capture === 'function') {
+          const uri = await ref.capture();
+          if (uri) {
+            const screenshotImage: ImageAsset = {
+              uri,
+              fileName: `screenshot_${Date.now()}.jpg`,
+              type: 'image/jpeg',
+            };
+            setScreenshots((prev) => [...prev, screenshotImage]);
+            console.log(`Screenshot ${index + 1}:`, uri);
+            Alert.alert(`Screenshot ${index + 1}`, uri);
+          }
+        }
+      } catch (error) {
+        console.error('Screenshot error:', error);
+      }
+    };
 
   // const captureScreenshot = async () => {
   //   try {
@@ -529,7 +526,7 @@ useEffect(() => {
 
 
 
-      capturedImageUri.forEach((image, index) => {
+      screenshots.forEach((image, index) => {
         formData.append('Files', {
           uri: image.uri,
           name: image.fileName || `image_${index}.jpg`,
@@ -1446,59 +1443,64 @@ if (currentStep === 3) {
             </View>
 
 
-            <View>
-              {imageUri.map((img, index) => (
-                <TouchableOpacity key={index}>
-                  <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.8 }}>
-                    <View style={styles.imageContainer}>
-                      <Image source={{ uri: img.uri }} style={styles.image} />
-
-
-                      {/* Overlay for Location & Address */}
-                      <View style={styles.overlay}>
-                        {location && address ? (
-                          <>
-                            <Text style={styles.overlayText}>
-                              Latitude: {location.latitude}, Longitude: {location.longitude}
-                            </Text>
-                            <Text style={styles.overlayText}>{formattedAddress}</Text>
-                          </>
-                        ) : (
-                          <ActivityIndicator size="small" color="#ffffff" />
-                        )}
-                      </View>
-                    </View>
-                  </ViewShot>
-                </TouchableOpacity>
-              ))}
-            </View>
-
+          
             <View>
 
               <View>
 
 
-               
-                 {/* <TouchableOpacity onPress={captureScreenshot} style={{ marginVertical: 10 }}>
-                  <Text style={{ color: 'blue' }}>Capture Screenshot</Text>
-                </TouchableOpacity>  */}
-
-                {capturedImageUri.length > 0 && (
-                  <View>
-                    {capturedImageUri.map((img, index) => (
+                
+                
+                      {imageUri.map((img, index) => (
+                        <View key={index} style={{ marginBottom: 20 }}>
+                          <ViewShot
+                            ref={(ref) => { viewShotRefs.current[index] = ref; }}
+                            options={{ format: 'jpg', quality: 1.0 }}
+                          >
+                            <View style={styles.imageContainer}>
+                              <Image source={{ uri: img.uri }} style={styles.image} resizeMode="cover" />
+                
+                              {/* Overlay for Location & Address */}
+                              <View style={styles.overlay}>
+                                {location && address ? (
+                                  <>
+                                    <Text style={styles.overlayText}>
+                                      Latitude: {location.latitude}, Longitude: {location.longitude}
+                                    </Text>
+                                    <Text style={styles.overlayText}>{formattedAddress}</Text>
+                                  </>
+                                ) : (
+                                  <ActivityIndicator size="small" color="#ffffff" />
+                                )}
+                              </View>
+                            </View>
+                          </ViewShot>
+                
+                         
+                        </View>
+                      ))}
+                
+                
+                      <Text> Screenshot </Text>
+                
+                      {screenshots.length > 0 && (
+                  <View style={{ marginTop: 20 }}>
+                    <Text style={{ fontWeight: 'bold' }}>Captured Screenshots:</Text>
+                    {screenshots.map((sUri, i) => (
                       <Image
-                        key={index}
-                        source={{ uri: img.uri }}
-                        style={{
-                          width: '100%',
-                          height: 187,
-                          resizeMode: 'cover',
-                          marginBottom: 10,
-                        }}
+                        key={i}
+                        source={{ uri: typeof sUri === 'string' ? sUri : sUri.uri }}
+                        style={{ width: 200, height: 130, marginVertical: 10 }}
                       />
                     ))}
                   </View>
                 )}
+                
+
+
+               
+             
+
 
 
 
@@ -1764,6 +1766,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    backgroundColor : 'red'
 
   },
   image: {
@@ -1946,7 +1949,18 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginLeft: 5,
-  }
+  },
+    captureButton: {
+    marginTop: 8,
+    backgroundColor: '#007bff',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  captureButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 
 
 });

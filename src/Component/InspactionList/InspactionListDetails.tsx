@@ -1143,7 +1143,7 @@ const closeEditModal = () => {
   />
 </TouchableOpacity>
 
-{expandedSection === 'files' && (
+{/* {expandedSection === 'files' && (
   <View style={styles.imagesContainer}>
     {inspectionData.files?.map((file: string, index: number) => (
       <Image
@@ -1154,7 +1154,7 @@ const closeEditModal = () => {
       />
     ))}
   </View>
-)}
+)} */}
 
 
 {expandedSection === 'files' && (
