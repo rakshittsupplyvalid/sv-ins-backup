@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, use } from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Image, ActivityIndicator, FlatList, Button, Linking, Alert } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import CommonPicker from '../../CommonCompoent/CommonPicker';
@@ -10,7 +10,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { PermissionsAndroid } from 'react-native';
 import apiClient from '../../service/api/apiInterceptors';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { encrypt, decrypt } from '../../utils/encryptDecrypt_not_used';
+
 import { validateStepOne, validateSteptwo, validateStepthree, validateStepFour, validateStepFive } from '../../FormValidation/Formvalidates';
 
 
@@ -130,8 +130,8 @@ useEffect(() => {
     }
   }, [state.form.option1]);
   useEffect(() => {
-    if (state.form.option2) { // Only call if option1 has a value
-      Storage();
+    if (state.form.option2) { 
+        Storage(state.form.option2);
     }
 
     else {
@@ -144,6 +144,13 @@ useEffect(() => {
       });
     }
   }, [state.form.option2]);
+
+
+  // useEffect(() => {
+  //   if (state.form.opition2){
+  //     Storage(state.form.opition2);
+  //   }
+  // }, [state.form.opition2]);
 
 
   useEffect(() => {
@@ -178,7 +185,7 @@ useEffect(() => {
     const url = `/api/group?VendorType=FPC&VendorType=FPO&FederationId=${federationId}`;
     apiClient.get(url).then((res) => {
       if (res?.data) {
-        // console.log("fpo fpc Data:", res.data);
+        console.log("fpo fpc Data:", res.data);
         updateState({
           fielddata: {
             ...state.fielddata,
@@ -193,11 +200,13 @@ useEffect(() => {
     });
   };
 
-  const Storage = () => {
-    const url = `/api/storagelocation?StorageType=NORMAL&LocationType=STORAGELOCATION&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`;
+  const Storage = (fpofpcId : string) => {
+   
+    // const url = `/api/storagelocation?GroupId=${fpofpcId}&StorageType=NORMAL&LocationType=STORAGELOCATION&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`;
+    const url = `/api/storagelocation?GroupId=${fpofpcId}&StorageType=NORMAL&LocationType=STORAGELOCATION&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`; // ✅ dynamic path
     apiClient.get(url).then((res) => {
       if (res?.data) {
-        // console.log("Storage api", res.data);
+        console.log("Storage api", res.data);
         updateState({
           fielddata: {
             ...state.fielddata,
@@ -371,23 +380,23 @@ useEffect(() => {
     );
   };
 
-  const captureScreenshot = async () => {
-    try {
-      if (viewShotRef.current && typeof viewShotRef.current.capture === 'function') {
-        const uri = await viewShotRef.current.capture();
-        if (uri) {
-          const screenshotImage = {
-            uri,
-            fileName: `screenshot_${Date.now()}.jpg`,
-            type: 'image/jpeg',
-          };
-          setCapturedImageUri((prev) => [...prev, screenshotImage]);
-        }
-      }
-    } catch (error) {
-      console.error('Error capturing screenshot:', error);
-    }
-  };
+  // const captureScreenshot = async () => {
+  //   try {
+  //     if (viewShotRef.current && typeof viewShotRef.current.capture === 'function') {
+  //       const uri = await viewShotRef.current.capture();
+  //       if (uri) {
+  //         const screenshotImage = {
+  //           uri,
+  //           fileName: `screenshot_${Date.now()}.jpg`,
+  //           type: 'image/jpeg',
+  //         };
+  //         setCapturedImageUri((prev) => [...prev, screenshotImage]);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Error capturing screenshot:', error);
+  //   }
+  // };
 
 
 
@@ -512,7 +521,7 @@ useEffect(() => {
 
       allSizes.forEach((item, index) => {
         formData.append(`ChawlSizes[${index}][chawlType]`, item.chawlType);
-        formData.append(`ChawlSizes[${index}][lenght]`, item.length);
+        formData.append(`ChawlSizes[${index}][length]`, item.length);
         formData.append(`ChawlSizes[${index}][breadth]`, item.breadth);
         formData.append(`ChawlSizes[${index}][height]`, item.height);
         formData.append(`ChawlSizes[${index}][quantity]`, item.quantity.toString());
@@ -567,6 +576,7 @@ useEffect(() => {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        
       });
 
       console.log('\nResponse:', response.data);
@@ -597,35 +607,37 @@ useEffect(() => {
     catch (error) {
       console.error('Error submitting form:', error);
 
-      // // If error is an Axios error (common in API calls)
-      // if (typeof error === 'object' && error !== null && 'response' in error) {
-      //   // Server responded with a status other than 2xx
-      //   const err = error as { response: any };
-      //   console.error('Response data:', err.response.data);
-      //   console.error('Response status:', err.response.status);
-      //   console.error('Response headers:', err.response.headers);
-      //   alert(`Server Error: ${err.response.data?.message || 'Check console for more details.'}`);
-      // } else if (typeof error === 'object' && error !== null && 'request' in error) {
-      //   // Request was made but no response received
-      //   const err = error as { request: any };
-      //   console.error('No response received:', err.request);
-      //   alert('No response from server. Please check your internet connection.');
-      // } else if (typeof error === 'object' && error !== null && 'message' in error) {
-      //   // Something else caused the error
-      //   const err = error as { message: string };
-      //   console.error('Error message:', err.message);
-      //   alert(`Unexpected Error: ${err.message}`);
-      // } else {
-      //   // Unknown error type
-      //   console.error('Unknown error:', error);
-      //   alert('An unknown error occurred.');
-      // }
+      console.log('abcd')
 
-      // // Optional: full stack trace
-      // if (typeof error === 'object' && error !== null && 'config' in error) {
-      //   const err = error as { config: any };
-      //   console.error('Error config:', err.config);
-      // }
+      
+    //   if (typeof error === 'object' && error !== null && 'response' in error) {
+    //     // Server responded with a status other than 2xx
+    //     const err = error as { response: any };
+    //     console.error('Response data:', err.response.data);
+    //     console.error('Response status:', err.response.status);
+    //     console.error('Response headers:', err.response.headers);
+    //     alert(`Server Error: ${err.response.data?.message || 'Check console for more details.'}`);
+    //   } else if (typeof error === 'object' && error !== null && 'request' in error) {
+    //     // Request was made but no response received
+    //     const err = error as { request: any };
+    //     console.error('No response received:', err.request);
+    //     alert('No response from server. Please check your internet connection.');
+    //   } else if (typeof error === 'object' && error !== null && 'message' in error) {
+    //     // Something else caused the error
+    //     const err = error as { message: string };
+    //     console.error('Error message:', err.message);
+    //     alert(`Unexpected Error: ${err.message}`);
+    //   } else {
+    //     // Unknown error type
+    //     console.error('Unknown error:', error);
+    //     alert('An unknown error occurred.');
+    //   }
+
+    //   // Optional: full stack trace
+    //   if (typeof error === 'object' && error !== null && 'config' in error) {
+    //     const err = error as { config: any };
+    //     console.error('Error config:', err.config);
+    //   }
     }
 
   };
@@ -784,14 +796,19 @@ if (currentStep === 3) {
                 })) || []),
               ]}
             />
-
-            {showInspectionButton && (
-              <Button
-                title="Check Inspection Status"
-                onPress={handleCheckInspection}
-
-              />
-            )}
+             
+             {showInspectionButton && (
+  <View style={styles.buttonContainer}>
+    <TouchableOpacity 
+      style={styles.inspectionButton}
+      onPress={handleCheckInspection}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.buttonTexti}>Check Inspection Status</Text>
+      <MaterialIcons name="search" size={20} color="#fff" style={styles.icon} />
+    </TouchableOpacity>
+  </View>
+)}
 
 
             {state.form.option3 && (
@@ -1461,10 +1478,10 @@ if (currentStep === 3) {
               <View>
 
 
-                {/* Capture Button */}
-                {/* <TouchableOpacity onPress={captureScreenshot} style={{ marginVertical: 10 }}>
+               
+                 {/* <TouchableOpacity onPress={captureScreenshot} style={{ marginVertical: 10 }}>
                   <Text style={{ color: 'blue' }}>Capture Screenshot</Text>
-                </TouchableOpacity> */}
+                </TouchableOpacity>  */}
 
                 {capturedImageUri.length > 0 && (
                   <View>
@@ -1902,6 +1919,34 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
   },
+    buttonContainer: {
+    marginVertical: 15,
+    alignItems: 'center',
+  },
+  inspectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor:  '#FF9500',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    shadowColor: '#4a8cff',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+    width: '90%',
+  },
+  buttonTexti: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  icon: {
+    marginLeft: 5,
+  }
 
 
 });

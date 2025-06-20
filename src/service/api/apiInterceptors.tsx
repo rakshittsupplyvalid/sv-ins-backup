@@ -99,35 +99,40 @@ const  apiClient = axios.create({
 });
 
 // Request interceptor — encrypt request data
- apiClient.interceptors.request.use(async (config) => {
-
-
-     const token = retrieveToken();
-  
+apiClient.interceptors.request.use(async (config) => {
+  const token = retrieveToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-    const fullUrl = `${config.baseURL?.replace(/\/$/, '')}${config.url}`;
-    console.log(`Hitting API: ${config.method?.toUpperCase()} ${fullUrl}`);
-    console.log(`Config Data:`, config.data);
-    if (config.data) {
-        const rawData = typeof config.data === 'string' ? config.data : JSON.stringify(config.data);
-        const [encryptedData, contentType] = await jscrypto.encryptRequest(rawData);
+  const fullUrl = `${config.baseURL?.replace(/\/$/, '')}${config.url}`;
+  console.log(`Hitting API: ${config.method?.toUpperCase()} ${fullUrl}`);
 
-        // Log the API URL being hit
-        const fullUrl = `${config.baseURL?.replace(/\/$/, '')}${config.url}`;
-        console.log(`Hitting API: ${config.method?.toUpperCase()} ${fullUrl}`);
-        console.log(` Encrypted Payload:`, encryptedData);
-        console.log("contentType :- ", contentType)
-
-        config.data = encryptedData;
-        config.headers['Content-Type'] = 'application/octet-stream';
-        config.headers['Original-Content'] = contentType || 'application/json';
-        config.headers['isencrypted'] = 'true';
-    }
+  // 🚫 Bypass encryption if FormData
+  if (config.data instanceof FormData) {
+    console.log('FormData detected, skipping encryption');
+    config.headers['Content-Type'] = 'multipart/form-data';
+    config.headers['Original-Content'] = 'multipart/form-data';
+    config.headers['isencrypted'] = 'true';  // if your backend still expects this
     return config;
+  }
+
+  // ✅ Encrypt JSON or plain object
+  if (config.data) {
+    const rawData = typeof config.data === 'string' ? config.data : JSON.stringify(config.data);
+    const [encryptedData, contentType] = await jscrypto.encryptRequest(rawData);
+    console.log(`Encrypted Payload:`, encryptedData);
+
+    config.data = encryptedData;
+    config.headers['Content-Type'] = 'application/octet-stream';
+    config.headers['Original-Content'] = contentType || 'application/json';
+    config.headers['isencrypted'] = 'true';
+  }
+
+  return config;
 });
+
+
 
 // Response interceptor — decrypt response data
  apiClient.interceptors.response.use(
@@ -139,7 +144,7 @@ const  apiClient = axios.create({
         console.log(`Response Data:`, response.data);
         const isEncrypted = response?.headers?.['isencrypted'] == 'True' || response?.headers?.['isencrypted'] == 'true';
 
-        const originalContent = response?.headers?.['original-content'] || 'application/json';
+        const originalContent = response?.headers?.['original-content'] || 'application/json' ;
 
         if (!isEncrypted) return response;
 
@@ -159,6 +164,80 @@ const  apiClient = axios.create({
 );
 
 export default  apiClient;
+
+
+
+// import axios from 'axios';
+// import jscrypto from '../../utils/jscrypto';
+// import Storage from '../../utils/Storage';
+
+// const apiClient = axios.create({
+//   baseURL: 'https://your-api-base-url.com',
+//   timeout: 10000,
+// });
+
+// // Request interceptor
+// apiClient.interceptors.request.use(async (config) => {
+//   // Get token and attach
+//   const token = Storage.getString('userToken');
+//   if (token) {
+//     config.headers['Authorization'] = `Bearer ${token}`;
+//   }
+
+//   // Skip encryption for multipart/form-data (FormData)
+//   if (config.data && !(config.data instanceof FormData)) {
+//     try {
+//       const rawData =
+//         typeof config.data === 'string'
+//           ? config.data
+//           : JSON.stringify(config.data);
+
+//       const [encryptedData, contentType] = await jscrypto.encryptRequest(rawData);
+
+//       config.data = encryptedData;
+//       config.headers['Content-Type'] = 'application/octet-stream';
+//       config.headers['Original-Content'] = contentType || 'application/json';
+//       config.headers['isencrypted'] = 'true';
+
+//     } catch (encryptionError) {
+//       console.error('Encryption error:', encryptionError);
+//       throw encryptionError;
+//     }
+//   }
+
+//   return config;
+// }, (error) => {
+//   return Promise.reject(error);
+// });
+
+// // Response interceptor (optional: for decryption)
+// apiClient.interceptors.response.use(
+//   async (response) => {
+//     if (
+//       response?.headers?.['isencrypted'] === 'true' &&
+//       response?.data &&
+//       typeof response.data === 'string'
+//     ) {
+//       try {
+//         const decrypted = await jscrypto.decryptResponse(response.data);
+//         return JSON.parse(decrypted);
+//       } catch (decryptionError) {
+//         console.error('Decryption failed:', decryptionError);
+//         return Promise.reject(decryptionError);
+//       }
+//     }
+
+//     return response;
+//   },
+//   (error) => {
+//     return Promise.reject(error);
+//   }
+// );
+
+// export default apiClient;
+
+
+
 
 
 
