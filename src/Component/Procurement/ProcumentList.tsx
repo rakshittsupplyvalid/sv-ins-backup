@@ -272,7 +272,7 @@ const fetchStatusData = async (status: string, pageNumber: number) => {
             style={styles.picker}
             dropdownIconColor="#495057"
           >
-                <Picker.Item label="All" value="ALL" />
+               
             <Picker.Item label="Approved" value="APPROVED" />
             <Picker.Item label="Pending" value="PENDING" />
             <Picker.Item label="Rejected" value="REJECTED" />

@@ -28,11 +28,11 @@ interface InspectionItem {
 
 
 type RouteParams = {
-  params: {
-    id: string;
-  
+    params: {
+        id: string;
 
-  };
+
+    };
 };
 
 const PAGE_SIZE = 5;
@@ -47,25 +47,25 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
     const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const route = useRoute<InspactionListRouteProp>();
-  const storageId = route.params?.storageId;
+    const storageId = route.params?.storageId;
     const [showButton, setShowButton] = useState(false);
 
 
     useEffect(() => {
-    if (storageId) {
-      setShowButton(true); // Show button only if storageId exists
-    } else {
-      setShowButton(false); // Hide button if no storageId
-    }
-  }, [storageId]); // Re-run effect whenever storageId changes
+        if (storageId) {
+            setShowButton(true); // Show button only if storageId exists
+        } else {
+            setShowButton(false); // Hide button if no storageId
+        }
+    }, [storageId]); // Re-run effect whenever storageId changes
 
-  const handleButtonPress = () => {
-    if (storageId) {
-      navigation.navigate('Review Form', { storageId });
-    }
-  };
+    const handleButtonPress = () => {
+        if (storageId) {
+            navigation.navigate('Review Form', { storageId });
+        }
+    };
 
-  
+
 
 
     const navigateToDrawer = (item: InspectionItem) => {
@@ -76,52 +76,52 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
         });
 
 
-    } ;
-   
+    };
+
 
     const fetchInspectionList = async (pageNumber: number, isRefreshing = false) => {
-    if (!hasMore && !isRefreshing) return;
+        if (!hasMore && !isRefreshing) return;
 
-    try {
-        if (isRefreshing) {
-            setRefreshing(true);
-        } else {
-            setLoading(true);
+        try {
+            if (isRefreshing) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
+
+            // Build the base URL
+            let url = `/api/InspectionReport/list?PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
+
+            // Add StorageLocationId to the URL if it exists
+            if (storageId) {
+                url = `/api/InspectionReport/list?StorageLocationId=${storageId}&PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
+            }
+
+            const response = await apiClient.get(url);
+
+            const receivedItems = response.data || [];
+
+            setHasMore(receivedItems.length >= PAGE_SIZE);
+
+            updateState({
+                fielddata: {
+                    ...state.fielddata,
+                    InspectionList: isRefreshing || pageNumber === 1
+                        ? receivedItems
+                        : [...(state.fielddata?.InspectionList || []), ...receivedItems],
+                },
+            });
+
+            setError(null);
+        } catch (err) {
+            console.error('API error:', err);
+            setError('Failed to fetch inspection reports. Please try again.');
+            setHasMore(false);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
         }
-
-        // Build the base URL
-        let url = `/api/InspectionReport/list?PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
-        
-        // Add StorageLocationId to the URL if it exists
-        if (storageId) {
-            url = `/api/InspectionReport/list?StorageLocationId=${storageId}&PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
-        }
-
-        const response = await apiClient.get(url);
-
-        const receivedItems = response.data || [];
-
-        setHasMore(receivedItems.length >= PAGE_SIZE);
-
-        updateState({
-            fielddata: {
-                ...state.fielddata,
-                InspectionList: isRefreshing || pageNumber === 1
-                    ? receivedItems
-                    : [...(state.fielddata?.InspectionList || []), ...receivedItems],
-            },
-        });
-
-        setError(null);
-    } catch (err) {
-        console.error('API error:', err);
-        setError('Failed to fetch inspection reports. Please try again.');
-        setHasMore(false);
-    } finally {
-        setLoading(false);
-        setRefreshing(false);
-    }
-};
+    };
 
     const handleLoadMore = () => {
         if (!loading && hasMore && !refreshing) {
@@ -239,15 +239,25 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
             </View>
 
 
-               <View style={{ padding: 20 }}>
-        {showButton && (
-        <Button
-          title="Go to Review Form"
-          onPress={handleButtonPress}
-        />
-        )}
-       
-    </View>
+            <View style={styles.buttonContainer}>
+                {showButton && (
+                    // <Button
+                    //   title="Go to Review Form"
+                    //   onPress={handleButtonPress}
+                    // />
+
+                    <TouchableOpacity
+                        style={styles.inspectionButton}
+                        onPress={handleButtonPress}
+                        activeOpacity={0.7}
+                    > <Text style={styles.buttonTexti}>Go to Review Form</Text>
+                        <MaterialIcons name="search" size={20} color="#fff" style={styles.icon} /></TouchableOpacity>
+                )}
+
+            </View>
+
+
+
 
             {error && (
                 <View style={styles.errorContainer}>
@@ -518,6 +528,34 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#6c757d',
         marginVertical: 16,
+    },
+    buttonContainer: {
+        marginVertical: 15,
+        alignItems: 'center',
+    },
+    inspectionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FF9500',
+        paddingVertical: 12,
+        paddingHorizontal: 25,
+        borderRadius: 25,
+        shadowColor: '#4a8cff',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        elevation: 5,
+        width: '90%',
+    },
+    buttonTexti: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+        marginRight: 8,
+    },
+    icon: {
+        marginLeft: 5,
     },
 });
 

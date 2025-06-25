@@ -10,9 +10,9 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { PermissionsAndroid } from 'react-native';
 import apiClient from '../../service/api/apiInterceptors';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-
 import { validateStepOne, validateSteptwo, validateStepthree, validateStepFour, validateStepFive } from '../../FormValidation/Formvalidates';
-
+import { StackNavigationProp } from '@react-navigation/stack';
+import { DrawerParamList } from '../../Type/DrawerParam';
 
 
 type ImageAsset = {
@@ -36,8 +36,7 @@ type Chawl = {
   };
 };
 
-import { StackNavigationProp } from '@react-navigation/stack';
-import { DrawerParamList } from '../../Type/DrawerParam';
+
 
 
 const ReviewForm = () => {
@@ -51,9 +50,9 @@ const ReviewForm = () => {
   const [formattedAddress, setFormattedAddress] = useState('');
   const [chawlList, setChawlList] = useState<Chawl[]>([]);
   const [binList, setBinList] = useState<Chawl[]>([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
-   const [imageUri, setImageUri] = useState<ImageAsset[]>([]);
-    const [screenshots, setScreenshots] = useState<ImageAsset[]>([]);
- 
+  const [imageUri, setImageUri] = useState<ImageAsset[]>([]);
+  const [screenshots, setScreenshots] = useState<ImageAsset[]>([]);
+
   const [showInspectionButton, setShowInspectionButton] = useState(false);
   const [selectedStorageId, setSelectedStorageId] = useState('');
   const isFocused = useIsFocused();
@@ -62,7 +61,7 @@ const ReviewForm = () => {
 
 
 
-const viewShotRefs = useRef<Array<ViewShot | null>>([]);
+  const viewShotRefs = useRef<Array<ViewShot | null>>([]);
   const totalSteps = 6;
 
   const openInGoogleMaps = (lat: number, lng: number) => {
@@ -73,45 +72,45 @@ const viewShotRefs = useRef<Array<ViewShot | null>>([]);
 
 
 
- // Update your useEffect for isFocused
-useEffect(() => {
-  if (isFocused) {
-    // Reset all form states
-    updateState({
-      form: {
-        option1: '',
-        option2: '',
-        option3: '',
-        Farmers: '',
-        quanityfound: '',
-        Depositedfound: '',
-        Weighmentslip: '',
-        stockQuality: '',
-        staffBehavior: '',
-        additionalComments: '',
-        noOfChawls: '',
-        noofbins: '',
-        deterioration: '',
-        quanityfoundsystem: '',
-        assayingDone: '',
-        laborRegister: '',
-        inspectionStatus: '',
-        chawlDimensions: [],
-        binDimensions: []
-      },
-      hidden: { ...state.hidden, currentStep: 1 }
-    });
-    
-    // Reset local states
-    setCurrentStep(1);
-    setImageUri([]);
+  // Update your useEffect for isFocused
+  useEffect(() => {
+    if (isFocused) {
+      // Reset all form states
+      updateState({
+        form: {
+          option1: '',
+          option2: '',
+          option3: '',
+          Farmers: '',
+          quanityfound: '',
+          Depositedfound: '',
+          Weighmentslip: '',
+          stockQuality: '',
+          staffBehavior: '',
+          additionalComments: '',
+          noOfChawls: '',
+          noofbins: '',
+          deterioration: '',
+          quanityfoundsystem: '',
+          assayingDone: '',
+          laborRegister: '',
+          inspectionStatus: '',
+          chawlDimensions: [],
+          binDimensions: []
+        },
+        hidden: { ...state.hidden, currentStep: 1 }
+      });
 
-    setChawlList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
-    setBinList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
-    setShowInspectionButton(false);
-    setSelectedStorageId('');
-  }
-}, [isFocused]);
+      // Reset local states
+      setCurrentStep(1);
+      setImageUri([]);
+
+      setChawlList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
+      setBinList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
+      setShowInspectionButton(false);
+      setSelectedStorageId('');
+    }
+  }, [isFocused]);
 
 
   useEffect(() => {
@@ -132,8 +131,8 @@ useEffect(() => {
     }
   }, [state.form.option1]);
   useEffect(() => {
-    if (state.form.option2) { 
-        Storage(state.form.option2);
+    if (state.form.option2) {
+      Storage(state.form.option2);
     }
 
     else {
@@ -148,11 +147,7 @@ useEffect(() => {
   }, [state.form.option2]);
 
 
-  // useEffect(() => {
-  //   if (state.form.opition2){
-  //     Storage(state.form.opition2);
-  //   }
-  // }, [state.form.opition2]);
+ 
 
 
   useEffect(() => {
@@ -202,8 +197,8 @@ useEffect(() => {
     });
   };
 
-  const Storage = (fpofpcId : string) => {
-   
+  const Storage = (fpofpcId: string) => {
+
     // const url = `/api/storagelocation?GroupId=${fpofpcId}&StorageType=NORMAL&LocationType=STORAGELOCATION&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`;
     const url = `/api/storagelocation?GroupId=${fpofpcId}&StorageType=NORMAL&LocationType=STORAGELOCATION&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`; // ✅ dynamic path
     apiClient.get(url).then((res) => {
@@ -254,7 +249,7 @@ useEffect(() => {
 
   const handleCheckInspection = () => {
     // Navigate to InspectionCheck screen with the selected ID
-    navigation.navigate('InspectionList', { 
+    navigation.navigate('InspectionList', {
       storageId: selectedStorageId,
     });
   };
@@ -318,10 +313,10 @@ useEffect(() => {
     }
   };
 
-  
 
 
-    const openCamera = async () => {
+
+  const openCamera = async () => {
     launchCamera({ mediaType: 'photo' }, (response) => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
@@ -356,26 +351,26 @@ useEffect(() => {
 
 
 
-   const captureSingleScreenshot = async (index: number) => {
-      try {
-        const ref = viewShotRefs.current[index];
-        if (ref && typeof ref.capture === 'function') {
-          const uri = await ref.capture();
-          if (uri) {
-            const screenshotImage: ImageAsset = {
-              uri,
-              fileName: `screenshot_${Date.now()}.jpg`,
-              type: 'image/jpeg',
-            };
-            setScreenshots((prev) => [...prev, screenshotImage]);
-            console.log(`Screenshot ${index + 1}:`, uri);
-            Alert.alert(`Screenshot ${index + 1}`, uri);
-          }
+  const captureSingleScreenshot = async (index: number) => {
+    try {
+      const ref = viewShotRefs.current[index];
+      if (ref && typeof ref.capture === 'function') {
+        const uri = await ref.capture();
+        if (uri) {
+          const screenshotImage: ImageAsset = {
+            uri,
+            fileName: `screenshot_${Date.now()}.jpg`,
+            type: 'image/jpeg',
+          };
+          setScreenshots((prev) => [...prev, screenshotImage]);
+          console.log(`Screenshot ${index + 1}:`, uri);
+          Alert.alert(`Screenshot ${index + 1}`, uri);
         }
-      } catch (error) {
-        console.error('Screenshot error:', error);
       }
-    };
+    } catch (error) {
+      console.error('Screenshot error:', error);
+    }
+  };
 
   // const captureScreenshot = async () => {
   //   try {
@@ -573,7 +568,7 @@ useEffect(() => {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        
+
       });
 
       console.log('\nResponse:', response.data);
@@ -606,35 +601,35 @@ useEffect(() => {
 
       console.log('abcd')
 
-      
-    //   if (typeof error === 'object' && error !== null && 'response' in error) {
-    //     // Server responded with a status other than 2xx
-    //     const err = error as { response: any };
-    //     console.error('Response data:', err.response.data);
-    //     console.error('Response status:', err.response.status);
-    //     console.error('Response headers:', err.response.headers);
-    //     alert(`Server Error: ${err.response.data?.message || 'Check console for more details.'}`);
-    //   } else if (typeof error === 'object' && error !== null && 'request' in error) {
-    //     // Request was made but no response received
-    //     const err = error as { request: any };
-    //     console.error('No response received:', err.request);
-    //     alert('No response from server. Please check your internet connection.');
-    //   } else if (typeof error === 'object' && error !== null && 'message' in error) {
-    //     // Something else caused the error
-    //     const err = error as { message: string };
-    //     console.error('Error message:', err.message);
-    //     alert(`Unexpected Error: ${err.message}`);
-    //   } else {
-    //     // Unknown error type
-    //     console.error('Unknown error:', error);
-    //     alert('An unknown error occurred.');
-    //   }
 
-    //   // Optional: full stack trace
-    //   if (typeof error === 'object' && error !== null && 'config' in error) {
-    //     const err = error as { config: any };
-    //     console.error('Error config:', err.config);
-    //   }
+      //   if (typeof error === 'object' && error !== null && 'response' in error) {
+      //     // Server responded with a status other than 2xx
+      //     const err = error as { response: any };
+      //     console.error('Response data:', err.response.data);
+      //     console.error('Response status:', err.response.status);
+      //     console.error('Response headers:', err.response.headers);
+      //     alert(`Server Error: ${err.response.data?.message || 'Check console for more details.'}`);
+      //   } else if (typeof error === 'object' && error !== null && 'request' in error) {
+      //     // Request was made but no response received
+      //     const err = error as { request: any };
+      //     console.error('No response received:', err.request);
+      //     alert('No response from server. Please check your internet connection.');
+      //   } else if (typeof error === 'object' && error !== null && 'message' in error) {
+      //     // Something else caused the error
+      //     const err = error as { message: string };
+      //     console.error('Error message:', err.message);
+      //     alert(`Unexpected Error: ${err.message}`);
+      //   } else {
+      //     // Unknown error type
+      //     console.error('Unknown error:', error);
+      //     alert('An unknown error occurred.');
+      //   }
+
+      //   // Optional: full stack trace
+      //   if (typeof error === 'object' && error !== null && 'config' in error) {
+      //     const err = error as { config: any };
+      //     console.error('Error config:', err.config);
+      //   }
     }
 
   };
@@ -664,14 +659,14 @@ useEffect(() => {
     }
 
     // Usage in your component
-if (currentStep === 3) {
-  const validation = validateStepthree(state.form);
+    if (currentStep === 3) {
+      const validation = validateStepthree(state.form);
 
-  if (!validation.isValid) {
-    Alert.alert('Validation Error', validation.message);
-    return;
-  }
-}
+      if (!validation.isValid) {
+        Alert.alert('Validation Error', validation.message);
+        return;
+      }
+    }
 
 
     if (currentStep === 4) {
@@ -793,19 +788,19 @@ if (currentStep === 3) {
                 })) || []),
               ]}
             />
-             
-             {showInspectionButton && (
-  <View style={styles.buttonContainer}>
-    <TouchableOpacity 
-      style={styles.inspectionButton}
-      onPress={handleCheckInspection}
-      activeOpacity={0.7}
-    >
-      <Text style={styles.buttonTexti}>Check Inspection Status</Text>
-      <MaterialIcons name="search" size={20} color="#fff" style={styles.icon} />
-    </TouchableOpacity>
-  </View>
-)}
+
+            {showInspectionButton && (
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.inspectionButton}
+                  onPress={handleCheckInspection}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.buttonTexti}>Check Inspection Status</Text>
+                  <MaterialIcons name="search" size={20} color="#fff" style={styles.icon} />
+                </TouchableOpacity>
+              </View>
+            )}
 
 
             {state.form.option3 && (
@@ -1443,47 +1438,47 @@ if (currentStep === 3) {
             </View>
 
 
-          
+
             <View>
 
               <View>
 
 
-                
-                
-                      {imageUri.map((img, index) => (
-                        <View key={index} style={{ marginBottom: 20 }}>
-                          <ViewShot
-                            ref={(ref) => { viewShotRefs.current[index] = ref; }}
-                            options={{ format: 'jpg', quality: 1.0 }}
-                          >
-                            <View style={styles.imageContainer}>
-                              <Image source={{ uri: img.uri }} style={styles.image} resizeMode="cover" />
-                
-                              {/* Overlay for Location & Address */}
-                              <View style={styles.overlay}>
-                                {location && address ? (
-                                  <>
-                                    <Text style={styles.overlayText}>
-                                      Latitude: {location.latitude}, Longitude: {location.longitude}
-                                    </Text>
-                                    <Text style={styles.overlayText}>{formattedAddress}</Text>
-                                  </>
-                                ) : (
-                                  <ActivityIndicator size="small" color="#ffffff" />
-                                )}
-                              </View>
-                            </View>
-                          </ViewShot>
-                
-                         
+
+
+                {imageUri.map((img, index) => (
+                  <View key={index} style={{ marginBottom: 20 }}>
+                    <ViewShot
+                      ref={(ref) => { viewShotRefs.current[index] = ref; }}
+                      options={{ format: 'jpg', quality: 1.0 }}
+                    >
+                      <View style={styles.imageContainer}>
+                        <Image source={{ uri: img.uri }} style={styles.image} resizeMode="cover" />
+
+                        {/* Overlay for Location & Address */}
+                        <View style={styles.overlay}>
+                          {location && address ? (
+                            <>
+                              <Text style={styles.overlayText}>
+                                Latitude: {location.latitude}, Longitude: {location.longitude}
+                              </Text>
+                              <Text style={styles.overlayText}>{formattedAddress}</Text>
+                            </>
+                          ) : (
+                            <ActivityIndicator size="small" color="#ffffff" />
+                          )}
                         </View>
-                      ))}
-                
-                
-                      <Text> Screenshot </Text>
-                
-                      {screenshots.length > 0 && (
+                      </View>
+                    </ViewShot>
+
+
+                  </View>
+                ))}
+
+
+                <Text> Screenshot </Text>
+
+                {screenshots.length > 0 && (
                   <View style={{ marginTop: 20 }}>
                     <Text style={{ fontWeight: 'bold' }}>Captured Screenshots:</Text>
                     {screenshots.map((sUri, i) => (
@@ -1495,11 +1490,11 @@ if (currentStep === 3) {
                     ))}
                   </View>
                 )}
-                
 
 
-               
-             
+
+
+
 
 
 
@@ -1766,7 +1761,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    backgroundColor : 'red'
+    backgroundColor: 'red'
 
   },
   image: {
@@ -1922,7 +1917,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
   },
-    buttonContainer: {
+  buttonContainer: {
     marginVertical: 15,
     alignItems: 'center',
   },
@@ -1930,7 +1925,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor:  '#FF9500',
+    backgroundColor: '#FF9500',
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 25,
@@ -1950,7 +1945,7 @@ const styles = StyleSheet.create({
   icon: {
     marginLeft: 5,
   },
-    captureButton: {
+  captureButton: {
     marginTop: 8,
     backgroundColor: '#007bff',
     paddingVertical: 8,

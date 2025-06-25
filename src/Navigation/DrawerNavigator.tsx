@@ -9,6 +9,8 @@ import Dashboard from '../Dashboard/DashboardScreen';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Storage from '../utils/Storage';
 import { useNavigation } from '@react-navigation/native';
+import RemainingInspectionReport from '../Component/InspactionRemList/RemainingInspectionReport';
+// import Warehousechecklist from '../Component/Warehousechecklist/Warehousechecklist'
 
 // import pdf from '../Component/Reviewformcomp/Rough';
 const Drawer = createDrawerNavigator();
@@ -43,7 +45,7 @@ function CustomDrawerContent(props: any) {
           <Text style={[styles.profileName, { fontFamily: 'Poppins-SemiBold' }]}>John Doe</Text>
           <Text style={[styles.profileEmail, { fontFamily: 'Poppins-Regular' }]}>john.doe@example.com</Text>
         </View>
-        
+
         {/* Main Drawer Items */}
         <View style={styles.drawerContent}>
           <DrawerItemList {...props} />
@@ -67,23 +69,23 @@ export default function DrawerNavigator() {
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
-      
-        headerStyle: { 
+
+        headerStyle: {
           backgroundColor: '#F79B00',
           height: 80,
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
-          fontFamily: 'Poppins-SemiBold', 
+          fontFamily: 'Poppins-SemiBold',
         },
-        drawerStyle: { 
-          backgroundColor: '#FFFFFF', 
+        drawerStyle: {
+          backgroundColor: '#FFFFFF',
           width: 290,
         },
         drawerActiveTintColor: '#818589',
         drawerInactiveTintColor: 'black',
         drawerLabelStyle: {
-          fontFamily: 'Poppins-Regular', 
+          fontFamily: 'Poppins-Regular',
           fontSize: 16,
         },
       }}
@@ -112,21 +114,30 @@ export default function DrawerNavigator() {
       />
 
       {/* Procurement List */}
-    <Drawer.Screen
+     <Drawer.Screen
   name="Procurement List"
   component={ProcumentList}
-  initialParams={{ status: 'PENDING' }} // 👈 Default param passed here
-  options={{
+  initialParams={{ status: 'PENDING' }}
+  options={({ navigation }) => ({
     drawerIcon: ({ color, size }) => (
       <Icon name="list-alt" size={size} color={color} />
     ),
-  }}
+    headerRight: () => (
+      <TouchableOpacity
+  onPress={() => navigation.navigate('Dashboard')}
+  style={styles.dashboardButton}
+>
+  <Text style={styles.buttonText}> Go To Dashboard</Text>
+  <Icon name="dashboard" size={20} color="#FFF" style={styles.buttonIcon} />
+</TouchableOpacity>
+    ),
+  })}
 />
 
 
- 
 
-{/* <Drawer.Screen
+
+      {/* <Drawer.Screen
   name="Pdf"
   component={pdf}
  
@@ -142,19 +153,54 @@ export default function DrawerNavigator() {
       <Drawer.Screen
         name="InspectionList"
         component={InspectionList}
-          options={{
+       
+          options={({ navigation }) => ({
     drawerIcon: ({ color, size }) => (
       <Icon name="list-alt" size={size} color={color} />
-       
     ),
-       drawerItemStyle: { display: 'none' },
-  }}
-    
+    headerRight: () => (
+      <TouchableOpacity
+  onPress={() => navigation.navigate('Dashboard')}
+  style={styles.dashboardButton}
+>
+  <Text style={styles.buttonText}> Go To Dashboard</Text>
+  <Icon name="dashboard" size={20} color="#FFF" style={styles.buttonIcon} />
+</TouchableOpacity>
+    ),
+  })}
+
       />
+
+
+      <Drawer.Screen
+        name="RemainingInspectionReport"
+        component={RemainingInspectionReport}
+        options={{
+          title: 'Remaining Inspection Report', // 👈 This shows in sidebar
+          drawerIcon: ({ color, size }) => (
+            <Icon name="list-alt" size={size} color={color} />
+          ),
+        }}
+      />
+
+
+        {/* <Drawer.Screen
+        name="WarehouseChecklist"
+        component={Warehousechecklist}    
+            options={{
+          title: 'Warehouse Check list', 
+          drawerIcon: ({ color, size }) => (
+            <Icon name="list-alt" size={size} color={color} />
+          ),
+        }}
+      /> */}
+
+
+
       <Drawer.Screen
         name="Inspection List Details"
         component={InspectionListDetails}
-        options={{ 
+        options={{
           headerShown: false,
           drawerItemStyle: { display: 'none' },
         }}
@@ -208,5 +254,29 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 16,
     color: '#333',
+  },
+   dashboardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 25,
+     // fallback solid color, replace with LinearGradient if needed
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: 'Poppins-Regular',
+   
+    padding : 2,
+    width: 80,
+    
+    marginRight: 6,
+  },
+  buttonIcon: {
+    marginLeft: 2,
   },
 });

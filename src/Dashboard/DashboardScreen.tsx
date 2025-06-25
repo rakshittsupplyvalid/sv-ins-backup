@@ -7,6 +7,7 @@ import { useDisableBackHandler } from '../service/useDisableBackHandler';
 
 
 
+
 const Dashboard = ({ navigation }: any) => {
   const [data, setData] = useState<any>(null);
   const [pendingData, setPendingData] = useState<any>(null);
@@ -85,13 +86,17 @@ const Dashboard = ({ navigation }: any) => {
   useEffect(() => {
     fetchData();
     Inspectiondata();
-     remainingcount();
+    remainingcount();
   }, []);
 
   const handleCardPress = (status: string) => {
     if (status === 'ALL') {
       navigation.navigate('InspectionList');
-    } else {
+    } else if (status === 'Remaining') {
+      navigation.navigate('RemainingInspectionReport');
+    }
+
+    else {
       navigation.navigate('Procurement List', { status });
     }
   };
@@ -135,15 +140,15 @@ const Dashboard = ({ navigation }: any) => {
     },
 
 
-   {
-  id: 5,
-  title: 'Remaining Inspection Report',
-  value: remainingData,
-  icon: 'pending-actions', 
-  color: '#F44336',
-  bgColor: '#ffffff', 
-  status: 'ALL'
-}
+    {
+      id: 5,
+      title: 'Remaining Inspection Report',
+      value: remainingData,
+      icon: 'pending-actions',
+      color: '#F44336',
+      bgColor: '#ffffff',
+      status: 'Remaining'
+    }
 
   ];
 
@@ -223,7 +228,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 12, 
+    gap: 12,
   },
   card: {
     borderRadius: 16,
@@ -236,7 +241,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     backgroundColor: 'red',
 
-    height : 180, // Adjust height as needed
+    height: 200, // Adjust height as needed
 
   },
   cardHeader: {
@@ -255,7 +260,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     color: '#666',
-    
+
     fontWeight: '500',
   },
   cardValue: {
