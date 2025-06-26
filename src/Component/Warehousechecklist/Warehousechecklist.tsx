@@ -1,112 +1,159 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import CommonPicker from '../../CommonCompoent/CommonPicker';
 import apiClient from '../../service/api/apiInterceptors';
 import useForm from '../../Common/UseForm';
+import { useNavigation } from '@react-navigation/native';
 
 const Warehousechecklist = () => {
   const { state, updateState } = useForm();
+  const navigation = useNavigation<any>();
 
+  // Initial data loading
   useEffect(() => {
     CompanyDropdown();
     FederationType();
   }, []);
 
+  // When company changes
   useEffect(() => {
-    if (state.form.option1) { // Only call if option1 (company) has a value
-      // Reset branch and federation when company changes
+    if (state.form.option1) {
+      
       updateState({
         form: {
           ...state.form,
-          option2: '', // reset branch selection
-          federationType: '', // reset federation type selection
-          option3: '' // reset federation selection
+          option2: '',
+          federationType: '',
+          option3: '',
+          fpofpcdata: '',
+          Storagedata: ''
         },
         fielddata: {
           ...state.fielddata,
-          Branchdata: null, // clear branch data
-          federation: null // clear federation data
+          Branchdata: null,
+          federation: null,
+          fpofpc: null,
+          storageLocation: null
         }
       });
-
-      // Load branches for the selected company
       BranchDropdown(state.form.option1);
     }
   }, [state.form.option1]);
 
+  // When branch changes
   useEffect(() => {
     if (state.form.option2) {
       updateState({
         form: {
           ...state.form,
-          federationType: '', // reset federation type selection
-          option3: '',// reset federation selection
+          federationType: '',
+          option3: '',
+          fpofpcdata: '',
           Storagedata: ''
         },
         fielddata: {
           ...state.fielddata,
-          federation: null // clear federation data
+          federation: null,
+          fpofpc: null,
+          storageLocation: null
         }
       });
-
-      // Load federations for the selected branch
-      Federation(state.form.option2);
     }
   }, [state.form.option2]);
 
+  // When federation type changes
+  useEffect(() => {
+    if (state.form.option2 && state.form.federationType) {
+      updateState({
+        form: {
+          ...state.form,
+          option3: '',
+          fpofpcdata: '',
+          Storagedata: ''
+        },
+        fielddata: {
+          ...state.fielddata,
+          federation: null,
+          fpofpc: null,
+          storageLocation: null
+        }
+      });
+
+      // Load appropriate data based on federation type
+      if (state.form.federationType === 'FEDERATION') {
+        Federation(state.form.option2);
+      } else if (state.form.federationType === 'SOCIETY') {
+        Society(state.form.option2);
+      } else if (state.form.federationType === 'PACCS') {
+        Paccs(state.form.option2);
+      }
+    }
+  }, [state.form.federationType, state.form.option2]);
+
+  // When federation/society/paccs is selected
   useEffect(() => {
     if (state.form.option3) {
-      console.log('Calling FpoandFpc with federationId:', state.form.option3);
-      FpoandFpc(state.form.option3);
+      if (state.form.federationType === 'FEDERATION') {
+        FpoandFpc(state.form.option3);
+      } else if (state.form.federationType === 'SOCIETY' || state.form.federationType === 'PACCS') {
+        Storagelocation(state.form.option3);
+      }
     }
   }, [state.form.option3]);
 
-
+  // When FPO/FPC is selected
   useEffect(() => {
     if (state.form.fpofpcdata) {
       Storagelocation(state.form.fpofpcdata);
     }
   }, [state.form.fpofpcdata]);
 
-  const CompanyDropdown = () => {
-    const url = `/api/dropdown/company`;
-    apiClient.get(url).then((res) => {
-      if (res?.data) {
-        updateState({
-          fielddata: {
-            ...state.fielddata,
-            Company: res.data,
-          }
-        });
-      } else {
-        console.log("No data found in API response.");
-      }
-    }).catch((error) => {
-      console.log("Error fetching data:", error);
+  const handleCompleteChecklist = () => {
+    if (!state.form.Storagedata) {
+      alert('Please select a storage location');
+      return;
+    }
+    
+    navigation.navigate('WarehouseCamera', { 
+      storageId: state.form.Storagedata,
+      // You can pass additional data if needed
     });
+  };
+
+  // API Functions
+  const CompanyDropdown = () => {
+    apiClient.get('/api/dropdown/company')
+      .then((res) => {
+        if (res?.data) {
+          updateState({
+            fielddata: {
+              ...state.fielddata,
+              Company: res.data,
+            }
+          });
+        }
+      })
+      .catch(console.error);
   };
 
   const BranchDropdown = (companyId: string) => {
     const url = `/api/group?CompanyId=${companyId}&GroupType=Branch&BranchType=PROCURING&BranchType=BOTH&ApprovalStatus=APPROVED&IsActive=true`;
-    apiClient.get(url).then((res) => {
-      if (res?.data) {
-        updateState({
-          fielddata: {
-            ...state.fielddata,
-            Branchdata: res.data
-          }
-        });
-      } else {
-        console.log("No data found in API response.");
-      }
-    }).catch((error) => {
-      console.log("Error fetching data:", error);
-    });
+    apiClient.get(url)
+      .then((res) => {
+        if (res?.data) {
+          updateState({
+            fielddata: {
+              ...state.fielddata,
+              Branchdata: res.data
+            }
+          });
+        }
+      })
+      .catch(console.error);
   };
 
   const FederationType = () => {
-    const url = `/api/enum/FederationType`;
-    apiClient.get(url)
+    apiClient.get('/api/enum/FederationType')
       .then((res) => {
         if (res?.data) {
           updateState({
@@ -115,17 +162,13 @@ const Warehousechecklist = () => {
               federationType: res.data,
             }
           });
-        } else {
-          console.log("No data found in API response.");
         }
       })
-      .catch((error) => {
-        console.log("Error fetching data:", error);
-      });
+      .catch(console.error);
   };
 
-   const Society = (BranchId: string) => {
-    const url = `/api/group?BranchId=GRP2025052206325399069396&GroupType=Vendor&VendorType=SOCIETY&ApprovalStatus=APPROVED&IsActive=true`;
+  const Society = (BranchId: string) => {
+    const url = `/api/group?BranchId=${BranchId}&GroupType=Vendor&VendorType=SOCIETY&ApprovalStatus=APPROVED&IsActive=true`;
     apiClient.get(url)
       .then((res) => {
         if (res?.data) {
@@ -135,19 +178,13 @@ const Warehousechecklist = () => {
               federation: res.data,
             }
           });
-        } else {
-          console.log("No data found in API response.");
         }
       })
-      .catch((error) => {
-        console.log("Error fetching data:", error);
-      });
+      .catch(console.error);
   };
 
-
-
-    const Paccs = (BranchId: string) => {
-    const url = `/api/group?BranchId=GRP2025052206325399069396&GroupType=Vendor&VendorType=SOCIETY&ApprovalStatus=APPROVED&IsActive=true`;
+  const Paccs = (BranchId: string) => {
+    const url = `/api/group?BranchId=${BranchId}&GroupType=Vendor&VendorType=PACCS&ApprovalStatus=APPROVED&IsActive=true`;
     apiClient.get(url)
       .then((res) => {
         if (res?.data) {
@@ -157,18 +194,11 @@ const Warehousechecklist = () => {
               federation: res.data,
             }
           });
-        } else {
-          console.log("No data found in API response.");
         }
       })
-      .catch((error) => {
-        console.log("Error fetching data:", error);
-      });
+      .catch(console.error);
   };
 
-
-
-  
   const Federation = (BranchId: string) => {
     const url = `/api/group?FederationType=FEDERATION&GroupBy=FEDERATION&ApprovalStatus=APPROVED&BranchId=${BranchId}`;
     apiClient.get(url)
@@ -180,17 +210,12 @@ const Warehousechecklist = () => {
               federation: res.data,
             }
           });
-        } else {
-          console.log("No data found in API response.");
         }
       })
-      .catch((error) => {
-        console.log("Error fetching data:", error);
-      });
+      .catch(console.error);
   };
 
   const FpoandFpc = (federationId: string) => {
-    console.log('Fetching FPO/FPC data for federationId:', federationId);
     const url = `/api/group?VendorType=FPC&VendorType=FPO&FederationId=${federationId}`;
     apiClient.get(url)
       .then((res) => {
@@ -201,21 +226,15 @@ const Warehousechecklist = () => {
               fpofpc: res.data,
             }
           });
-        } else {
-          console.log("No data found in API response.");
         }
       })
-      .catch((error) => {
-        console.log("Error fetching FPO/FPC data:", error);
-      });
+      .catch(console.error);
   };
 
-
-  const Storagelocation = (fpofpcId: string) => {
-    const url = `/api/storagelocation?GroupId=${fpofpcId}&StorageType=NORMAL&LocationType=STORAGELOCATION&ApprovalStatus=PENDING&IsActive=true&CompanyId=`;
+  const Storagelocation = (groupId: string) => {
+    const url = `/api/storagelocation?GroupId=${groupId}&StorageType=NORMAL&LocationType=STORAGELOCATION&ApprovalStatus=PENDING&IsActive=true&CompanyId=`;
     apiClient.get(url)
       .then((res) => {
-        console.log('stoargelocation', res.data);
         if (res?.data) {
           updateState({
             fielddata: {
@@ -223,17 +242,14 @@ const Warehousechecklist = () => {
               storageLocation: res.data,
             }
           });
-        } else {
-          console.log("No data found in API response.");
         }
       })
-      .catch((error) => {
-        console.log("Error fetching data:", error);
-      });
+      .catch(console.error);
   };
 
   return (
     <View style={styles.container}>
+      {/* Company Dropdown */}
       <CommonPicker
         label="COMPANY NAME"
         selectedValue={state.form.option1 || ''}
@@ -242,9 +258,11 @@ const Warehousechecklist = () => {
             form: {
               ...state.form,
               option1: value,
-              option2: '', // Reset branch selection
-              federationType: '', // Reset federation type selection
-              option3: '' // Reset federation selection
+              option2: '',
+              federationType: '',
+              option3: '',
+              fpofpcdata: '',
+              Storagedata: ''
             },
           });
         }}
@@ -257,6 +275,7 @@ const Warehousechecklist = () => {
         ]}
       />
 
+      {/* Branch Dropdown */}
       <CommonPicker
         label="Branch Name"
         selectedValue={state.form.option2 || ''}
@@ -265,8 +284,10 @@ const Warehousechecklist = () => {
             form: {
               ...state.form,
               option2: value,
-              federationType: '', // Reset federation type selection
-              option3: '' // Reset federation selection
+              federationType: '',
+              option3: '',
+              fpofpcdata: '',
+              Storagedata: ''
             },
           });
         }}
@@ -279,6 +300,7 @@ const Warehousechecklist = () => {
         ]}
       />
 
+      {/* Federation Type Dropdown */}
       <CommonPicker
         label="Select Federation Type"
         selectedValue={state.form.federationType}
@@ -287,7 +309,16 @@ const Warehousechecklist = () => {
             form: {
               ...state.form,
               federationType: value,
+              option3: '',
+              fpofpcdata: '',
+              Storagedata: ''
             },
+            fielddata: {
+              ...state.fielddata,
+              federation: null,
+              fpofpc: null,
+              storageLocation: null
+            }
           });
         }}
         items={[
@@ -299,72 +330,194 @@ const Warehousechecklist = () => {
         ]}
       />
 
-      <CommonPicker
-        label="Select Federation"
-        selectedValue={state.form.option3 || ''}
-        onValueChange={(value) => {
-          console.log('Selected federation:', value);
-          updateState({
-            form: {
-              ...state.form,
-              option3: value,
-            },
-          });
-        }}
-        items={[
-          { label: 'Select Federation', value: '' },
-          ...(state.fielddata.federation?.map((item: { name: string; id: string }) => ({
-            label: item.name,
-            value: item.id,
-          })) || [])
-        ]}
-      />
+      {/* Conditional Dropdowns based on Federation Type */}
+      {state.form.federationType === 'FEDERATION' && (
+        <>
+          {/* Federation Dropdown */}
+          {state.fielddata.federation && (
+            <CommonPicker
+              label="Select Federation"
+              selectedValue={state.form.option3 || ''}
+              onValueChange={(value) => {
+                updateState({
+                  form: {
+                    ...state.form,
+                    option3: value,
+                    fpofpcdata: '',
+                    Storagedata: ''
+                  },
+                });
+              }}
+              items={[
+                { label: 'Select Federation', value: '' },
+                ...(state.fielddata.federation?.map((item: { name: string; id: string }) => ({
+                  label: item.name,
+                  value: item.id,
+                })) || [])
+              ]}
+            />
+          )}
 
-      <CommonPicker
-        label="Select FPO/FPC"
-        selectedValue={state.form.fpofpcdata || ''}
-        onValueChange={(value) => {
+          {/* FPO/FPC Dropdown */}
+          {state.form.option3 && state.fielddata.fpofpc && (
+            <CommonPicker
+              label="Select FPO/FPC"
+              selectedValue={state.form.fpofpcdata || ''}
+              onValueChange={(value) => {
+                updateState({
+                  form: {
+                    ...state.form,
+                    fpofpcdata: value,
+                    Storagedata: ''
+                  },
+                });
+              }}
+              items={[
+                { label: 'Select FPO/FPC', value: '' },
+                ...(state.fielddata.fpofpc?.map((item: { name: string; id: string }) => ({
+                  label: item.name,
+                  value: item.id,
+                })) || [])
+              ]}
+            />
+          )}
 
-          console.log('fpo/fpc id', value);
-          updateState({
-            form: {
-              ...state.form,
-              fpofpcdata: value,
-            },
-          });
-        }}
-        items={[
-          { label: 'Select FPO/FPC', value: '' },
-          ...(state.fielddata.fpofpc?.map((item: { name: string; id: string }) => ({
-            label: item.name,
-            value: item.id,
-          })) || [])
-        ]}
-      />
+          {/* Storage Location Dropdown */}
+          {(state.form.fpofpcdata || state.form.option3) && state.fielddata.storageLocation && (
+            <CommonPicker
+              label="Select Storage"
+              selectedValue={state.form.Storagedata || ''}
+              onValueChange={(value) => {
+                updateState({
+                  form: {
+                    ...state.form,
+                    Storagedata: value,
+                  },
+                });
+              }}
+              items={[
+                { label: 'Select storage', value: '' },
+                ...(state.fielddata.storageLocation?.map((item: { name: string; id: string }) => ({
+                  label: item.name,
+                  value: item.id,
+                })) || [])
+              ]}
+            />
+          )}
+        </>
+      )}
 
+      {state.form.federationType === 'SOCIETY' && (
+        <>
+          {/* Society Dropdown */}
+          {state.fielddata.federation && (
+            <CommonPicker
+              label="Select Society"
+              selectedValue={state.form.option3 || ''}
+              onValueChange={(value) => {
+                updateState({
+                  form: {
+                    ...state.form,
+                    option3: value,
+                    Storagedata: ''
+                  },
+                });
+              }}
+              items={[
+                { label: 'Select Society', value: '' },
+                ...(state.fielddata.federation?.map((item: { name: string; id: string }) => ({
+                  label: item.name,
+                  value: item.id,
+                })) || [])
+              ]}
+            />
+          )}
 
+          {/* Storage Location Dropdown */}
+          {state.form.option3 && state.fielddata.storageLocation && (
+            <CommonPicker
+              label="Select Storage"
+              selectedValue={state.form.Storagedata || ''}
+              onValueChange={(value) => {
+                updateState({
+                  form: {
+                    ...state.form,
+                    Storagedata: value,
+                  },
+                });
+              }}
+              items={[
+                { label: 'Select storage', value: '' },
+                ...(state.fielddata.storageLocation?.map((item: { name: string; id: string }) => ({
+                  label: item.name,
+                  value: item.id,
+                })) || [])
+              ]}
+            />
+          )}
+        </>
+      )}
 
-      <CommonPicker
-        label="Select Storage"
-        selectedValue={state.form.Storagedata || ''}
-        onValueChange={(value) => {
+      {state.form.federationType === 'PACCS' && (
+        <>
+          {/* PACCS Dropdown */}
+          {state.fielddata.federation && (
+            <CommonPicker
+              label="Select PACCS"
+              selectedValue={state.form.option3 || ''}
+              onValueChange={(value) => {
+                updateState({
+                  form: {
+                    ...state.form,
+                    option3: value,
+                    Storagedata: ''
+                  },
+                });
+              }}
+              items={[
+                { label: 'Select PACCS', value: '' },
+                ...(state.fielddata.federation?.map((item: { name: string; id: string }) => ({
+                  label: item.name,
+                  value: item.id,
+                })) || [])
+              ]}
+            />
+          )}
 
-          console.log('fpo/fpc id', value);
-          updateState({
-            form: {
-              ...state.form,
-              Storagedata: value,
-            },
-          });
-        }}
-        items={[
-          { label: 'Select storage', value: '' },
-          ...(state.fielddata.storageLocation?.map((item: { name: string; id: string }) => ({
-            label: item.name,
-            value: item.id,
-          })) || [])
-        ]}
-      />
+          {/* Storage Location Dropdown */}
+          {state.form.option3 && state.fielddata.storageLocation && (
+            <CommonPicker
+              label="Select Storage"
+              selectedValue={state.form.Storagedata || ''}
+              onValueChange={(value) => {
+                updateState({
+                  form: {
+                    ...state.form,
+                    Storagedata: value,
+                  },
+                });
+              }}
+              items={[
+                { label: 'Select storage', value: '' },
+                ...(state.fielddata.storageLocation?.map((item: { name: string; id: string }) => ({
+                  label: item.name,
+                  value: item.id,
+                })) || [])
+              ]}
+            />
+          )}
+        </>
+      )}
+
+      {/* Complete Checklist Button */}
+      {state.form.Storagedata && (
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={handleCompleteChecklist}
+        >
+          <Text style={styles.buttonText}>Complete Checklist</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -372,7 +525,19 @@ const Warehousechecklist = () => {
 const styles = StyleSheet.create({
   container: {
     padding: 16
-  }
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default Warehousechecklist;

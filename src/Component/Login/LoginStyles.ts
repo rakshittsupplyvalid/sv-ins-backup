@@ -1,30 +1,52 @@
 // src/styles/LoginStyles.ts
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
+const isSmallDevice = width < 375;
 
 export default StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 30,
-    backgroundColor: '#ffffff', 
-   
+    paddingHorizontal: width * 0.08, // Responsive padding
+    backgroundColor: '#ffffff',
   },
-
-  heading: {
-    fontSize: 28,
-    textAlign: 'center',
-    marginBottom: 40,
-    fontWeight: '700',
-    color: '#2d3748',
-    letterSpacing: 0.5,
-  } ,
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: height * 0.05,
+  },
+  logo: {
+    width: width * 0.7,
+    height: width * 0.7,
+    resizeMode: 'contain',
+  },
+  inputContainer: {
+    marginBottom: height * 0.02,
+    position: 'relative',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    padding: 15,
-    marginBottom: 20,
-    borderRadius: 10,
-    fontSize: 16,
+    padding: isSmallDevice ? 12 : 15,
+    borderRadius: 8,
+    fontSize: isSmallDevice ? 14 : 16,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    paddingRight: 40, // Space for icon
+  },
+  passwordInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
     backgroundColor: '#ffffff',
     shadowColor: '#000',
     shadowOffset: {
@@ -35,13 +57,25 @@ export default StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  passwordInput: {
+    flex: 1,
+    padding: isSmallDevice ? 12 : 15,
+    fontSize: isSmallDevice ? 14 : 16,
+  },
+  iconContainer: {
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    marginTop: -10, // Half of icon size
+  },
   button: {
-    borderRadius: 10,
-    paddingVertical: 14,
+    borderRadius: 8,
+    paddingVertical: isSmallDevice ? 12 : 14,
     backgroundColor: '#FF9500',
+    marginTop: height * 0.02,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: isSmallDevice ? 15 : 16,
     fontWeight: '600',
     color: '#ffffff',
     textAlign: 'center',
@@ -49,27 +83,11 @@ export default StyleSheet.create({
   loader: {
     marginTop: 20,
   },
-  errorText: {
-    color: '#e53e3e',
-    marginBottom: 15,
-    textAlign: 'center',
-    fontSize: 14,
-  },
   forgotPassword: {
-    marginTop: 15,
+    marginTop: height * 0.02,
     textAlign: 'center',
     color: '#FF9500',
-    fontSize: 14,
+    fontSize: isSmallDevice ? 13 : 14,
     fontWeight: '500',
-  },
-  footerText: {
-    marginTop: 30,
-    textAlign: 'center',
-    color: '#718096',
-    fontSize: 14,
-  },
-  linkText: {
-    color: '#36c898',
-    fontWeight: '600',
   },
 });

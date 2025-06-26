@@ -10,7 +10,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Storage from '../utils/Storage';
 import { useNavigation } from '@react-navigation/native';
 import RemainingInspectionReport from '../Component/InspactionRemList/RemainingInspectionReport';
-// import Warehousechecklist from '../Component/Warehousechecklist/Warehousechecklist'
+// import Warehousechecklist from '../Component/Warehousechecklist/Warehousechecklist';
+// import WarehouseCamera from '../Component/Warehousechecklist/Warehousecamera';
 
 // import pdf from '../Component/Reviewformcomp/Rough';
 const Drawer = createDrawerNavigator();
@@ -106,33 +107,43 @@ export default function DrawerNavigator() {
       <Drawer.Screen
         name="Review Form"
         component={ReviewForm}
-        options={{
+           options={({ navigation }) => ({
           drawerIcon: ({ color, size }) => (
-            <Icon name="assignment" size={size} color={color} />
+            <Icon name="list-alt" size={size} color={color} />
           ),
-        }}
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Dashboard')}
+              style={styles.dashboardButton}
+            >
+              <Text style={styles.buttonText}> Go To Dashboard</Text>
+              <Icon name="dashboard" size={20} color="#FFF" style={styles.buttonIcon} />
+            </TouchableOpacity>
+          ),
+        })}
+    
       />
 
       {/* Procurement List */}
-     <Drawer.Screen
-  name="Procurement List"
-  component={ProcumentList}
-  initialParams={{ status: 'PENDING' }}
-  options={({ navigation }) => ({
-    drawerIcon: ({ color, size }) => (
-      <Icon name="list-alt" size={size} color={color} />
-    ),
-    headerRight: () => (
-      <TouchableOpacity
-  onPress={() => navigation.navigate('Dashboard')}
-  style={styles.dashboardButton}
->
-  <Text style={styles.buttonText}> Go To Dashboard</Text>
-  <Icon name="dashboard" size={20} color="#FFF" style={styles.buttonIcon} />
-</TouchableOpacity>
-    ),
-  })}
-/>
+      <Drawer.Screen
+        name="Procurement List"
+        component={ProcumentList}
+        initialParams={{ status: 'PENDING' }}
+        options={({ navigation }) => ({
+          drawerIcon: ({ color, size }) => (
+            <Icon name="list-alt" size={size} color={color} />
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Dashboard')}
+              style={styles.dashboardButton}
+            >
+              <Text style={styles.buttonText}> Go To Dashboard</Text>
+              <Icon name="dashboard" size={20} color="#FFF" style={styles.buttonIcon} />
+            </TouchableOpacity>
+          ),
+        })}
+      />
 
 
 
@@ -153,21 +164,21 @@ export default function DrawerNavigator() {
       <Drawer.Screen
         name="InspectionList"
         component={InspectionList}
-       
-          options={({ navigation }) => ({
-    drawerIcon: ({ color, size }) => (
-      <Icon name="list-alt" size={size} color={color} />
-    ),
-    headerRight: () => (
-      <TouchableOpacity
-  onPress={() => navigation.navigate('Dashboard')}
-  style={styles.dashboardButton}
->
-  <Text style={styles.buttonText}> Go To Dashboard</Text>
-  <Icon name="dashboard" size={20} color="#FFF" style={styles.buttonIcon} />
-</TouchableOpacity>
-    ),
-  })}
+
+        options={({ navigation }) => ({
+          drawerIcon: ({ color, size }) => (
+            <Icon name="list-alt" size={size} color={color} />
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Dashboard')}
+              style={styles.dashboardButton}
+            >
+              <Text style={styles.buttonText}> Go To Dashboard</Text>
+              <Icon name="dashboard" size={20} color="#FFF" style={styles.buttonIcon} />
+            </TouchableOpacity>
+          ),
+        })}
 
       />
 
@@ -176,7 +187,7 @@ export default function DrawerNavigator() {
         name="RemainingInspectionReport"
         component={RemainingInspectionReport}
         options={{
-          title: 'Remaining Inspection Report', // 👈 This shows in sidebar
+          title: 'Pending Storage Inspection', // 👈 This shows in sidebar
           drawerIcon: ({ color, size }) => (
             <Icon name="list-alt" size={size} color={color} />
           ),
@@ -184,7 +195,7 @@ export default function DrawerNavigator() {
       />
 
 
-        {/* <Drawer.Screen
+      {/* <Drawer.Screen
         name="WarehouseChecklist"
         component={Warehousechecklist}    
             options={{
@@ -193,10 +204,21 @@ export default function DrawerNavigator() {
             <Icon name="list-alt" size={size} color={color} />
           ),
         }}
+      />
+
+
+
+      <Drawer.Screen
+        name="WarehouseCamera"
+        component={WarehouseCamera}
+        options={{
+          headerShown: false,
+          drawerItemStyle: { display: 'none' },
+        }}
       /> */}
 
 
-
+      
       <Drawer.Screen
         name="Inspection List Details"
         component={InspectionListDetails}
@@ -243,6 +265,9 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: '#ccc',
+
+    position : 'relative',
+    top : -40
   },
   logoutButton: {
     flexDirection: 'row',
@@ -255,7 +280,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-   dashboardButton: {
+  dashboardButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -263,17 +288,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 25,
-     // fallback solid color, replace with LinearGradient if needed
+    // fallback solid color, replace with LinearGradient if needed
   },
   buttonText: {
     color: '#FFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     fontFamily: 'Poppins-Regular',
-   
-    padding : 2,
+
+    padding: 2,
     width: 80,
-    
+
     marginRight: 6,
   },
   buttonIcon: {

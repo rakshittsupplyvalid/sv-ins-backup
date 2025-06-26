@@ -62,6 +62,7 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
     const handleButtonPress = () => {
         if (storageId) {
             navigation.navigate('Review Form', { storageId });
+            setShowButton(false);
         }
     };
 

@@ -1,5 +1,5 @@
 // src/screens/LoginApp.tsx
-import React, { useState , useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   TextInput,
@@ -8,24 +8,25 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  StatusBar
+  StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView
 } from 'react-native';
 
 import Storage from '../../utils/Storage';
 import apiClient from '../../service/api/apiInterceptors';
-
 import useForm from '../../Common/UseForm';
 import styles from './LoginStyles'
 import { useDisableBackHandler } from '../../service/useDisableBackHandler'
-
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const LoginApp = ({ navigation }: any) => {
   const { state, updateState } = useForm();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-    useDisableBackHandler(true);
-
-
+  useDisableBackHandler(true);
 
   useEffect(() => {
     updateState({
@@ -43,49 +44,26 @@ const LoginApp = ({ navigation }: any) => {
         [field]: value
       }
     });
-
   };
-
-  // const handleLogin = async () => {
-  //   const { mobileNo, password } = state.form;
-
-  //   navigation.navigate('DrawerNavigator');
-
-
-  //   if (!mobileNo || !password) {
-  //     Alert.alert('Error', 'Please enter both mobile number and password');
-  //     return;
-  //   }
-
-  //   if (mobileNo.length !== 10) {
-  //     Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
-  //     return;
-  //   }
-  //   setIsLoading(true);
-  // };
-
 
   const handleLogin = async () => {
     const { mobileNo, password } = state.form;
 
-    // if (!mobileNo || !password) {
-    //   Alert.alert('Error', 'Please enter both mobile number and password');
-    //   return;
-    // }
+    if (!mobileNo || !password) {
+      Alert.alert('Error', 'Please enter both mobile number and password');
+      return;
+    }
 
-    // if (mobileNo.length !== 10) {
-    //   Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
-    //   return;
-    // }
+    if (mobileNo.length !== 10) {
+      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
+      return;
+    }
 
-    // setIsLoading(true);
-
-
-    
+    setIsLoading(true);
     try {
       const payload = {
-        mobileNo: '',
-        password: ''
+        mobileNo,
+        password
       }
       const response = await apiClient.post('/api/login/user', payload);
 
@@ -98,13 +76,10 @@ const LoginApp = ({ navigation }: any) => {
         throw new Error('Authentication token not received');
       }
 
-      // Store token securely using MMKV
       Storage.setString('userToken', token);
       console.log('Login successful, token:', token);
 
-      // Reset form after successful login
       updateState(null);
-
       navigation.navigate('DrawerNavigator');
     } catch (error: any) {
       console.error('Login error:', error);
@@ -117,76 +92,80 @@ const LoginApp = ({ navigation }: any) => {
     }
   };
 
- 
-  
-  // const handleLogin = async () => {
-  //   if (!mobileNo || !password) {
-  //     Alert.alert('Error', 'Please enter both mobileNo and password');
-  //     return;
-  //   }
-
-  //   try {
-  //     const payload = {
-  //       mobileNo,
-  //       password,
-  //     };
-  //     const response = await apiClient.post('/login/user', payload);
-  //     console.log('Login response:', response.data);
-
-  //     navigation.navigate('Dashboard', { userData: response.data });
-  //     //  navigation.navigate('Dashboard');
-  //   } catch (error) {
-  // console.log('Login errors', error, (error as Error)?.stack);
-  //     Alert.alert('Login Failed', 'Please check your credentials');
-  //   }
-  // };
-
-
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F79B00" />
-      <Image
-        source={require('../../../assets/image.jpg')}
-        style={{
-          width: 250,
-          height: 250,
-          resizeMode: 'center', // or 'cover', 'stretch', 'center'
-          marginLeft: 30
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.container}>
+          <StatusBar barStyle="dark-content" backgroundColor="#F79B00" />
+          
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../../assets/image.jpg')}
+              style={styles.logo}
+            />
+          </View>
 
-        }}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Mobile Number"
-        placeholderTextColor="#a0aec0"
-        keyboardType="number-pad"
-        value={state.form?.mobileNo || ''}
-        onChangeText={(text) => handleChange('mobileNo', text)}
-      
-   
-        maxLength={10}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#a0aec0"
-        secureTextEntry
-        value={state.form?.password || ''}
-        onChangeText={(text) => handleChange('password', text)}
-         
-   
-      />
-      {isLoading ? (
-        <ActivityIndicator style={styles.loader} size="large" color="#4f46e5" />
-      ) : (
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
-      )}
-      <Text style={styles.forgotPassword} onPress={() => navigation.navigate('ForgetPassword')}>Forgot Password?</Text>
-    </View>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Mobile Number"
+              placeholderTextColor="#a0aec0"
+              keyboardType="number-pad"
+              value={state.form?.mobileNo || ''}
+              onChangeText={(text) => handleChange('mobileNo', text)}
+              maxLength={10}
+            />
+          </View>
+
+          <View style={styles.passwordInputContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Password"
+              placeholderTextColor="#a0aec0"
+              secureTextEntry={!showPassword}
+              value={state.form?.password || ''}
+              onChangeText={(text) => handleChange('password', text)}
+            />
+            <TouchableOpacity 
+              style={styles.iconContainer}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <MaterialIcons 
+                name={showPassword ? 'visibility-off' : 'visibility'} 
+                size={20} 
+                color="#a0aec0" 
+              />
+            </TouchableOpacity>
+          </View>
+          
+          {isLoading ? (
+            <ActivityIndicator style={styles.loader} size="large" color="#FF9500" />
+          ) : (
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={handleLogin}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.buttonText}>Login</Text>
+            </TouchableOpacity>
+          )}
+          
+          <Text 
+            style={styles.forgotPassword} 
+            onPress={() => navigation.navigate('ForgetPassword')}
+          >
+            Forgot Password?
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
-
 
 export default LoginApp;

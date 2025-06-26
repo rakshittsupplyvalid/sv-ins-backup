@@ -44,7 +44,7 @@ const RemainingInspectionReport = () => {
 
   const renderStatusBadge = (status: any) => {
     let backgroundColor = '#FFA500'; // Orange for pending
-    if (status === 'APPROVED') backgroundColor = '#4CAF50'; // Green
+    if (status === 'APPROVED') backgroundColor = '#4CAF50'; // 
     if (status === 'REJECTED') backgroundColor = '#F44336'; // Red
 
     return (
@@ -150,7 +150,7 @@ const RemainingInspectionReport = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>Remaining Inspection Reports</Text>
+        <Text style={styles.headerTitle}>Pending Storage Inspection</Text>
         <Text style={styles.headerSubtitle}>
           {reports.length} {reports.length === 1 ? 'report' : 'reports'} pending inspection
         </Text>
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '500',
     color: '#202124',
     marginBottom: 4,
@@ -237,8 +237,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '500',
     color: '#202124',
     flex: 1,
     marginRight: 12,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 15,
-    color: '#5F6368',
+    color: '#6c757d',
     marginRight: 8,
   },
   arrowIcon: {
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   ,
   infoValue: {
     fontSize: 15,
-    color: '#202124',
+    color: '#4a6da7',
     fontWeight: '500',
     flexShrink: 1,
   },
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: 16,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#f1f5fe',
     borderRadius: 10,
     padding: 12,
   },
@@ -325,9 +325,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   statValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#202124',
+ fontSize: 14,
+        fontWeight: '500',
+        color: '#4a6da7',
     textAlign: 'center',
   },
   divider: {

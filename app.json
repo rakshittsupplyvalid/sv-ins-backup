@@ -27,7 +27,7 @@
       "package": "com.rakshit1234.NewDemoAppFixed"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/search.png"
     },
     "plugins": [
       

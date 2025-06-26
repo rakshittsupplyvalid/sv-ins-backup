@@ -11,7 +11,6 @@ import { useDisableBackHandler } from '../service/useDisableBackHandler';
 const Dashboard = ({ navigation }: any) => {
   const [data, setData] = useState<any>(null);
   const [pendingData, setPendingData] = useState<any>(null);
-
   const [rejectedData, setRejectedData] = useState<any>(null);
   const [insepectionData, setInsepectionData] = useState<any>(null);
   const [remainingData, setRemainingData] = useState<any>(null);

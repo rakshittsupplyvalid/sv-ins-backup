@@ -7,12 +7,16 @@ import { launchCamera, ImagePickerResponse } from 'react-native-image-picker';
 import * as Location from 'expo-location';
 import ViewShot from 'react-native-view-shot';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { PermissionsAndroid } from 'react-native';
+import { PermissionsAndroid  ,   Dimensions } from 'react-native';
 import apiClient from '../../service/api/apiInterceptors';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { validateStepOne, validateSteptwo, validateStepthree, validateStepFour, validateStepFive } from '../../FormValidation/Formvalidates';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { DrawerParamList } from '../../Type/DrawerParam';
+
+
+const { width } = Dimensions.get('window');
+const isSmallDevice = width < 375; 
 
 
 type ImageAsset = {
@@ -147,7 +151,7 @@ const ReviewForm = () => {
   }, [state.form.option2]);
 
 
- 
+
 
 
   useEffect(() => {
@@ -363,8 +367,7 @@ const ReviewForm = () => {
             type: 'image/jpeg',
           };
           setScreenshots((prev) => [...prev, screenshotImage]);
-          console.log(`Screenshot ${index + 1}:`, uri);
-          Alert.alert(`Screenshot ${index + 1}`, uri);
+
         }
       }
     } catch (error) {
@@ -727,9 +730,12 @@ const ReviewForm = () => {
                     ...state.form,
                     option1: value,
                     option2: '', // Reset FPO selection when Federation changes
-                    option3: '' // Reset Storage selection when Federation changes
+                    option3: '' ,// Reset Storage selection when Federation changes
+                 
                   },
                 });
+                 setSelectedStorageId(''); // Clear storage ID
+  setShowInspectionButton(false); // Hide inspection button
               }}
               items={[
                 { label: 'Select Federation Name', value: '' }, // Empty value for default option
@@ -1351,9 +1357,11 @@ const ReviewForm = () => {
                 placeholderTextColor="#999"
                 keyboardType="numeric"
                 value={state.form.Weighmentslip || ''}
-                onChangeText={(val) =>
-                  updateState({ form: { ...state.form, Weighmentslip: val } })
-                }
+                onChangeText={(val) => {
+                  if (state.form.laborRegister !== 'NO') {
+                    updateState({ form: { ...state.form, Weighmentslip: val } });
+                  }
+                }}
                 editable={state.form.laborRegister !== 'NO'}
               />
             </View>
@@ -1367,7 +1375,13 @@ const ReviewForm = () => {
                     state.form.laborRegister === 'YES' && styles.radioButtonSelected,
                   ]}
                   onPress={() =>
-                    updateState({ form: { ...state.form, laborRegister: 'YES' } })
+                    updateState({
+                      form: {
+                        ...state.form,
+                        laborRegister: 'YES',
+                        Weighmentslip: state.form.Weighmentslip || '0'
+                      }
+                    })
                   }
                 >
                   <Text style={[
@@ -1382,7 +1396,13 @@ const ReviewForm = () => {
                     state.form.laborRegister === 'NO' && styles.radioButtonSelected,
                   ]}
                   onPress={() =>
-                    updateState({ form: { ...state.form, laborRegister: 'NO', Weighmentslip: '' } })
+                    updateState({
+                      form: {
+                        ...state.form,
+                        laborRegister: 'NO',
+                        Weighmentslip: '0'
+                      }
+                    })
                   }
                 >
                   <Text style={[
@@ -1476,20 +1496,7 @@ const ReviewForm = () => {
                 ))}
 
 
-                <Text> Screenshot </Text>
 
-                {screenshots.length > 0 && (
-                  <View style={{ marginTop: 20 }}>
-                    <Text style={{ fontWeight: 'bold' }}>Captured Screenshots:</Text>
-                    {screenshots.map((sUri, i) => (
-                      <Image
-                        key={i}
-                        source={{ uri: typeof sUri === 'string' ? sUri : sUri.uri }}
-                        style={{ width: 200, height: 130, marginVertical: 10 }}
-                      />
-                    ))}
-                  </View>
-                )}
 
 
 
@@ -1564,398 +1571,371 @@ export default ReviewForm;
 
 
 
-const styles = StyleSheet.create({
-
-  viewShot: {
-    width: '100%',
-    alignSelf: 'center',
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-
-  },
-  scrollContainer: {
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-    backgroundColor: '#fff',
-    position: 'relative',
-    top: 30
-  },
-  header: {
-    backgroundColor: '#070738',
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  headerText: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-
-
-
-
-
-  dimensionsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dimensionInput: {
-    flex: 1,
-    marginRight: 5,
-    textAlign: 'center',
-  },
-  dimensionSeparator: {
-    color: '#666',
-    fontSize: 16,
-    marginHorizontal: 5,
-  },
-  radioGroup: {
-    flexDirection: 'row',
-    marginTop: 5,
-  },
-  radioButton: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginRight: 10,
-    backgroundColor: '#f9f9f9',
-  },
-  radioButtonSelected: {
-    backgroundColor: '#FF9500',
-    borderColor: '#FF9500',
-  },
-  radioLabel: {
-    fontSize: 15,
-    color: '#666',
-  },
-  radioLabelSelected: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-
-  navigationButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-
-    paddingHorizontal: 25
-  },
-  prevButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#070738',
-    borderRadius: 8,
-    padding: 16,
-    flex: 1,
-    marginRight: 10,
-    alignItems: 'center',
-  },
-  nextButton: {
-    backgroundColor: '#FF9500',
-    borderRadius: 8,
-    padding: 16,
-    flex: 1,
-    alignItems: 'center',
-  },
-  navButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  navButtonpreviousText: {
-    color: 'black',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  submitButton: {
-    backgroundColor: '#FF9500',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    shadowColor: '#FF9500',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-    flex: 1,
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-
-
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-
-    padding: 24,
-    margin: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
+ const styles = StyleSheet.create({
+    viewShot: {
+      width: '100%',
+      alignSelf: 'center',
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  stepIndicator: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 16,
-    fontWeight: '500',
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 24,
-  },
-  buttoncontent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-    width: '70%',
+    keyboardAvoidingView: {
+      flex: 1,
+      backgroundColor: '#ffffff',
+    },
+    checkboxContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: isSmallDevice ? 5 : 8,
+    },
+    scrollContainer: {
+      paddingVertical: isSmallDevice ? 10 : 16,
+      paddingHorizontal: isSmallDevice ? 8 : 16,
+      backgroundColor: '#fff',
+    },
+    header: {
+      backgroundColor: '#070738',
+      padding: isSmallDevice ? 15 : 20,
+      borderRadius: 10,
+      marginBottom: isSmallDevice ? 15 : 20,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.2,
+      shadowRadius: 5,
+      elevation: 5,
+    },
+    headerText: {
+      color: '#fff',
+      fontSize: isSmallDevice ? 18 : 22,
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    dimensionsContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    dimensionInput: {
+      flex: 1,
+      marginRight: isSmallDevice ? 3 : 5,
+      textAlign: 'center',
+      fontSize: isSmallDevice ? 14 : 16,
+    },
+    dimensionSeparator: {
+      color: '#666',
+      fontSize: isSmallDevice ? 14 : 16,
+      marginHorizontal: isSmallDevice ? 3 : 5,
+    },
+    radioGroup: {
+      flexDirection: 'row',
+      marginTop: isSmallDevice ? 3 : 5,
+    },
+    radioButton: {
+      borderWidth: 1,
+      borderColor: '#ddd',
+      borderRadius: 8,
+      paddingVertical: isSmallDevice ? 8 : 10,
+      paddingHorizontal: isSmallDevice ? 15 : 20,
+      marginRight: isSmallDevice ? 8 : 10,
+      backgroundColor: '#f9f9f9',
+    },
+    radioButtonSelected: {
+      backgroundColor: '#FF9500',
+      borderColor: '#FF9500',
+    },
+    radioLabel: {
+      fontSize: isSmallDevice ? 13 : 15,
+      color: '#666',
+    },
+    radioLabelSelected: {
+      color: '#fff',
+      fontWeight: 'bold',
+    },
+    navigationButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: isSmallDevice ? 20 : 30,
+      paddingHorizontal: isSmallDevice ? 15 : 25,
+    },
+    prevButton: {
+      backgroundColor: '#fff',
+      borderWidth: 1,
+      borderColor: '#070738',
+      borderRadius: 8,
+      padding: isSmallDevice ? 12 : 16,
+      flex: 1,
+      marginRight: isSmallDevice ? 8 : 10,
+      alignItems: 'center',
+    },
+    nextButton: {
+      backgroundColor: '#FF9500',
+      borderRadius: 8,
+      padding: isSmallDevice ? 12 : 16,
+      flex: 1,
+      alignItems: 'center',
+    },
+    navButtonText: {
+      color: '#fff',
+      fontSize: isSmallDevice ? 14 : 16,
+      fontWeight: 'bold',
+    },
+    navButtonpreviousText: {
+      color: 'black',
+      fontSize: isSmallDevice ? 14 : 16,
+      fontWeight: 'bold',
+    },
+    submitButton: {
+      backgroundColor: '#FF9500',
+      borderRadius: 8,
+      padding: isSmallDevice ? 12 : 16,
+      alignItems: 'center',
+      shadowColor: '#FF9500',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 5,
+      flex: 1,
+    },
+    submitButtonText: {
+      color: '#fff',
+      fontSize: isSmallDevice ? 16 : 18,
+      fontWeight: 'bold',
+    },
+    card: {
+      backgroundColor: '#ffffff',
+      borderRadius: 12,
+      padding: isSmallDevice ? 16 : 24,
+      margin: isSmallDevice ? 10 : 16,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    stepIndicator: {
+      fontSize: isSmallDevice ? 12 : 14,
+      color: '#6B7280',
+      marginBottom: isSmallDevice ? 12 : 16,
+      fontWeight: '500',
+    },
+    sectionTitle: {
+      fontSize: isSmallDevice ? 18 : 20,
+      fontWeight: '600',
+      color: '#111827',
+      marginBottom: isSmallDevice ? 18 : 24,
+    },
+    buttoncontent: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: isSmallDevice ? 18 : 24,
+      width: isSmallDevice ? '85%' : '70%',
+      alignSelf: 'center',
+    },
+    camerabutton: {
+      backgroundColor: '#FF9500',
+      borderRadius: 8,
+      padding: isSmallDevice ? 7 : 9,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      width: '100%',
+    },
+    buttonText: {
+      color: '#FFFFFF',
+      fontSize: isSmallDevice ? 14 : 16,
+      fontWeight: '500',
+      marginLeft: isSmallDevice ? 6 : 8,
+    },
+    imageContainer: {
+      position: 'relative',
+      marginBottom: isSmallDevice ? 12 : 16,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+    },
+    image: {
+      width: '100%',
+      height: isSmallDevice ? 180 : 200,
+      resizeMode: 'cover',
+    },
+    deleteButton: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      borderRadius: 12,
+      padding: 14,
+    },
+    overlay: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      padding: isSmallDevice ? 6 : 8,
+    },
+    overlayText: {
+      color: '#FFFFFF',
+      fontSize: isSmallDevice ? 9 : 10,
+      marginBottom: isSmallDevice ? 2 : 4,
+    },
+    inputContainer: {
+      marginTop: isSmallDevice ? 12 : 16,
+    },
+    label: {
+      fontSize: isSmallDevice ? 13 : 14,
+      fontWeight: '500',
+      color: '#374151',
+      marginBottom: isSmallDevice ? 6 : 8,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: '#D1D5DB',
+      borderRadius: 8,
+      padding: isSmallDevice ? 10 : 12,
+      fontSize: isSmallDevice ? 14 : 16,
+      color: '#111827',
+      backgroundColor: '#F9FAFB',
+    },
+    textArea: {
+      height: isSmallDevice ? 100 : 120,
+      textAlignVertical: 'top',
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      marginTop: isSmallDevice ? 6 : 8,
+    },
+    checkboxLabel: {
+      fontSize: isSmallDevice ? 13 : 14,
+      color: '#374151',
+      marginLeft: isSmallDevice ? 6 : 8,
+    },
+    radioOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    radioCircle: {
+      height: isSmallDevice ? 18 : 20,
+      width: isSmallDevice ? 18 : 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    selectedRadio: {
+      backgroundColor: '#4CAF50',
+    },
+    storageContainer: {
+      marginTop: isSmallDevice ? 12 : 16,
+      padding: isSmallDevice ? 12 : 16,
+      backgroundColor: '#ffffff',
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: '#e0e0e0',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    storageHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: isSmallDevice ? 10 : 12,
+    },
+    storageName: {
+      fontSize: isSmallDevice ? 16 : 18,
+      fontWeight: '600',
+      color: '#2c3e50',
+      marginLeft: isSmallDevice ? 6 : 8,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: isSmallDevice ? 6 : 8,
+    },
+    infoText: {
+      fontSize: isSmallDevice ? 13 : 14,
+      color: '#555',
+      marginLeft: isSmallDevice ? 6 : 8,
+    },
+    coordinatesRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginVertical: isSmallDevice ? 10 : 12,
+      paddingVertical: isSmallDevice ? 6 : 8,
+      paddingHorizontal: isSmallDevice ? 10 : 12,
+      backgroundColor: '#edf2f7',
+      borderRadius: 8,
+    },
+    coordinateText: {
+      fontSize: isSmallDevice ? 12 : 13,
+      fontFamily: 'monospace',
+    },
+    coordinateLabel: {
+      fontWeight: '500',
+      color: '#4a5568',
+    },
+    navigateButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#dce6fc',
+      opacity: 1,
+      paddingVertical: isSmallDevice ? 5 : 6,
+      borderRadius: 8,
+      marginTop: isSmallDevice ? 6 : 8,
+    },
+    navigateButtonText: {
+      color: 'black',
+      fontWeight: '500',
+      marginLeft: isSmallDevice ? 6 : 8,
+      fontSize: isSmallDevice ? 13 : 14,
+    },
+    buttonContainer: {
+      marginVertical: isSmallDevice ? 12 : 15,
+      alignItems: 'center',
+    },
+    inspectionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#FF9500',
+      paddingVertical: isSmallDevice ? 10 : 12,
+      paddingHorizontal: isSmallDevice ? 20 : 25,
+      borderRadius: 25,
+      shadowColor: '#4a8cff',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
+      elevation: 5,
+      width: isSmallDevice ? '95%' : '90%',
+    },
+    buttonTexti: {
+      color: '#fff',
+      fontSize: isSmallDevice ? 14 : 16,
+      fontWeight: '600',
+      marginRight: isSmallDevice ? 6 : 8,
+    },
+    icon: {
+      marginLeft: isSmallDevice ? 3 : 5,
+    },
+    captureButton: {
+      marginTop: isSmallDevice ? 6 : 8,
+      backgroundColor: '#007bff',
+      paddingVertical: isSmallDevice ? 6 : 8,
+      paddingHorizontal: isSmallDevice ? 12 : 16,
+      borderRadius: 6,
+    },
+    captureButtonText: {
+      color: '#fff',
+      fontWeight: 'bold',
+      fontSize: isSmallDevice ? 13 : 14,
+    },
+  });
 
-    alignSelf: 'center',
-  },
-  camerabutton: {
-    backgroundColor: '#FF9500',
-    borderRadius: 8,
-    padding: 9,
 
 
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    width: '100%',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '500',
-    marginLeft: 8,
-  },
-  imageContainer: {
-    position: 'relative',
-    marginBottom: 16,
-
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: 'red'
-
-  },
-  image: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 12,
-    padding: 14,
-  },
-  overlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    padding: 8,
-  },
-  overlayText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    marginBottom: 4,
-  },
-  inputContainer: {
-    marginTop: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
-  },
-  textArea: {
-    height: 120,
-    textAlignVertical: 'top',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    marginTop: 8,
-  },
-  copyButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 4,
-  },
-  copyButtonText: {
-    color: '#333',
-    fontSize: 12,
-  },
-  checkboxLabel: {
-    fontSize: 14,
-    color: '#374151',
-    marginLeft: 8,
-  },
-
-  radioOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  radioCircle: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  selectedRadio: {
-    backgroundColor: '#4CAF50', // green highlight if selected (can change for red too)
-  },
 
 
-  storageContainer: {
-    marginTop: 16,
-    padding: 16,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  storageHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  storageName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginLeft: 8,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#555',
-    marginLeft: 8,
-  },
-  coordinatesRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#edf2f7',
-    borderRadius: 8,
-  },
-  coordinateText: {
-    fontSize: 13,
-    fontFamily: 'monospace',
-  },
-  coordinateLabel: {
-    fontWeight: '500',
-    color: '#4a5568',
-  },
-  navigateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#dce6fc',
-    opacity: 1,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  navigateButtonText: {
-    color: 'black',
-    fontWeight: '500',
-    marginLeft: 8,
-  },
-  buttonContainer: {
-    marginVertical: 15,
-    alignItems: 'center',
-  },
-  inspectionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FF9500',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 25,
-    shadowColor: '#4a8cff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
-    width: '90%',
-  },
-  buttonTexti: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  icon: {
-    marginLeft: 5,
-  },
-  captureButton: {
-    marginTop: 8,
-    backgroundColor: '#007bff',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-  },
-  captureButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
 
-
-});

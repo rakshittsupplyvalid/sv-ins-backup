@@ -150,8 +150,8 @@ apiClient.interceptors.request.use(async (config) => {
 
         try {
             const decryptedRes = await jscrypto.decryptResponse(response.data);
-            console.log('\n =========== Encrypted Response: ========= \n', response?.data);
-            console.log('\n =========== Decrypted Response: ========= \n', decryptedRes);
+            console.log('\n ========= Encrypted Response: ====== \n', response?.data);
+            console.log('\n ========= Decrypted Response: ====== \n', decryptedRes);
             response.data = decryptedRes
         } catch (err) {
             console.error('Decryption error:', err);
