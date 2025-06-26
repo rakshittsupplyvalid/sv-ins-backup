@@ -84,8 +84,8 @@ const LoginApp = ({ navigation }: any) => {
     
     try {
       const payload = {
-        mobileNo: '9634958888',
-        password: 'Password@123'
+        mobileNo: '',
+        password: ''
       }
       const response = await apiClient.post('/api/login/user', payload);
 
