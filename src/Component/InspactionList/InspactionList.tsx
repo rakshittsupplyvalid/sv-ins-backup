@@ -35,7 +35,7 @@ type RouteParams = {
     };
 };
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 100;
 
 type InspactionListRouteProp = RouteProp<DrawerParamList, 'InspectionList'>;
 

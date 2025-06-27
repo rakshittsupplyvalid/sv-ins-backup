@@ -1,28 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../service/api/apiInterceptors';
 import { useDisableBackHandler } from '../service/useDisableBackHandler';
-
-
-
-
 
 const Dashboard = ({ navigation }: any) => {
   const [data, setData] = useState<any>(null);
   const [pendingData, setPendingData] = useState<any>(null);
   const [rejectedData, setRejectedData] = useState<any>(null);
   const [insepectionData, setInsepectionData] = useState<any>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [remainingData, setRemainingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useDisableBackHandler(true);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchAllData = async () => {
+    try {
+      await Promise.all([
+        fetchData(),
+        Inspectiondata(),
+        remainingcount()
+      ]);
+    } catch (err) {
+      setError('Failed to fetch data');
+      console.error('API Error:', err);
+    }
+  };
 
+  const fetchData = async () => {
     try {
       const [approvedRes, pendingRes, rejectedRes] = await Promise.all([
         apiClient('/api/procurement/count/total?ApprovalStatus=APPROVED'),
@@ -33,59 +40,46 @@ const Dashboard = ({ navigation }: any) => {
       setData(approvedRes.data);
       setPendingData(pendingRes.data);
       setRejectedData(rejectedRes.data);
-
     } catch (err) {
-      setError('Failed to fetch data');
-      console.error('API Error:', err);
-    } finally {
-      setLoading(false);
+      throw err;
     }
   };
 
   const Inspectiondata = async () => {
-    setLoading(true);
-    setError(null);
-
     try {
       const response = await apiClient.get('/api/InspectionReport/Count');
       if (response.status === 200) {
         setInsepectionData(response.data);
       } else {
-        setError('Failed to fetch inspection count');
+        throw new Error('Failed to fetch inspection count');
       }
     } catch (err) {
-      setError('Failed to fetch inspection count');
-      console.error('API Error:', err);
-    } finally {
-      setLoading(false);
+      throw err;
     }
   };
 
-
-  const remainingcount
-    = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await apiClient.get('/api/InspectionReport/remainingcount');
-        if (response.status === 200) {
-          setRemainingData(response.data);
-        } else {
-          setError('Failed to fetch inspection count');
-        }
-      } catch (err) {
-        setError('Failed to fetch inspection count');
-        console.error('API Error:', err);
-      } finally {
-        setLoading(false);
+  const remainingcount = async () => {
+    try {
+      const response = await apiClient.get('/api/InspectionReport/remainingcount');
+      if (response.status === 200) {
+        setRemainingData(response.data);
+      } else {
+        throw new Error('Failed to fetch inspection count');
       }
-    };
+    } catch (err) {
+      throw err;
+    }
+  };
 
   useEffect(() => {
-    fetchData();
-    Inspectiondata();
-    remainingcount();
+    fetchAllData();
+  }, []);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchAllData().finally(() => {
+      setRefreshing(false);
+    });
   }, []);
 
   const handleCardPress = (status: string) => {
@@ -93,9 +87,7 @@ const Dashboard = ({ navigation }: any) => {
       navigation.navigate('InspectionList');
     } else if (status === 'Remaining') {
       navigation.navigate('RemainingInspectionReport');
-    }
-
-    else {
+    } else {
       navigation.navigate('Procurement List', { status });
     }
   };
@@ -137,8 +129,6 @@ const Dashboard = ({ navigation }: any) => {
       bgColor: '#ffffff',
       status: 'ALL'
     },
-
-
     {
       id: 5,
       title: 'Remaining Inspection Report',
@@ -148,26 +138,19 @@ const Dashboard = ({ navigation }: any) => {
       bgColor: '#ffffff',
       status: 'Remaining'
     }
-
   ];
 
   const screenWidth = Dimensions.get('window').width;
   const cardWidth = (screenWidth - 48) / 2;
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2196F3" />
-      </View>
-    );
-  }
+
 
   if (error) {
     return (
       <View style={styles.errorContainer}>
         <MaterialIcons name="error-outline" size={48} color="#F44336" />
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity onPress={() => { fetchData(); Inspectiondata(); }} style={styles.retryButton}>
+        <TouchableOpacity onPress={() => { fetchAllData(); }} style={styles.retryButton}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -178,8 +161,15 @@ const Dashboard = ({ navigation }: any) => {
     <ScrollView
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#2196F3']}
+          tintColor="#2196F3"
+        />
+      }
     >
-
       <View style={styles.grid}>
         {cards.map((card) => (
           <TouchableOpacity
@@ -191,12 +181,10 @@ const Dashboard = ({ navigation }: any) => {
             <View style={styles.cardHeader}>
               <View style={[styles.iconContainer, { backgroundColor: `${card.color}20` }]}>
                 <MaterialIcons name={card.icon} size={24} color={card.color} />
-
               </View>
             </View>
             <Text style={styles.cardTitle}>{card.title}</Text>
             <Text style={[styles.cardValue, { color: card.color }]}>{card.value}</Text>
-
             <View style={styles.cardFooter}>
               <Text style={styles.viewText}>View Details</Text>
               <MaterialIcons name="chevron-right" size={20} color={card.color} />
@@ -212,7 +200,6 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#f5f5f5',
-
     minHeight: '100%',
     justifyContent: 'center'
   },
@@ -239,9 +226,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
     backgroundColor: 'red',
-
-    height: 200, // Adjust height as needed
-
+    height: 200,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -259,7 +244,6 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     color: '#666',
-
     fontWeight: '500',
   },
   cardValue: {
@@ -311,4 +295,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Dashboard
+export default Dashboard;

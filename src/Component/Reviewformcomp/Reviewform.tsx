@@ -298,6 +298,8 @@ const ReviewForm = () => {
   };
 
   const requestCameraPermission = async () => {
+
+
     if (Platform.OS === 'android') {
       try {
         const granted = await PermissionsAndroid.request(
@@ -477,6 +479,8 @@ const ReviewForm = () => {
 
   const handleSubmit = async () => {
     try {
+
+   
 
       const formData = new FormData();
 
@@ -1771,6 +1775,8 @@ export default ReviewForm;
       bottom: 0,
       left: 0,
       right: 0,
+      justifyContent : 'center',
+      alignItems : 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.2)',
       padding: isSmallDevice ? 6 : 8,
     },

@@ -13,7 +13,8 @@ import {
   Modal,
   TextInput,
   Alert,
-  Platform
+  Platform,
+    
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
@@ -27,6 +28,10 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system';
+
+
+
+
 
 
 
@@ -79,6 +84,7 @@ const [editForm, setEditForm] = useState({
       try {
         const response = await apiClient.get(`/api/InspectionReport/${id}`);
         setInspectionData(response.data);
+        console.log('id response' , response.data);
         console.log('Inspection Data:', response.data);
       } catch (error) {
         console.error('Error fetching inspection details:', error);
@@ -506,348 +512,342 @@ const getBase64Logo = async () => {
 
 
 
-const generatePDF = async () => {
-  if (!inspectionData) {
-    Alert.alert('Error', 'No inspection data available');
-    return;
-  }
+ const generatePDF = async () => {
+    if (!inspectionData) {
+      Alert.alert('Error', 'No inspection data available');
+      return;
+    }
 
-  try {
-    // // Show loading indicator
-    // Alert.alert('Generating PDF', 'Please wait...');
+    try {
+      const formattedDate = new Date(inspectionData.createdOn).toLocaleString();
+      const logoBase64 = await getBase64Logo();
 
+      // Prepare image HTML for each file if they exist
+      let imagesHtml = '';
+      if (inspectionData.files?.length) {
+        imagesHtml = `
+          <div class="section">
+            <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Attachments (${inspectionData.files.length})</h2>
+            <div class="image-grid">
+              ${inspectionData.files.map((file: string) => `
+                <div class="image-container">
+                  <img src="https://dev-backend-2025.epravaha.com${file}" style="width: 100%; height: auto;" />
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
 
-     const formattedDate = new Date(inspectionData.createdOn).toLocaleString();
-    const logoBase64 = await getBase64Logo();
-
-    const htmlContent = `
-    <html>
-      <head>
-        <style>
-          /* Base reset for consistent rendering */
-          * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-          }
-          
-          /* Use standard A4 aspect ratio */
-          body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            width: 100%;
-            min-height: 100vh;
-            padding: 1.5cm;
-            color: #333;
-            line-height: 1.5;
-          }
-          
-          /* Main container with print-specific sizing */
-          .document {
-            width: 100%;
-            max-width: 21cm; /* Standard A4 width */
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-          }
-          
-          /* Header with responsive layout */
-          .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #2c3e50;
-            margin-bottom: 20px;
-          }
-          
-          .logo {
-            height: 1.8cm;
-            max-width: 4cm;
-            object-fit: contain;
-          }
-          
-          /* Content sections that adapt to available space */
-          .section {
-            width: 100%;
-            page-break-inside: avoid;
-            margin-bottom: 15px;
-          }
-          
-          /* Responsive tables */
-          .info-table {
-            width: 100%;
-            border-collapse: collapse;
-          }
-          
-          .info-table td {
-            padding: 8px 5px;
-            border-bottom: 1px solid #eee;
-            vertical-align: top;
-          }
-          
-          .info-label {
-            font-weight: 600;
-            color: #555;
-            width: 40%;
-          }
-          
-          /* Images that scale properly */
-          .image-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-          }
-          
-          .image-container {
-            border: 1px solid #ddd;
-            padding: 3px;
-            border-radius: 3px;
-          }
-          
-          .image-container img {
-            width: 100%;
-            height: auto;
-            display: block;
-          }
-          
-          /* Print-specific adjustments */
-          @media print {
-            body {
+      const htmlContent = `
+      <html>
+        <head>
+          <style>
+            * {
+              box-sizing: border-box;
+              margin: 0;
               padding: 0;
             }
-            .document {
-              max-width: 100%;
+            
+            body {
+              font-family: 'Segoe UI', Roboto, sans-serif;
+              width: 100%;
+              min-height: 100vh;
               padding: 1.5cm;
+              color: #333;
+              line-height: 1.5;
             }
-            .no-print {
-              display: none !important;
+            
+            .document {
+              width: 100%;
+              max-width: 21cm;
+              margin: 0 auto;
+              display: flex;
+              flex-direction: column;
+              gap: 15px;
             }
-          }
-          
-          /* Force page breaks when needed */
-          .page-break {
-            page-break-after: always;
-          }
-          
-          /* Footer positioning */
-          .footer {
-            margin-top: auto;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-            font-size: 0.8rem;
-            color: #777;
-            text-align: center;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="document">
-          <div class="header">
-            <div>
-              <h1 style="margin: 0; font-size: 1.5rem;">Inspection Report</h1>
-              <p style="margin-top: 5px; font-size: 0.9rem;">${formattedDate}</p>
+            
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              padding-bottom: 15px;
+              border-bottom: 2px solid #2c3e50;
+              margin-bottom: 20px;
+            }
+            
+            .logo {
+              height: 1.8cm;
+              max-width: 4cm;
+              object-fit: contain;
+            }
+            
+            .section {
+              width: 100%;
+              page-break-inside: avoid;
+              margin-bottom: 15px;
+            }
+            
+            .info-table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            
+            .info-table td {
+              padding: 8px 5px;
+              border-bottom: 1px solid #eee;
+              vertical-align: top;
+            }
+            
+            .info-label {
+              font-weight: 600;
+              color: #555;
+              width: 40%;
+            }
+            
+            .image-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+              gap: 10px;
+              margin-top: 10px;
+            }
+            
+            .image-container {
+              border: 1px solid #ddd;
+              padding: 3px;
+              border-radius: 3px;
+              page-break-inside: avoid;
+            }
+            
+            .image-container img {
+              width: 100%;
+              height: auto;
+              display: block;
+              max-height: 200px;
+              object-fit: contain;
+            }
+            
+            @media print {
+              body {
+                padding: 0;
+              }
+              .document {
+                max-width: 100%;
+                padding: 1.5cm;
+              }
+              .no-print {
+                display: none !important;
+              }
+            }
+            
+            .page-break {
+              page-break-after: always;
+            }
+            
+            .footer {
+              margin-top: auto;
+              padding-top: 15px;
+              border-top: 1px solid #eee;
+              font-size: 0.8rem;
+              color: #777;
+              text-align: center;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="document">
+            <div class="header">
+              <div>
+                <h1 style="margin: 0; font-size: 1.5rem;">Inspection Report</h1>
+                <p style="margin-top: 5px; font-size: 0.9rem;">${formattedDate}</p>
+              </div>
+              <img src="${logoBase64}" class="logo" alt="Company Logo" />
             </div>
-          <img src="${logoBase64}" class="logo" alt="Company Logo" />
+            
+            <div class="section">
+              <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Basic Information</h2>
+              <table class="info-table">
+                <tr>
+                  <td class="info-label">Location Name:</td>
+                  <td>${locationName || 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">Vendor Name:</td>
+                  <td>${vendorName || 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">Status:</td>
+                  <td>
+                    <span style="
+                      display: inline-block;
+                      padding: 2px 8px;
+                      border-radius: 3px;
+                      background: ${inspectionData.isActive ? '#4CAF50' : '#F44336'};
+                      color: white;
+                      font-size: 0.9rem;
+                    ">
+                      ${inspectionData.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            
+            <div class="section">
+              <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Procurement Details</h2>
+              <table class="info-table">
+                <tr>
+                  <td class="info-label">No. of Farmers:</td>
+                  <td>${inspectionData.noOfFarmers || 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">Physical Quantity:</td>
+                  <td>${inspectionData.totalPhysicalQuantity || 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">Procured Quantity:</td>
+                  <td>${inspectionData.totalProcuerQuantity || 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">Weighment Slips:</td>
+                  <td>${inspectionData.noOfWeighmentSlip || 'N/A'}</td>
+                </tr>
+              </table>
+            </div>
+            
+            ${inspectionData.chawlSizes?.length ? `
+              <div class="section">
+                <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Chawl Sizes (${inspectionData.chawlSizes.length})</h2>
+                ${inspectionData.chawlSizes.map((chawl: any, index: number) => `
+                  <table class="info-table" style="margin-bottom: 10px;">
+                    <tr><td class="info-label">Chawl ${index + 1}</td><td></td></tr>
+                    <tr><td class="info-label">Type</td><td>${chawl.chawlType || 'N/A'}</td></tr>
+                    <tr><td class="info-label">Length</td><td>${chawl.length || 'N/A'}</td></tr>
+                    <tr><td class="info-label">Breadth</td><td>${chawl.breadth || 'N/A'}</td></tr>
+                    <tr><td class="info-label">Height</td><td>${chawl.height || 'N/A'}</td></tr>
+                    <tr><td class="info-label">Quantity</td><td>${chawl.quantity || 'N/A'}</td></tr>
+                  </table>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${inspectionData.binsSizes?.length ? `
+              <div class="section">
+                <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Bin Sizes (${inspectionData.binsSizes.length})</h2>
+                ${inspectionData.binsSizes.map((bin: any, index: number) => `
+                  <table class="info-table" style="margin-bottom: 10px;">
+                    <tr><td class="info-label">Bin ${index + 1}</td><td></td></tr>
+                    <tr><td class="info-label">Type</td><td>${bin.chawlType || 'N/A'}</td></tr>
+                    <tr><td class="info-label">Length</td><td>${bin.length || 'N/A'}</td></tr>
+                    <tr><td class="info-label">Breadth</td><td>${bin.breadth || 'N/A'}</td></tr>
+                    <tr><td class="info-label">Height</td><td>${bin.height || 'N/A'}</td></tr>
+                    <tr><td class="info-label">Quantity</td><td>${bin.quantity || 'N/A'}</td></tr>
+                  </table>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${imagesHtml}
+
+            <div class="footer">
+              <p>Generated on ${new Date().toLocaleDateString()} • © ${new Date().getFullYear()} Supply Valid</p>
+            </div>
           </div>
-          
-          <div class="section">
-            <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Basic Information</h2>
-            <table class="info-table">
-              <tr>
-                <td class="info-label">Location Name:</td>
-                <td>${locationName || 'N/A'}</td>
-              </tr>
-              <tr>
-                <td class="info-label">Vendor Name:</td>
-                <td>${vendorName || 'N/A'}</td>
-              </tr>
-              <tr>
-                <td class="info-label">Status:</td>
-                <td>
-                  <span style="
-                    display: inline-block;
-                    padding: 2px 8px;
-                    border-radius: 3px;
-                    background: ${inspectionData.isActive ? '#4CAF50' : '#F44336'};
-                    color: white;
-                    font-size: 0.9rem;
-                  ">
-                    ${inspectionData.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-              </tr>
-            </table>
-          </div>
-          
-          <div class="section">
-            <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Procurement Details</h2>
-            <table class="info-table">
-              <tr>
-                <td class="info-label">No. of Farmers:</td>
-                <td>${inspectionData.noOfFarmers || 'N/A'}</td>
-              </tr>
-              <tr>
-                <td class="info-label">Physical Quantity:</td>
-                <td>${inspectionData.totalPhysicalQuantity || 'N/A'}</td>
-              </tr>
-              <tr>
-                <td class="info-label">Procured Quantity:</td>
-                <td>${inspectionData.totalProcuerQuantity || 'N/A'}</td>
-              </tr>
-              <tr>
-                <td class="info-label">Weighment Slips:</td>
-                <td>${inspectionData.noOfWeighmentSlip || 'N/A'}</td>
-              </tr>
-            </table>
-          </div>
-          ${inspectionData.chawlSizes?.length ? `
-  <div class="section">
-    <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Chawl Sizes (${inspectionData.chawlSizes.length})</h2>
-    ${inspectionData.chawlSizes.map((chawl: any, index: number) => `
-      <table class="info-table" style="margin-bottom: 10px;">
-        <tr><td class="info-label">Chawl ${index + 1}</td><td></td></tr>
-        <tr><td class="info-label">Type</td><td>${chawl.chawlType || 'N/A'}</td></tr>
-        <tr><td class="info-label">Length</td><td>${chawl.length || 'N/A'}</td></tr>
-        <tr><td class="info-label">Breadth</td><td>${chawl.breadth || 'N/A'}</td></tr>
-        <tr><td class="info-label">Height</td><td>${chawl.height || 'N/A'}</td></tr>
-        <tr><td class="info-label">Quantity</td><td>${chawl.quantity || 'N/A'}</td></tr>
-      </table>
-    `).join('')}
-  </div>
-` : ''}
+        </body>
+      </html>
+    `;
 
-${inspectionData.binsSizes?.length ? `
-  <div class="section">
-    <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Bin Sizes (${inspectionData.binsSizes.length})</h2>
-    ${inspectionData.binsSizes.map((bin: any, index: number) => `
-      <table class="info-table" style="margin-bottom: 10px;">
-        <tr><td class="info-label">Bin ${index + 1}</td><td></td></tr>
-        <tr><td class="info-label">Type</td><td>${bin.chawlType || 'N/A'}</td></tr>
-        <tr><td class="info-label">Length</td><td>${bin.length || 'N/A'}</td></tr>
-        <tr><td class="info-label">Breadth</td><td>${bin.breadth || 'N/A'}</td></tr>
-        <tr><td class="info-label">Height</td><td>${bin.height || 'N/A'}</td></tr>
-        <tr><td class="info-label">Quantity</td><td>${bin.quantity || 'N/A'}</td></tr>
-      </table>
-    `).join('')}
-  </div>
-` : ''}
-
-          
-     
-          
-          <div class="footer">
-            <p>Generated on ${new Date().toLocaleDateString()} • © ${new Date().getFullYear()} Supply Valid</p>
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-
-    // Generate the PDF (your existing code)
-    const { uri } = await Print.printToFileAsync({
-      html: htmlContent,
-      base64: false,
-      width: 794,
-      height: 1123,
-      margins: {
-        top: 40,
-        bottom: 40,
-        left: 40,
-        right: 40
-      }
-    });
-
-    // Define PDF filename
-    const pdfName = `Inspection_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-
-    if (Platform.OS === 'android') {
-      // Android specific download logic
-      try {
-        // Get the public Downloads directory URI
-        const downloadsDir = FileSystem.StorageAccessFramework.getUriForDirectoryInRoot('Downloads');
-        
-        // Request permissions
-        const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync(downloadsDir);
-        
-        if (permissions.granted) {
-          // Read the generated PDF
-          const pdfContent = await FileSystem.readAsStringAsync(uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-
-          // Save to Downloads folder
-          const newUri = await FileSystem.StorageAccessFramework.createFileAsync(
-            permissions.directoryUri,
-            pdfName,
-            'application/pdf'
-          );
-
-          await FileSystem.writeAsStringAsync(newUri, pdfContent, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-
-          Alert.alert(
-            'Success', 
-            'PDF downloaded to your Downloads folder',
-            [
-              { text: 'Open', onPress: () => Sharing.shareAsync(newUri) },
-              { text: 'OK' }
-            ]
-          );
-        } else {
-          throw new Error('Permission denied');
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        base64: false,
+        width: 794,
+        height: 1123,
+        margins: {
+          top: 40,
+          bottom: 40,
+          left: 40,
+          right: 40
         }
-      } catch (androidError) {
-        console.warn('Android direct save failed:', androidError);
-        // Fallback to share dialog
-        await Sharing.shareAsync(uri, {
-          mimeType: 'application/pdf',
-          dialogTitle: 'Save Inspection Report',
-          UTI: 'com.adobe.pdf'
-        });
-      }
-    } else {
-      // iOS - save to app's documents and share
-      const newPath = FileSystem.documentDirectory + pdfName;
-      await FileSystem.copyAsync({
-        from: uri,
-        to: newPath
       });
 
-      Alert.alert(
-        'Success', 
-        'PDF ready to save',
-        [
-          { 
-            text: 'Save to Files', 
-            onPress: () => Sharing.shareAsync(newPath, {
-              mimeType: 'application/pdf',
-              dialogTitle: 'Save Inspection Report',
-              UTI: 'com.adobe.pdf'
-            }) 
-          },
-          { text: 'OK' }
-        ]
-      );
+      const pdfName = `Inspection_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+
+      if (Platform.OS === 'android') {
+        try {
+          const downloadsDir = FileSystem.StorageAccessFramework.getUriForDirectoryInRoot('Downloads');
+          const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync(downloadsDir);
+          
+          if (permissions.granted) {
+            const pdfContent = await FileSystem.readAsStringAsync(uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+
+            const newUri = await FileSystem.StorageAccessFramework.createFileAsync(
+              permissions.directoryUri,
+              pdfName,
+              'application/pdf'
+            );
+
+            await FileSystem.writeAsStringAsync(newUri, pdfContent, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+
+            Alert.alert(
+              'Success', 
+              'PDF downloaded to your Downloads folder',
+              [
+                { text: 'Open', onPress: () => Sharing.shareAsync(newUri) },
+                { text: 'OK' }
+              ]
+            );
+          } else {
+            throw new Error('Permission denied');
+          }
+        } catch (androidError) {
+          console.warn('Android direct save failed:', androidError);
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'Save Inspection Report',
+            UTI: 'com.adobe.pdf'
+          });
+        }
+      } else {
+        const newPath = FileSystem.documentDirectory + pdfName;
+        await FileSystem.copyAsync({
+          from: uri,
+          to: newPath
+        });
+
+        Alert.alert(
+          'Success', 
+          'PDF ready to save',
+          [
+            { 
+              text: 'Save to Files', 
+              onPress: () => Sharing.shareAsync(newPath, {
+                mimeType: 'application/pdf',
+                dialogTitle: 'Save Inspection Report',
+                UTI: 'com.adobe.pdf'
+              }) 
+            },
+            { text: 'OK' }
+          ]
+        );
+      }
+
+      await FileSystem.deleteAsync(uri, { idempotent: true });
+
+    } catch (error) {
+      console.error('PDF download failed:', error);
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      Alert.alert('Error', `Failed to download PDF: ${errorMessage}`);
     }
-
-    // Clean up temporary file
-    await FileSystem.deleteAsync(uri, { idempotent: true });
-
-  } catch (error) {
-    console.error('PDF download failed:', error);
-    let errorMessage = 'Unknown error';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    } else if (typeof error === 'string') {
-      errorMessage = error;
-    }
-    Alert.alert('Error', `Failed to download PDF: ${errorMessage}`);
-  }
-};
-
+  };
 
 
   const toggleSection = (section: string) => {
@@ -1511,18 +1511,16 @@ const styles = StyleSheet.create({
     color: '#343a40',
   },
   imagesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+ 
+  
     paddingHorizontal: 16,
     marginBottom: 20,
   },
   image: {
-    width: width * 0.43,
-    height: width * 0.43,
-    borderRadius: 8,
-    marginBottom: 12,
-    overflow: 'hidden',
+   width: '100%',
+      height: 180,
+      resizeMode: 'cover',
+      marginBottom : 10
   },
   imageOverlay: {
     flex: 1,
