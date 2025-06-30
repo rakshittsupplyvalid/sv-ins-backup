@@ -11,7 +11,6 @@ const Dashboard = ({ navigation }: any) => {
   const [insepectionData, setInsepectionData] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [remainingData, setRemainingData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useDisableBackHandler(true);
@@ -151,6 +150,7 @@ const Dashboard = ({ navigation }: any) => {
         <MaterialIcons name="error-outline" size={48} color="#F44336" />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity onPress={() => { fetchAllData(); }} style={styles.retryButton}>
+
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>

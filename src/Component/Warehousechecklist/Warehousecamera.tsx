@@ -7,8 +7,8 @@ import apiClient from '../../service/api/apiInterceptors';
 import useForm from '../../Common/UseForm';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { DrawerParamList } from '../../Type/DrawerParam';
-
 import { useNavigation } from '@react-navigation/native';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
 
 type WarehouseCameraStackParamList = {
   WarehouseCamera: { storageId: string };
@@ -31,8 +31,8 @@ const WarehouseCamera = () => {
   const route = useRoute<RouteProp<WarehouseCameraStackParamList, 'WarehouseCamera'>>();
   const { state, updateState } = useForm();
   const { storageId } = route.params;
-  const navigation = useNavigation<DrawerParamList>();
-  
+  const navigation = useNavigation<DrawerNavigationProp<DrawerParamList>>();
+
   const [parameters, setParameters] = useState<InspectionParameter[]>([]);
   const [parameterValues, setParameterValues] = useState<Record<string, boolean | null>>({});
   const [parameterImages, setParameterImages] = useState<Record<string, ImageAsset[]>>({});
@@ -44,11 +44,11 @@ const WarehouseCamera = () => {
       try {
         const url = `/api/insparameter?parameterType=STORAGELOCATION`;
         const res = await apiClient.get(url);
-        
+
         if (res?.data) {
           const initialValues: Record<string, boolean | null> = {};
           const initialImages: Record<string, ImageAsset[]> = {};
-          
+
           res.data.forEach((param: InspectionParameter) => {
             initialValues[param.id] = null;
             initialImages[param.id] = [];
@@ -92,7 +92,7 @@ const WarehouseCamera = () => {
   const handleParameterClick = (paramId: string) => {
     setActiveParameter(paramId);
     const paramDescription = parameters.find(p => p.id === paramId)?.description;
-    
+
     Alert.alert(
       'Confirmation',
       `Is ${paramDescription} available?`,
@@ -131,7 +131,7 @@ const WarehouseCamera = () => {
   };
 
   const openCamera = (paramId: string) => {
-    launchCamera({ 
+    launchCamera({
       mediaType: 'photo',
       quality: 0.8,
       saveToPhotos: false,
@@ -154,7 +154,7 @@ const WarehouseCamera = () => {
           fileName: asset.fileName || `image_${Date.now()}.jpg`,
           type: asset.type || 'image/jpeg'
         };
-        
+
         setParameterImages(prev => ({
           ...prev,
           [paramId]: [newImage],
@@ -176,7 +176,7 @@ const WarehouseCamera = () => {
           fileName: asset.fileName || `image_${Date.now()}.jpg`,
           type: asset.type || 'image/jpeg'
         };
-        
+
         setParameterImages(prev => ({
           ...prev,
           [paramId]: [newImage],
@@ -246,50 +246,60 @@ const WarehouseCamera = () => {
   };
 
   return (
-    <ScrollView 
+
+    <View
       style={styles.container}
-      contentContainerStyle={styles.contentContainer}
     >
-      {parameters.map(param => {
-        const value = parameterValues[param.id];
-        const images = parameterImages[param.id] || [];
-        const isComplete = value !== null && (value === false || images.length > 0);
 
-        return (
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('WarehouseChecklist')}>
+          <Icon name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Verify Sorage</Text>
+      </View>
 
-          <View 
-            key={param.id} 
-            style={[
-              styles.parameterCard,
-              isComplete && styles.completedCard,
-              activeParameter === param.id && styles.activeCard
-            ]}
-          >
 
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Warehousechecklist')}>
-                      <Icon name="arrow-back" size={24} color="#fff" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Inspection Report</Text>
-                  </View>
+      <ScrollView
 
-            <View style={styles.cardHeader}>
-              <Text style={styles.parameterTitle}>{param.description}</Text>
-              <Text style={getStatusIndicatorStyle(value)}>
-                {getStatusText(value)}
-              </Text>
-            </View>
+        contentContainerStyle={styles.contentContainer}
+      >
 
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleParameterClick(param.id)}
+
+        {parameters.map(param => {
+          const value = parameterValues[param.id];
+          const images = parameterImages[param.id] || [];
+          const isComplete = value !== null && (value === false || images.length > 0);
+
+          return (
+
+            <View
+              key={param.id}
+              style={[
+                styles.parameterCard,
+                isComplete && styles.completedCard,
+                activeParameter === param.id && styles.activeCard
+              ]}
             >
-              <Text style={styles.actionButtonText}>
-                {value === null ? 'Set Status' : 'Change Status'}
-              </Text>
-            </TouchableOpacity>
 
-            {/* {value === true && (
+
+
+              <View style={styles.cardHeader}>
+                <Text style={styles.parameterTitle}>{param.description}</Text>
+                <Text style={getStatusIndicatorStyle(value)}>
+                  {getStatusText(value)}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleParameterClick(param.id)}
+              >
+                <Text style={styles.actionButtonText}>
+                  {value === null ? 'Set Status' : 'Change Status'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* {value === true && (
               <TouchableOpacity
                 style={styles.secondaryButton}
                 onPress={() => openGallery(param.id)}
@@ -308,28 +318,30 @@ const WarehouseCamera = () => {
               </View>
             )} */}
 
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                (!isComplete || isUploading) && styles.submitButtonDisabled
-              ]}
-              onPress={() => handleSubmit(param.id)}
-              disabled={!isComplete || isUploading}
-            >
-              <Text style={styles.submitButtonText}>
-                {isUploading ? (
-                  <>
-                    <Text style={styles.loadingDot}>•</Text>
-                    <Text style={styles.loadingDot}>•</Text>
-                    <Text style={styles.loadingDot}>•</Text>
-                  </>
-                ) : 'Submit Inspection'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        );
-      })}
-    </ScrollView>
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  (!isComplete || isUploading) && styles.submitButtonDisabled
+                ]}
+                onPress={() => handleSubmit(param.id)}
+                disabled={!isComplete || isUploading}
+              >
+                <Text style={styles.submitButtonText}>
+                  {isUploading ? (
+                    <>
+                      <Text style={styles.loadingDot}>•</Text>
+                      <Text style={styles.loadingDot}>•</Text>
+                      <Text style={styles.loadingDot}>•</Text>
+                    </>
+                  ) : 'Submit Inspection'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
+
   );
 };
 
@@ -337,16 +349,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f7fa',
-    paddingTop : 60
   },
   contentContainer: {
     padding: 16,
-  
+    paddingTop: 0, // Add this to prevent double padding at the top
   },
   header: {
-    padding: 24,
-    paddingTop: 40,
-    paddingBottom: 30,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
     backgroundColor: '#F79B00',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -356,15 +366,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 5,
-    flexDirection: 'row', // row-wise layout
-    alignItems: 'center'
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start', // Ensure items are aligned to the start
+    width: '100%', // Ensure full width
   },
   headerTitle: {
+      
     fontSize: 20,
     fontFamily: 'Poppins-Medium',
     color: 'white',
-    paddingLeft: 16,
+    marginLeft: 16, // Use margin instead of padding for spacing
 
+  
   },
 
 

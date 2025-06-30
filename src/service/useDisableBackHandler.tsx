@@ -1,4 +1,4 @@
-// hooks/useDisableBackHandler.ts
+
 import { useEffect } from 'react';
 import { BackHandler } from 'react-native';
 

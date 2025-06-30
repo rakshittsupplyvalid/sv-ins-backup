@@ -3,5 +3,5 @@ export type DrawerParamList = {
   Dashboard: undefined;
   Profile: undefined;
 InspectionList?: { storageId?: string };
-Warehousechecklist : undefined;
+WarehouseChecklist : undefined;
 }

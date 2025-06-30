@@ -518,6 +518,9 @@ const Warehousechecklist = () => {
           <Text style={styles.buttonText}>Complete Checklist</Text>
         </TouchableOpacity>
       )}
+
+
+      
     </View>
   );
 };
@@ -527,11 +530,13 @@ const styles = StyleSheet.create({
     padding: 16
   },
   button: {
-    backgroundColor: '#007AFF',
+   backgroundColor: '#FF9500',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
     marginTop: 20,
+  
+  
   },
   buttonText: {
     color: 'white',
