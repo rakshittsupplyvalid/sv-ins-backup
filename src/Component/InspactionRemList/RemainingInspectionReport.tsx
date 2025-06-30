@@ -20,7 +20,7 @@ const RemainingInspectionReport = () => {
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const response = await apiClient.get('/api/InspectionReport/remaininglist');
+        const response = await apiClient.get('/api/mobile/InspectionReport/remaininglist');
         if (response.status === 200) {
           setReports(response.data);
         } else {

@@ -91,11 +91,11 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
             }
 
             // Build the base URL
-            let url = `/api/InspectionReport/list?PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
+            let url = `/api/mobile/InspectionReport/list?PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
 
             // Add StorageLocationId to the URL if it exists
             if (storageId) {
-                url = `/api/InspectionReport/list?StorageLocationId=${storageId}&PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
+                url = `/api/mobile/InspectionReport/list?StorageLocationId=${storageId}&PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
             }
 
             const response = await apiClient.get(url);

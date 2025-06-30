@@ -1,4 +1,4 @@
-import React, { useState, useEffect , useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -52,23 +52,23 @@ const ProcumentList = () => {
   const [selectedStatus, setSelectedStatus] = useState(status || 'ALL');
   const [data, setData] = useState<ProcurementItem[]>([]);
   const [loading, setLoading] = useState(false);
-   const [refreshing, setRefreshing] = useState(false);
-      const [page, setPage] = useState(1);
-      const [hasMore, setHasMore] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
 
-       useFocusEffect(
-          useCallback(() => {
-            setPage(1);
-            setHasMore(true);
-            setData([]);
-          }, [])
-        );
-      
+  useFocusEffect(
+    useCallback(() => {
+      setPage(1);
+      setHasMore(true);
+      setData([]);
+    }, [])
+  );
 
 
-  
-    useEffect(() => {
+
+
+  useEffect(() => {
     if (status) {
       setSelectedStatus(status);
     }
@@ -76,18 +76,18 @@ const ProcumentList = () => {
 
   useEffect(() => {
     console.log("Received status from Dashboard:", status);
-    fetchStatusData(status , 1);
+    fetchStatusData(status, 1);
   }, [status]);
 
-const fetchStatusData = async (status: string, pageNumber: number) => {
+  const fetchStatusData = async (status: string, pageNumber: number) => {
     if (!hasMore && pageNumber !== 1) return;
-    
+
     setLoading(true);
     try {
       const response = await apiClient.get(
-        `/api/procurement/list?ApprovalStatus=${status}&PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`
+        `/api/mobile/procurement/list?ApprovalStatus=${status}&PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`
       );
-      
+
       if (response.data.length > 0) {
         if (pageNumber === 1) {
           setData(response.data);
@@ -268,11 +268,11 @@ const fetchStatusData = async (status: string, pageNumber: number) => {
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedStatus}
-               onValueChange={(itemValue) => setSelectedStatus(itemValue)}
+            onValueChange={(itemValue) => setSelectedStatus(itemValue)}
             style={styles.picker}
             dropdownIconColor="#495057"
           >
-               
+
             <Picker.Item label="Approved" value="APPROVED" />
             <Picker.Item label="Pending" value="PENDING" />
             <Picker.Item label="Rejected" value="REJECTED" />
@@ -280,32 +280,32 @@ const fetchStatusData = async (status: string, pageNumber: number) => {
         </View>
       </View>
 
-    <FlatList
-            data={data}
-            renderItem={renderItem}
-            keyExtractor={(item, index) => index.toString()}
-            contentContainerStyle={styles.listContent}
-            // ListEmptyComponent={
-            //   !loading
-            //     ? (
-            //       <View style={styles.emptyContainer}>
-            //         <Icon name="info-outline" size={40} color="#adb5bd" />
-            //         <Text style={styles.emptyText}>No procurement records found</Text>
-            //       </View>
-            //     )
-            //     : null
-            // }
-            ListFooterComponent={
-              loading && page > 1 ? (
-                <ActivityIndicator size="large" color="#4361ee" />
-              ) : null
-            }
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.5}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            showsVerticalScrollIndicator={false}
-          />
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => index.toString()}
+        contentContainerStyle={styles.listContent}
+        // ListEmptyComponent={
+        //   !loading
+        //     ? (
+        //       <View style={styles.emptyContainer}>
+        //         <Icon name="info-outline" size={40} color="#adb5bd" />
+        //         <Text style={styles.emptyText}>No procurement records found</Text>
+        //       </View>
+        //     )
+        //     : null
+        // }
+        ListFooterComponent={
+          loading && page > 1 ? (
+            <ActivityIndicator size="large" color="#4361ee" />
+          ) : null
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 };
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-   
+
     paddingHorizontal: 16,
     paddingTop: 20,
   },
@@ -365,10 +365,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    
-    borderWidth : 2,
+
+    borderWidth: 2,
     borderColor: '#e9ecef',
-    
+
   },
   statusBadge: {
     borderRadius: 12,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
- 
+
     fontFamily: 'Poppins-Regular',
   },
   infoRow: {
@@ -419,14 +419,14 @@ const styles = StyleSheet.create({
     color: '#6c757d',
     marginLeft: 8,
     width: 100,
-     fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-Regular',
   },
   infoValue: {
     fontSize: 14,
     color: '#212529',
     fontWeight: '500',
     flexShrink: 1,
-      fontFamily: 'Poppins-Regular',
+    fontFamily: 'Poppins-Regular',
   },
   arrowIcon: {
     marginHorizontal: 8,

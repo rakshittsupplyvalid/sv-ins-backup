@@ -10,8 +10,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Storage from '../utils/Storage';
 import { useNavigation } from '@react-navigation/native';
 import RemainingInspectionReport from '../Component/InspactionRemList/RemainingInspectionReport';
-// import Warehousechecklist from '../Component/Warehousechecklist/Warehousechecklist';
-// import WarehouseCamera from '../Component/Warehousechecklist/Warehousecamera';
+import Warehousechecklist from '../Component/Warehousechecklist/Warehousechecklist';
+import WarehouseCamera from '../Component/Warehousechecklist/Warehousecamera';
 
 // import pdf from '../Component/Reviewformcomp/Rough';
 const Drawer = createDrawerNavigator();
@@ -107,7 +107,7 @@ export default function DrawerNavigator() {
       <Drawer.Screen
         name="Review Form"
         component={ReviewForm}
-           options={({ navigation }) => ({
+        options={({ navigation }) => ({
           drawerIcon: ({ color, size }) => (
             <Icon name="list-alt" size={size} color={color} />
           ),
@@ -121,7 +121,7 @@ export default function DrawerNavigator() {
             </TouchableOpacity>
           ),
         })}
-    
+
       />
 
       {/* Procurement List */}
@@ -195,11 +195,11 @@ export default function DrawerNavigator() {
       />
 
 
-      {/* <Drawer.Screen
+      <Drawer.Screen
         name="WarehouseChecklist"
-        component={Warehousechecklist}    
-            options={{
-          title: 'Warehouse Check list', 
+        component={Warehousechecklist}
+        options={{
+          title: 'Warehouse Check list',
           drawerIcon: ({ color, size }) => (
             <Icon name="list-alt" size={size} color={color} />
           ),
@@ -215,10 +215,11 @@ export default function DrawerNavigator() {
           headerShown: false,
           drawerItemStyle: { display: 'none' },
         }}
-      /> */}
+
+      />
 
 
-      
+
       <Drawer.Screen
         name="Inspection List Details"
         component={InspectionListDetails}
@@ -231,7 +232,7 @@ export default function DrawerNavigator() {
   );
 }
 
-// ===== Styles =====
+// = = = = = S t y l e s = = = = =
 const styles = StyleSheet.create({
   drawerContainer: {
     flex: 1,
@@ -266,8 +267,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#ccc',
 
-    position : 'relative',
-    top : -40
+    position: 'relative',
+    top: -40
   },
   logoutButton: {
     flexDirection: 'row',

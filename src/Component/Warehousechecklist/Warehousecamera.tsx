@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Alert, Platform, PermissionsAndroid, Image } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Alert, Platform, PermissionsAndroid, Image, ScrollView } from 'react-native';
 import { useRoute } from '@react-navigation/native';
-import { launchCamera } from 'react-native-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import type { RouteProp } from '@react-navigation/native';
 import apiClient from '../../service/api/apiInterceptors';
 import useForm from '../../Common/UseForm';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { DrawerParamList } from '../../Type/DrawerParam';
 
+import { useNavigation } from '@react-navigation/native';
 
 type WarehouseCameraStackParamList = {
   WarehouseCamera: { storageId: string };
@@ -17,13 +20,59 @@ type ImageAsset = {
   type: string;
 };
 
+interface InspectionParameter {
+  id: string;
+  name: string;
+  description: string;
+  parameterType: string;
+}
+
 const WarehouseCamera = () => {
   const route = useRoute<RouteProp<WarehouseCameraStackParamList, 'WarehouseCamera'>>();
-    const { state, updateState } = useForm();
+  const { state, updateState } = useForm();
   const { storageId } = route.params;
-  const [imageUri, setImageUri] = useState<ImageAsset[]>([]);
-  const [properFencingValue, setProperFencingValue] = useState<boolean | null>(null);
+  const navigation = useNavigation<DrawerParamList>();
+  
+  const [parameters, setParameters] = useState<InspectionParameter[]>([]);
+  const [parameterValues, setParameterValues] = useState<Record<string, boolean | null>>({});
+  const [parameterImages, setParameterImages] = useState<Record<string, ImageAsset[]>>({});
   const [isUploading, setIsUploading] = useState(false);
+  const [activeParameter, setActiveParameter] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchParameters = async () => {
+      try {
+        const url = `/api/insparameter?parameterType=STORAGELOCATION`;
+        const res = await apiClient.get(url);
+        
+        if (res?.data) {
+          const initialValues: Record<string, boolean | null> = {};
+          const initialImages: Record<string, ImageAsset[]> = {};
+          
+          res.data.forEach((param: InspectionParameter) => {
+            initialValues[param.id] = null;
+            initialImages[param.id] = [];
+          });
+
+          setParameters(res.data);
+          setParameterValues(initialValues);
+          setParameterImages(initialImages);
+          updateState({
+            fielddata: {
+              ...state.fielddata,
+              Federation: res.data,
+              FpoFpcdata: null
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching parameters:", error);
+        Alert.alert("Error", "Failed to load inspection parameters");
+      }
+    };
+
+    fetchParameters();
+  }, []);
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -31,39 +80,35 @@ const WarehouseCamera = () => {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.CAMERA
         );
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('Camera permission granted');
-          openCamera();
-        } else {
-          console.log('Camera permission denied');
-        }
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
       } catch (err) {
         console.warn(err);
+        return false;
       }
-    } else {
-      openCamera(); // iOS opens directly
     }
+    return true;
   };
 
-  const handleProperFencingClick = () => {
+  const handleParameterClick = (paramId: string) => {
+    setActiveParameter(paramId);
+    const paramDescription = parameters.find(p => p.id === paramId)?.description;
+    
     Alert.alert(
       'Confirmation',
-      'Is proper fencing available?',
+      `Is ${paramDescription} available?`,
       [
         {
           text: 'No',
-          onPress: () => {
-            console.log('No pressed');
-            setProperFencingValue(false);
-            handleSubmit(false);
-          },
-          style: 'cancel',
+          onPress: () => updateParameterValue(paramId, false),
+          style: 'destructive',
         },
         {
           text: 'Yes',
-          onPress: () => {
-            setProperFencingValue(true);
-            requestCameraPermission();
+          onPress: async () => {
+            const hasPermission = await requestCameraPermission();
+            if (hasPermission) {
+              openCamera(paramId);
+            }
           },
         },
       ],
@@ -71,17 +116,38 @@ const WarehouseCamera = () => {
     );
   };
 
-  const openCamera = async () => {
+  const updateParameterValue = (paramId: string, value: boolean) => {
+    setParameterValues(prev => ({
+      ...prev,
+      [paramId]: value,
+    }));
+
+    if (!value) {
+      setParameterImages(prev => ({
+        ...prev,
+        [paramId]: [],
+      }));
+    }
+  };
+
+  const openCamera = (paramId: string) => {
     launchCamera({ 
       mediaType: 'photo',
       quality: 0.8,
       saveToPhotos: false,
     }, (response) => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
+        setParameterValues(prev => ({
+          ...prev,
+          [paramId]: null,
+        }));
       } else if (response.errorMessage) {
         Alert.alert('Error', response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
+        setParameterValues(prev => ({
+          ...prev,
+          [paramId]: null,
+        }));
+      } else if (response.assets?.[0]) {
         const asset = response.assets[0];
         const newImage: ImageAsset = {
           uri: asset.uri!,
@@ -89,205 +155,332 @@ const WarehouseCamera = () => {
           type: asset.type || 'image/jpeg'
         };
         
-        setImageUri([newImage]); // Replace previous images with new one
-    
+        setParameterImages(prev => ({
+          ...prev,
+          [paramId]: [newImage],
+        }));
+        updateParameterValue(paramId, true);
       }
     });
   };
 
-
- 
-
- 
-
-   const handleSubmit = async (hasFencing: boolean) => {
-  setIsUploading(true);
-  try {
-    const formData = new FormData();
-
-    // Add parameters with array indexing
-    formData.append(`parameters[0].insParameterId`, 'IPARA2025052805350726607061');
-    formData.append(`parameters[0].value`, hasFencing.toString());
-
-    // Add image if exists
-    if (hasFencing && imageUri.length > 0) {
-      formData.append(`parameters[0].image`, {
-        uri: imageUri[0].uri,
-        name: `fencing_${Date.now()}.jpg`,  // Random filename
-        type: imageUri[0].type || 'image/jpeg'
-      } as any);
-    }
-
-    console.log('FormData structure:', {
-      insParameterId: 'IPARA2025052805350726607061',
-      value: hasFencing,
-      image: hasFencing && imageUri.length > 0 ? 'exists' : 'null'
-    });
-
-    const response = await apiClient.post(
-      `/api/storagelocation/${storageId}/insparameter`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+  const openGallery = (paramId: string) => {
+    launchImageLibrary({
+      mediaType: 'photo',
+      quality: 0.8,
+    }, (response) => {
+      if (response.assets?.[0]) {
+        const asset = response.assets[0];
+        const newImage: ImageAsset = {
+          uri: asset.uri!,
+          fileName: asset.fileName || `image_${Date.now()}.jpg`,
+          type: asset.type || 'image/jpeg'
+        };
+        
+        setParameterImages(prev => ({
+          ...prev,
+          [paramId]: [newImage],
+        }));
       }
-    );
-    
-    if (response.status === 200) {
-      Alert.alert('Success', 'Status updated successfully');
-    } else {
-      throw new Error(response.data?.message || 'Failed to upload data');
+    });
+  };
+
+  const handleSubmit = async (paramId: string) => {
+    const value = parameterValues[paramId];
+    const images = parameterImages[paramId] || [];
+
+    if (value === null) {
+      Alert.alert("Error", "Please select a status first");
+      return;
     }
-  } catch (error) {
-    console.error('Upload error:', error);
 
-  } finally {
-    setIsUploading(false);
-  }
-};
+    if (value === true && images.length === 0) {
+      Alert.alert("Error", "Please capture an image for verification");
+      return;
+    }
 
+    setIsUploading(true);
 
-  const federationDropdown = () => {
-    const url = `/api/insparameter?parameterType=STORAGELOCATION`;
-    apiClient.get(url).then((res) => {
-      if (res?.data) {
-        console.log("API Response Data:", res.data);
-        updateState({
-          fielddata: {
-            ...state.fielddata,
-            Federation: res.data,
-            FpoFpcdata: null // Clear FPO data when loading new federations
-          }
-        });
+    try {
+      const formData = new FormData();
+      formData.append(`parameters[0].insParameterId`, paramId);
+      formData.append(`parameters[0].value`, value.toString());
+
+      if (value && images.length > 0) {
+        formData.append(`parameters[0].image`, {
+          uri: images[0].uri,
+          name: images[0].fileName,
+          type: images[0].type
+        } as any);
+      }
+
+      const response = await apiClient.post(
+        `/api/storagelocation/${storageId}/insparameter`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+
+      if (response.status === 200) {
+        Alert.alert("Success", "Status updated successfully");
       } else {
-        console.log("No data found in API response.");
+        throw new Error(response.data?.message || 'Failed to upload data');
       }
-    }).catch((error) => {
-      console.log("Error fetching data:", error);
-    });
+    } catch (error) {
+      console.error('Upload error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to update status";
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
+  const getStatusIndicatorStyle = (value: boolean | null) => {
+    if (value === null) return [styles.statusIndicator, styles.statusNotSet];
+    if (value) return [styles.statusIndicator, styles.statusYes];
+    return [styles.statusIndicator, styles.statusNo];
+  };
 
-    useEffect(() => {
-      federationDropdown();
-    }, []);
-
-  
-
-
-//   const handleSubmit = () => {
-//     if (properFencingValue === null) {
-//       Alert.alert('Error', 'Please confirm proper fencing status first');
-//       return;
-//     }
-
-//     if (properFencingValue && imageUri.length === 0) {
-//       Alert.alert('Error', 'Please take a photo for proper fencing');
-//       return;
-//     }
-
-//     uploadData(properFencingValue);
-//   };
+  const getStatusText = (value: boolean | null) => {
+    if (value === null) return 'Not set';
+    return value ? 'Verified' : 'Not Available';
+  };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity 
-        style={styles.fencingContainer}
-        onPress={handleProperFencingClick}
-      >
-        <Text style={styles.fencingText}>1. Proper Fencing</Text>
-        <Text style={styles.statusText}>
-          Status: {properFencingValue === null ? 'Not set' : properFencingValue ? 'Yes' : 'No'}
-        </Text>
-      </TouchableOpacity>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+    >
+      {parameters.map(param => {
+        const value = parameterValues[param.id];
+        const images = parameterImages[param.id] || [];
+        const isComplete = value !== null && (value === false || images.length > 0);
 
-      {imageUri.length > 0 && (
-        <View style={styles.imagePreviewContainer}>
-          <Text style={styles.previewText}>Captured Photo:</Text>
-          <Image 
-            source={{ uri: imageUri[0].uri }}
-            style={styles.previewImage}
-            resizeMode="contain"
-          />
-        </View>
-      )}
+        return (
 
-      <TouchableOpacity 
-        style={[styles.submitButton, isUploading && styles.submitButtonDisabled]}
-        onPress={() => {
-          if (properFencingValue === null) {
-            Alert.alert('Error', 'Please confirm proper fencing status first');
-            return;
-          }
-          if (properFencingValue && imageUri.length === 0) {
-            Alert.alert('Error', 'Please take a photo for proper fencing');
-            return;
-          }
-          handleSubmit(properFencingValue);
-        }}
-        disabled={isUploading}
-      >
-        <Text style={styles.submitButtonText}>
-          {isUploading ? 'Uploading...' : 'Submit'}
-        </Text>
-      </TouchableOpacity>
-    </View>
+          <View 
+            key={param.id} 
+            style={[
+              styles.parameterCard,
+              isComplete && styles.completedCard,
+              activeParameter === param.id && styles.activeCard
+            ]}
+          >
+
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Warehousechecklist')}>
+                      <Icon name="arrow-back" size={24} color="#fff" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Inspection Report</Text>
+                  </View>
+
+            <View style={styles.cardHeader}>
+              <Text style={styles.parameterTitle}>{param.description}</Text>
+              <Text style={getStatusIndicatorStyle(value)}>
+                {getStatusText(value)}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleParameterClick(param.id)}
+            >
+              <Text style={styles.actionButtonText}>
+                {value === null ? 'Set Status' : 'Change Status'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* {value === true && (
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => openGallery(param.id)}
+              >
+                <Text style={styles.secondaryButtonText}>Choose from Gallery</Text>
+              </TouchableOpacity>
+            )}
+
+            {images.length > 0 && (
+              <View style={styles.imageSection}>
+                <Text style={styles.sectionTitle}>Captured Photo</Text>
+                <Image 
+                  source={{ uri: images[0].uri }}
+                  style={styles.imagePreview}
+                />
+              </View>
+            )} */}
+
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                (!isComplete || isUploading) && styles.submitButtonDisabled
+              ]}
+              onPress={() => handleSubmit(param.id)}
+              disabled={!isComplete || isUploading}
+            >
+              <Text style={styles.submitButtonText}>
+                {isUploading ? (
+                  <>
+                    <Text style={styles.loadingDot}>•</Text>
+                    <Text style={styles.loadingDot}>•</Text>
+                    <Text style={styles.loadingDot}>•</Text>
+                  </>
+                ) : 'Submit Inspection'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+      })}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f7fa',
+    paddingTop : 60
+  },
+  contentContainer: {
+    padding: 16,
+  
+  },
+  header: {
+    padding: 24,
+    paddingTop: 40,
+    paddingBottom: 30,
+    backgroundColor: '#F79B00',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+    flexDirection: 'row', // row-wise layout
+    alignItems: 'center'
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: 'Poppins-Medium',
+    color: 'white',
+    paddingLeft: 16,
+
+  },
+
+
+  parameterCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
     padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#e9ecef',
   },
-  fencingContainer: {
-    borderWidth: 1,
-    borderColor: '#000',
-    padding: 15,
-    borderRadius: 5,
-    marginBottom: 10,
+  completedCard: {
+    borderLeftColor: '#4caf50',
   },
-  fencingText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  activeCard: {
+    borderLeftColor: '#38a169',
   },
-  statusText: {
-    fontSize: 14,
-    marginTop: 5,
-    color: '#666',
-  },
-  imagePreviewContainer: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 16,
   },
-  previewText: {
+  parameterTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2d3748',
+    flex: 1,
+  },
+  statusIndicator: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     fontSize: 14,
-    color: '#333',
-    marginBottom: 10,
+    fontWeight: '600',
+    overflow: 'hidden',
   },
-  previewImage: {
+  statusNotSet: {
+    backgroundColor: '#fff3bf',
+    color: '#e67700',
+  },
+  statusYes: {
+    backgroundColor: '#ebfbee',
+    color: '#2b8a3e',
+  },
+  statusNo: {
+    backgroundColor: '#ffecf0',
+    color: '#c92a2a',
+  },
+  actionButton: {
+    backgroundColor: '#f2b54e',
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  actionButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  secondaryButton: {
+    backgroundColor: '#e2e8f0',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  secondaryButtonText: {
+    color: '#4a5568',
+    fontWeight: '500',
+    fontSize: 15,
+  },
+  imageSection: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    color: '#4a5568',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  imagePreview: {
     width: '100%',
     height: 200,
-    borderRadius: 5,
+    borderRadius: 8,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 5,
+    backgroundColor: '#38a169',
+    padding: 12,
+    borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   submitButtonDisabled: {
-    backgroundColor: '#cccccc',
+    backgroundColor: '#a0aec0',
+    opacity: 0.7,
   },
   submitButtonText: {
     color: 'white',
+    fontWeight: '600',
     fontSize: 16,
-    fontWeight: 'bold',
+  },
+  loadingDot: {
+    fontSize: 20,
+    marginHorizontal: 2,
+    color: 'white',
   },
 });
 

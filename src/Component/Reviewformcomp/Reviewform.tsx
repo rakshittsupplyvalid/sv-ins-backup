@@ -1,12 +1,19 @@
 import React, { useState, useRef, useEffect, use } from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Image, ActivityIndicator, FlatList, Button, Linking, Alert } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
+
 import CommonPicker from '../../CommonCompoent/CommonPicker';
+
 import useForm from '../../Common/UseForm';
-import { launchCamera, ImagePickerResponse } from 'react-native-image-picker';
+
+import { launchCamera} from 'react-native-image-picker';
+
 import * as Location from 'expo-location';
+
 import ViewShot from 'react-native-view-shot';
+
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
 import { PermissionsAndroid  ,   Dimensions } from 'react-native';
 import apiClient from '../../service/api/apiInterceptors';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -186,7 +193,7 @@ const ReviewForm = () => {
     const url = `/api/group?VendorType=FPC&VendorType=FPO&FederationId=${federationId}`;
     apiClient.get(url).then((res) => {
       if (res?.data) {
-        console.log("fpo fpc Data:", res.data);
+        // console.log("fpo fpc Data:", res.data);
         updateState({
           fielddata: {
             ...state.fielddata,
@@ -228,7 +235,7 @@ const ReviewForm = () => {
     apiClient.get(url)
       .then((res) => {
         if (res?.data) {
-          console.log("✅ StorageById API response:", res.data);
+          // console.log("✅ StorageById API response:", res.data);
 
           updateState({
             fielddata: {
@@ -542,6 +549,9 @@ const ReviewForm = () => {
       }
 
 
+      
+
+
       console.log('--- Form Data Being Submitted ---');
       console.log('Text Fields:');
       console.log('NoOfFarmers:', state.form.Farmers);
@@ -567,7 +577,7 @@ const ReviewForm = () => {
       });
 
 
-      const url = `/api/InspectionReport?location=${state.form.option3}`;
+      const url = `/api//mobile?location=${state.form.option3}`;
       console.log('\nFinal Request URL:', url);
 
 

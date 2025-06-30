@@ -14,7 +14,7 @@ import {
   TextInput,
   Alert,
   Platform,
-    
+
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
@@ -44,8 +44,8 @@ import * as FileSystem from 'expo-file-system';
 type RouteParams = {
   params: {
     id: string;
-    locationName : string;
-    vendorName : string;
+    locationName: string;
+    vendorName: string;
 
   };
 };
@@ -55,36 +55,36 @@ const { width } = Dimensions.get('window');
 const InspectionListDetails = () => {
   const navigation = useNavigation<DrawerNavigationProp<DrawerParamList>>();
 
- 
+
   useDisableBackHandler(true);
   const route = useRoute<RouteProp<RouteParams, 'params'>>();
-  const { id ,  locationName ,  vendorName } = route.params;
- 
+  const { id, locationName, vendorName } = route.params;
+
 
 
 
   const [inspectionData, setInspectionData] = useState<any>(null);
-    const [comment, setComment] = useState('');
+  const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
- const [selectedChawlCode, setSelectedChawlCode] = useState('');
- const [chawlType , setChawltype] = useState('');
-const [editForm, setEditForm] = useState({
-  length: '',
-  breadth: '',
-  height: '',
+  const [selectedChawlCode, setSelectedChawlCode] = useState('');
+  const [chawlType, setChawltype] = useState('');
+  const [editForm, setEditForm] = useState({
+    length: '',
+    breadth: '',
+    height: '',
 
-  
-});
+
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchInspectionDetails = async () => {
       try {
-        const response = await apiClient.get(`/api/InspectionReport/${id}`);
+        const response = await apiClient.get(`/api/mobile/InspectionReport/${id}`);
         setInspectionData(response.data);
-        console.log('id response' , response.data);
+        console.log('id response', response.data);
         console.log('Inspection Data:', response.data);
       } catch (error) {
         console.error('Error fetching inspection details:', error);
@@ -98,421 +98,421 @@ const [editForm, setEditForm] = useState({
 
 
 
-const getBase64Logo = async () => {
-  const asset = Asset.fromModule(require('../../../assets/logo.png'));
-  await asset.downloadAsync(); // Ensure it's loaded
-  const base64 = await FileSystem.readAsStringAsync(asset.localUri!, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-  return `data:image/png;base64,${base64}`;
-};
+  const getBase64Logo = async () => {
+    const asset = Asset.fromModule(require('../../../assets/logo.png'));
+    await asset.downloadAsync(); // Ensure it's loaded
+    const base64 = await FileSystem.readAsStringAsync(asset.localUri!, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return `data:image/png;base64,${base64}`;
+  };
 
 
 
-// const generatePDF = async () => {
+  // const generatePDF = async () => {
 
-//    const formattedDate = new Date(inspectionData.createdOn).toLocaleString('en-IN', {
-//    day: 'numeric',
-//      month: 'long',
-//      year: 'numeric',
-//      hour: '2-digit',
-//      minute: '2-digit'
-//    });
+  //    const formattedDate = new Date(inspectionData.createdOn).toLocaleString('en-IN', {
+  //    day: 'numeric',
+  //      month: 'long',
+  //      year: 'numeric',
+  //      hour: '2-digit',
+  //      minute: '2-digit'
+  //    });
 
-//   if (!inspectionData) {
-//     Alert.alert('Error', 'No inspection data available');
-//     return;
-//   }
+  //   if (!inspectionData) {
+  //     Alert.alert('Error', 'No inspection data available');
+  //     return;
+  //   }
 
-//   try {
-//     // Show loading indicator
-//     Alert.alert('Generating PDF', 'Please wait...');
+  //   try {
+  //     // Show loading indicator
+  //     Alert.alert('Generating PDF', 'Please wait...');
 
-//     // Generate the PDF (your existing code)
+  //     // Generate the PDF (your existing code)
 
-//      const htmlContent = `
-//     <html>
-//       <head>
-//         <style>
-//           @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-          
-//           body {
-//             font-family: 'Roboto', sans-serif;
-//             color: #333;
-//             line-height: 1.5;
-//             padding: 0;
-//             margin: 0;
-//             background-color: #f9f9f9;
-//           }
-//           .container {
-//             max-width: 800px;
-//             margin: 0 auto;
-//             background: white;
-//             box-shadow: 0 0 20px rgba(0,0,0,0.05);
-//           }
-//           .letterhead {
-//             background: #2c3e50;
-//             color: white;
-//             padding: 30px 40px;
-//             display: flex;
-//             justify-content: space-between;
-//             align-items: center;
-//           }
-//           .company-info {
-//             line-height: 1.4;
-//           }
-//           .company-name {
-//             font-size: 22px;
-//             font-weight: 700;
-//             margin: 0 0 5px 0;
-//           }
-//           .company-tagline {
-//             font-size: 13px;
-//             opacity: 0.8;
-//             margin: 0;
-//           }
-//           .report-title {
-//             text-align: right;
-//           }
-//           .report-main-title {
-//             font-size: 28px;
-//             margin: 0;
-//             font-weight: 300;
-//           }
-//           .report-subtitle {
-//             font-size: 14px;
-//             margin: 5px 0 0 0;
-//             font-weight: 400;
-//           }
-//           .document-body {
-//             padding: 40px;
-//           }
-//           .section {
-//             margin-bottom: 30px;
-//           }
-//           .section-header {
-//             border-bottom: 2px solid #eaeaea;
-//             padding-bottom: 8px;
-//             margin-bottom: 20px;
-//             display: flex;
-//             justify-content: space-between;
-//             align-items: flex-end;
-//           }
-//           .section-title {
-//             font-size: 18px;
-//             font-weight: 500;
-//             color: #2c3e50;
-//             margin: 0;
-//           }
-//           .section-icon {
-//             color: #7f8c8d;
-//             font-size: 14px;
-//           }
-//           .two-column {
-//             display: flex;
-//             flex-wrap: wrap;
-//             gap: 20px;
-//           }
-//           .column {
-//             flex: 1;
-//             min-width: 250px;
-//           }
-//           .info-item {
-//             margin-bottom: 15px;
-//           }
-//           .info-label {
-//             font-size: 13px;
-//             color: #7f8c8d;
-//             margin-bottom: 3px;
-//             font-weight: 500;
-//           }
-//           .info-value {
-//             font-size: 15px;
-//             font-weight: 400;
-//           }
-//           .status {
-//             display: inline-block;
-//             padding: 3px 10px;
-//             border-radius: 4px;
-//             font-size: 12px;
-//             font-weight: 500;
-//             background-color: ${inspectionData.isActive ? '#27ae60' : '#e74c3c'};
-//             color: white;
-//           }
-//           .comments-box {
-//             background: #f8f9fa;
-//             border-left: 4px solid #bdc3c7;
-//             padding: 15px;
-//             font-size: 14px;
-//             line-height: 1.6;
-//           }
-//           .image-gallery {
-//             display: grid;
-//             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-//             gap: 15px;
-//             margin-top: 15px;
-//           }
-//           .image-container {
-//             border: 1px solid #eaeaea;
-//             padding: 5px;
-//             border-radius: 4px;
-//           }
-//           .footer {
-//             text-align: center;
-//             padding: 20px;
-//             font-size: 11px;
-//             color: #7f8c8d;
-//             border-top: 1px solid #eaeaea;
-//             background: #f8f9fa;
-//           }
-//           .signature-area {
-//             margin-top: 50px;
-//             display: flex;
-//             justify-content: space-between;
-//           }
-//           .signature-line {
-//             width: 200px;
-//             border-top: 1px solid #bdc3c7;
-//             margin-top: 40px;
-//             text-align: center;
-//             padding-top: 5px;
-//             font-size: 12px;
-//           }
-//         </style>
-//       </head>
-//       <body>
-//         <div class="container">
-//           <!-- Letterhead -->
-//           <div class="letterhead">
-//             <div class="company-info">
-//               <div class="company-name">Supply Valid</div>
-//               <div class="company-tagline">Quality Inspection & Procurement Solutions</div>
-//             </div>
-//             <div class="report-title">
-//               <h1 class="report-main-title">INSPECTION REPORT</h1>
-//               <p class="report-subtitle">Document ID: ${inspectionData.id || 'N/A'}</p>
-//             </div>
-//           </div>
+  //      const htmlContent = `
+  //     <html>
+  //       <head>
+  //         <style>
+  //           @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
-//           <!-- Document Body -->
-//           <div class="document-body">
-//             <!-- Metadata Section -->
-//             <div class="section">
-//               <div class="two-column">
-//                 <div class="column">
-//                   <div class="info-item">
-//                     <div class="info-label">LOCATION</div>
-//                     <div class="info-value">${locationName || 'N/A'}</div>
-//                   </div>
-//                   <div class="info-item">
-//                     <div class="info-label">VENDOR</div>
-//                     <div class="info-value">${vendorName || 'N/A'}</div>
-//                   </div>
-//                 </div>
-//                 <div class="column">
-//                   <div class="info-item">
-//                     <div class="info-label">REPORT DATE</div>
-//                     <div class="info-value">${formattedDate}</div>
-//                   </div>
-//                   <div class="info-item">
-//                     <div class="info-label">STATUS</div>
-//                     <div class="info-value"><span class="status">${inspectionData.isActive ? 'ACTIVE' : 'INACTIVE'}</span></div>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
+  //           body {
+  //             font-family: 'Roboto', sans-serif;
+  //             color: #333;
+  //             line-height: 1.5;
+  //             padding: 0;
+  //             margin: 0;
+  //             background-color: #f9f9f9;
+  //           }
+  //           .container {
+  //             max-width: 800px;
+  //             margin: 0 auto;
+  //             background: white;
+  //             box-shadow: 0 0 20px rgba(0,0,0,0.05);
+  //           }
+  //           .letterhead {
+  //             background: #2c3e50;
+  //             color: white;
+  //             padding: 30px 40px;
+  //             display: flex;
+  //             justify-content: space-between;
+  //             align-items: center;
+  //           }
+  //           .company-info {
+  //             line-height: 1.4;
+  //           }
+  //           .company-name {
+  //             font-size: 22px;
+  //             font-weight: 700;
+  //             margin: 0 0 5px 0;
+  //           }
+  //           .company-tagline {
+  //             font-size: 13px;
+  //             opacity: 0.8;
+  //             margin: 0;
+  //           }
+  //           .report-title {
+  //             text-align: right;
+  //           }
+  //           .report-main-title {
+  //             font-size: 28px;
+  //             margin: 0;
+  //             font-weight: 300;
+  //           }
+  //           .report-subtitle {
+  //             font-size: 14px;
+  //             margin: 5px 0 0 0;
+  //             font-weight: 400;
+  //           }
+  //           .document-body {
+  //             padding: 40px;
+  //           }
+  //           .section {
+  //             margin-bottom: 30px;
+  //           }
+  //           .section-header {
+  //             border-bottom: 2px solid #eaeaea;
+  //             padding-bottom: 8px;
+  //             margin-bottom: 20px;
+  //             display: flex;
+  //             justify-content: space-between;
+  //             align-items: flex-end;
+  //           }
+  //           .section-title {
+  //             font-size: 18px;
+  //             font-weight: 500;
+  //             color: #2c3e50;
+  //             margin: 0;
+  //           }
+  //           .section-icon {
+  //             color: #7f8c8d;
+  //             font-size: 14px;
+  //           }
+  //           .two-column {
+  //             display: flex;
+  //             flex-wrap: wrap;
+  //             gap: 20px;
+  //           }
+  //           .column {
+  //             flex: 1;
+  //             min-width: 250px;
+  //           }
+  //           .info-item {
+  //             margin-bottom: 15px;
+  //           }
+  //           .info-label {
+  //             font-size: 13px;
+  //             color: #7f8c8d;
+  //             margin-bottom: 3px;
+  //             font-weight: 500;
+  //           }
+  //           .info-value {
+  //             font-size: 15px;
+  //             font-weight: 400;
+  //           }
+  //           .status {
+  //             display: inline-block;
+  //             padding: 3px 10px;
+  //             border-radius: 4px;
+  //             font-size: 12px;
+  //             font-weight: 500;
+  //             background-color: ${inspectionData.isActive ? '#27ae60' : '#e74c3c'};
+  //             color: white;
+  //           }
+  //           .comments-box {
+  //             background: #f8f9fa;
+  //             border-left: 4px solid #bdc3c7;
+  //             padding: 15px;
+  //             font-size: 14px;
+  //             line-height: 1.6;
+  //           }
+  //           .image-gallery {
+  //             display: grid;
+  //             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  //             gap: 15px;
+  //             margin-top: 15px;
+  //           }
+  //           .image-container {
+  //             border: 1px solid #eaeaea;
+  //             padding: 5px;
+  //             border-radius: 4px;
+  //           }
+  //           .footer {
+  //             text-align: center;
+  //             padding: 20px;
+  //             font-size: 11px;
+  //             color: #7f8c8d;
+  //             border-top: 1px solid #eaeaea;
+  //             background: #f8f9fa;
+  //           }
+  //           .signature-area {
+  //             margin-top: 50px;
+  //             display: flex;
+  //             justify-content: space-between;
+  //           }
+  //           .signature-line {
+  //             width: 200px;
+  //             border-top: 1px solid #bdc3c7;
+  //             margin-top: 40px;
+  //             text-align: center;
+  //             padding-top: 5px;
+  //             font-size: 12px;
+  //           }
+  //         </style>
+  //       </head>
+  //       <body>
+  //         <div class="container">
+  //           <!-- Letterhead -->
+  //           <div class="letterhead">
+  //             <div class="company-info">
+  //               <div class="company-name">Supply Valid</div>
+  //               <div class="company-tagline">Quality Inspection & Procurement Solutions</div>
+  //             </div>
+  //             <div class="report-title">
+  //               <h1 class="report-main-title">INSPECTION REPORT</h1>
+  //               <p class="report-subtitle">Document ID: ${inspectionData.id || 'N/A'}</p>
+  //             </div>
+  //           </div>
 
-//             <!-- Procurement Data -->
-//             <div class="section">
-//               <div class="section-header">
-//                 <h2 class="section-title">PROCUREMENT DETAILS</h2>
-//                 <span class="section-icon">Section 1 of 4</span>
-//               </div>
-//               <div class="two-column">
-//                 <div class="column">
-//                   <div class="info-item">
-//                     <div class="info-label">NUMBER OF FARMERS</div>
-//                     <div class="info-value">${inspectionData.noOfFarmers || 'N/A'}</div>
-//                   </div>
-//                   <div class="info-item">
-//                     <div class="info-label">TOTAL PHYSICAL QUANTITY</div>
-//                     <div class="info-value">${inspectionData.totalPhysicalQuantity || 'N/A'}</div>
-//                   </div>
-//                 </div>
-//                 <div class="column">
-//                   <div class="info-item">
-//                     <div class="info-label">TOTAL PROCURED QUANTITY</div>
-//                     <div class="info-value">${inspectionData.totalProcuerQuantity || 'N/A'}</div>
-//                   </div>
-//                   <div class="info-item">
-//                     <div class="info-label">WEIGHMENT SLIPS</div>
-//                     <div class="info-value">${inspectionData.noOfWeighmentSlip || 'N/A'}</div>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
+  //           <!-- Document Body -->
+  //           <div class="document-body">
+  //             <!-- Metadata Section -->
+  //             <div class="section">
+  //               <div class="two-column">
+  //                 <div class="column">
+  //                   <div class="info-item">
+  //                     <div class="info-label">LOCATION</div>
+  //                     <div class="info-value">${locationName || 'N/A'}</div>
+  //                   </div>
+  //                   <div class="info-item">
+  //                     <div class="info-label">VENDOR</div>
+  //                     <div class="info-value">${vendorName || 'N/A'}</div>
+  //                   </div>
+  //                 </div>
+  //                 <div class="column">
+  //                   <div class="info-item">
+  //                     <div class="info-label">REPORT DATE</div>
+  //                     <div class="info-value">${formattedDate}</div>
+  //                   </div>
+  //                   <div class="info-item">
+  //                     <div class="info-label">STATUS</div>
+  //                     <div class="info-value"><span class="status">${inspectionData.isActive ? 'ACTIVE' : 'INACTIVE'}</span></div>
+  //                   </div>
+  //                 </div>
+  //               </div>
+  //             </div>
 
-//             <!-- Quality Assessment -->
-//             <div class="section">
-//               <div class="section-header">
-//                 <h2 class="section-title">QUALITY ASSESSMENT</h2>
-//                 <span class="section-icon">Section 2 of 4</span>
-//               </div>
-//               <div class="two-column">
-//                 <div class="column">
-//                   <div class="info-item">
-//                     <div class="info-label">STOCK QUALITY RATING</div>
-//                     <div class="info-value">${inspectionData.qualityOfStock || 'N/A'}</div>
-//                   </div>
-//                 </div>
-//                 <div class="column">
-//                   <div class="info-item">
-//                     <div class="info-label">STAFF BEHAVIOR RATING</div>
-//                     <div class="info-value">${inspectionData.staffBehavior || 'N/A'}</div>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
+  //             <!-- Procurement Data -->
+  //             <div class="section">
+  //               <div class="section-header">
+  //                 <h2 class="section-title">PROCUREMENT DETAILS</h2>
+  //                 <span class="section-icon">Section 1 of 4</span>
+  //               </div>
+  //               <div class="two-column">
+  //                 <div class="column">
+  //                   <div class="info-item">
+  //                     <div class="info-label">NUMBER OF FARMERS</div>
+  //                     <div class="info-value">${inspectionData.noOfFarmers || 'N/A'}</div>
+  //                   </div>
+  //                   <div class="info-item">
+  //                     <div class="info-label">TOTAL PHYSICAL QUANTITY</div>
+  //                     <div class="info-value">${inspectionData.totalPhysicalQuantity || 'N/A'}</div>
+  //                   </div>
+  //                 </div>
+  //                 <div class="column">
+  //                   <div class="info-item">
+  //                     <div class="info-label">TOTAL PROCURED QUANTITY</div>
+  //                     <div class="info-value">${inspectionData.totalProcuerQuantity || 'N/A'}</div>
+  //                   </div>
+  //                   <div class="info-item">
+  //                     <div class="info-label">WEIGHMENT SLIPS</div>
+  //                     <div class="info-value">${inspectionData.noOfWeighmentSlip || 'N/A'}</div>
+  //                   </div>
+  //                 </div>
+  //               </div>
+  //             </div>
 
-//             <!-- Comments -->
-//             <div class="section">
-//               <div class="section-header">
-//                 <h2 class="section-title">INSPECTOR COMMENTS</h2>
-//                 <span class="section-icon">Section 3 of 4</span>
-//               </div>
-//               <div class="comments-box">
-//                 ${inspectionData.additionalComments || 'No additional comments were recorded for this inspection.'}
-//               </div>
-//             </div>
+  //             <!-- Quality Assessment -->
+  //             <div class="section">
+  //               <div class="section-header">
+  //                 <h2 class="section-title">QUALITY ASSESSMENT</h2>
+  //                 <span class="section-icon">Section 2 of 4</span>
+  //               </div>
+  //               <div class="two-column">
+  //                 <div class="column">
+  //                   <div class="info-item">
+  //                     <div class="info-label">STOCK QUALITY RATING</div>
+  //                     <div class="info-value">${inspectionData.qualityOfStock || 'N/A'}</div>
+  //                   </div>
+  //                 </div>
+  //                 <div class="column">
+  //                   <div class="info-item">
+  //                     <div class="info-label">STAFF BEHAVIOR RATING</div>
+  //                     <div class="info-value">${inspectionData.staffBehavior || 'N/A'}</div>
+  //                   </div>
+  //                 </div>
+  //               </div>
+  //             </div>
 
-//             <!-- Attachments -->
-//             ${inspectionData.files?.length ? `
-//             <div class="section">
-//               <div class="section-header">
-//                 <h2 class="section-title">ATTACHMENTS</h2>
-//                 <span class="section-icon">Section 4 of 4</span>
-//               </div>
-//               <div class="image-gallery">
-//                 ${inspectionData.files.map(
-//                   (file: string) => `
-//                   <div class="image-container">
-//                     <img src="https://dev-backend-2024.epravaha.com${file}" width="100%" style="display: block;" />
-//                   </div>
-//                   `
-//                 ).join('')}
-//               </div>
-//             </div>
-//             ` : ''}
+  //             <!-- Comments -->
+  //             <div class="section">
+  //               <div class="section-header">
+  //                 <h2 class="section-title">INSPECTOR COMMENTS</h2>
+  //                 <span class="section-icon">Section 3 of 4</span>
+  //               </div>
+  //               <div class="comments-box">
+  //                 ${inspectionData.additionalComments || 'No additional comments were recorded for this inspection.'}
+  //               </div>
+  //             </div>
 
-//             <!-- Signature Area -->
-//             <div class="signature-area">
-//               <div>
-//                 <div class="signature-line">Inspector's Signature</div>
-//               </div>
-//               <div>
-//                 <div class="signature-line">Authorized Signatory</div>
-//               </div>
-//             </div>
-//           </div>
+  //             <!-- Attachments -->
+  //             ${inspectionData.files?.length ? `
+  //             <div class="section">
+  //               <div class="section-header">
+  //                 <h2 class="section-title">ATTACHMENTS</h2>
+  //                 <span class="section-icon">Section 4 of 4</span>
+  //               </div>
+  //               <div class="image-gallery">
+  //                 ${inspectionData.files.map(
+  //                   (file: string) => `
+  //                   <div class="image-container">
+  //                     <img src="https://dev-backend-2024.epravaha.com${file}" width="100%" style="display: block;" />
+  //                   </div>
+  //                   `
+  //                 ).join('')}
+  //               </div>
+  //             </div>
+  //             ` : ''}
 
-//           <!-- Footer -->
-//           <div class="footer">
-//             <p>This document is computer generated and does not require a physical signature • ${new Date().toLocaleDateString()}</p>
-//             <p>© ${new Date().getFullYear()} Agriculture Produce Network. All Rights Reserved.</p>
-//           </div>
-//         </div>
-//       </body>
-//     </html>
-//   `;
+  //             <!-- Signature Area -->
+  //             <div class="signature-area">
+  //               <div>
+  //                 <div class="signature-line">Inspector's Signature</div>
+  //               </div>
+  //               <div>
+  //                 <div class="signature-line">Authorized Signatory</div>
+  //               </div>
+  //             </div>
+  //           </div>
 
-//     const { uri } = await Print.printToFileAsync({
-//       html: htmlContent,
-//       base64: false,
-//       width: 794,
-//       height: 1123,
-//       margins: {
-//         top: 40,
-//         bottom: 40,
-//         left: 40,
-//         right: 40
-//       }
-//     });
+  //           <!-- Footer -->
+  //           <div class="footer">
+  //             <p>This document is computer generated and does not require a physical signature • ${new Date().toLocaleDateString()}</p>
+  //             <p>© ${new Date().getFullYear()} Agriculture Produce Network. All Rights Reserved.</p>
+  //           </div>
+  //         </div>
+  //       </body>
+  //     </html>
+  //   `;
 
-//     // Define PDF filename
-//     const pdfName = `Inspection_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+  //     const { uri } = await Print.printToFileAsync({
+  //       html: htmlContent,
+  //       base64: false,
+  //       width: 794,
+  //       height: 1123,
+  //       margins: {
+  //         top: 40,
+  //         bottom: 40,
+  //         left: 40,
+  //         right: 40
+  //       }
+  //     });
 
-//     if (Platform.OS === 'android') {
-//       // For Android - use DownloadManager for automatic download
-//       try {
-//         // Create a download request
-//         const downloadResumable = FileSystem.createDownloadResumable(
-//           uri,
-//           FileSystem.documentDirectory + pdfName,
-//           {},
-//           (downloadProgress) => {
-//             const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
-//             console.log(`Download progress: ${progress * 100}%`);
-//           }
-//         );
+  //     // Define PDF filename
+  //     const pdfName = `Inspection_Report_${new Date().toISOString().split('T')[0]}.pdf`;
 
-//         const downloadResult = await downloadResumable.downloadAsync();
-//         if (!downloadResult || !downloadResult.uri) {
-//           throw new Error('Download failed or returned undefined');
-//         }
-//         // Use Android's DownloadManager to make it appear in notifications
-//         const downloadUri = await FileSystem.getContentUriAsync(downloadResult.uri);
-//         await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-//           data: downloadUri,
-//           type: 'application/pdf',
-//           flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
-//         });
+  //     if (Platform.OS === 'android') {
+  //       // For Android - use DownloadManager for automatic download
+  //       try {
+  //         // Create a download request
+  //         const downloadResumable = FileSystem.createDownloadResumable(
+  //           uri,
+  //           FileSystem.documentDirectory + pdfName,
+  //           {},
+  //           (downloadProgress) => {
+  //             const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+  //             console.log(`Download progress: ${progress * 100}%`);
+  //           }
+  //         );
 
-//         Alert.alert('Success', 'PDF download started in background');
+  //         const downloadResult = await downloadResumable.downloadAsync();
+  //         if (!downloadResult || !downloadResult.uri) {
+  //           throw new Error('Download failed or returned undefined');
+  //         }
+  //         // Use Android's DownloadManager to make it appear in notifications
+  //         const downloadUri = await FileSystem.getContentUriAsync(downloadResult.uri);
+  //         await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+  //           data: downloadUri,
+  //           type: 'application/pdf',
+  //           flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
+  //         });
 
-//       } catch (androidError) {
-//         console.warn('Android DownloadManager failed:', androidError);
-//         // Fallback to direct share
-//         await Sharing.shareAsync(uri, {
-//           mimeType: 'application/pdf',
-//           dialogTitle: 'Save Inspection Report',
-//           UTI: 'com.adobe.pdf'
-//         });
-//       }
-//     } else {
-//       // For iOS - save to temporary location and share
-//       const newPath = FileSystem.cacheDirectory + pdfName;
-//       await FileSystem.copyAsync({
-//         from: uri,
-//         to: newPath
-//       });
+  //         Alert.alert('Success', 'PDF download started in background');
 
-//       // Automatically open share dialog
-//       await Sharing.shareAsync(newPath, {
-//         mimeType: 'application/pdf',
-//         dialogTitle: 'Save Inspection Report',
-//         UTI: 'com.adobe.pdf'
-//       });
-//     }
+  //       } catch (androidError) {
+  //         console.warn('Android DownloadManager failed:', androidError);
+  //         // Fallback to direct share
+  //         await Sharing.shareAsync(uri, {
+  //           mimeType: 'application/pdf',
+  //           dialogTitle: 'Save Inspection Report',
+  //           UTI: 'com.adobe.pdf'
+  //         });
+  //       }
+  //     } else {
+  //       // For iOS - save to temporary location and share
+  //       const newPath = FileSystem.cacheDirectory + pdfName;
+  //       await FileSystem.copyAsync({
+  //         from: uri,
+  //         to: newPath
+  //       });
 
-//     // Clean up temporary file
-//     await FileSystem.deleteAsync(uri, { idempotent: true });
+  //       // Automatically open share dialog
+  //       await Sharing.shareAsync(newPath, {
+  //         mimeType: 'application/pdf',
+  //         dialogTitle: 'Save Inspection Report',
+  //         UTI: 'com.adobe.pdf'
+  //       });
+  //     }
 
-//   } catch (error) {
-//     console.error('PDF download failed:', error);
-//     let errorMessage = 'Unknown error';
-//     if (error instanceof Error) {
-//       errorMessage = error.message;
-//     } else if (typeof error === 'string') {
-//       errorMessage = error;
-//     }
-//     Alert.alert('Error', `Failed to download PDF: ${errorMessage}`);
-//   }
-// };
+  //     // Clean up temporary file
+  //     await FileSystem.deleteAsync(uri, { idempotent: true });
 
-
+  //   } catch (error) {
+  //     console.error('PDF download failed:', error);
+  //     let errorMessage = 'Unknown error';
+  //     if (error instanceof Error) {
+  //       errorMessage = error.message;
+  //     } else if (typeof error === 'string') {
+  //       errorMessage = error;
+  //     }
+  //     Alert.alert('Error', `Failed to download PDF: ${errorMessage}`);
+  //   }
+  // };
 
 
- const generatePDF = async () => {
+
+
+  const generatePDF = async () => {
     if (!inspectionData) {
       Alert.alert('Error', 'No inspection data available');
       return;
@@ -776,7 +776,7 @@ const getBase64Logo = async () => {
         try {
           const downloadsDir = FileSystem.StorageAccessFramework.getUriForDirectoryInRoot('Downloads');
           const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync(downloadsDir);
-          
+
           if (permissions.granted) {
             const pdfContent = await FileSystem.readAsStringAsync(uri, {
               encoding: FileSystem.EncodingType.Base64,
@@ -793,7 +793,7 @@ const getBase64Logo = async () => {
             });
 
             Alert.alert(
-              'Success', 
+              'Success',
               'PDF downloaded to your Downloads folder',
               [
                 { text: 'Open', onPress: () => Sharing.shareAsync(newUri) },
@@ -819,16 +819,16 @@ const getBase64Logo = async () => {
         });
 
         Alert.alert(
-          'Success', 
+          'Success',
           'PDF ready to save',
           [
-            { 
-              text: 'Save to Files', 
+            {
+              text: 'Save to Files',
               onPress: () => Sharing.shareAsync(newPath, {
                 mimeType: 'application/pdf',
                 dialogTitle: 'Save Inspection Report',
                 UTI: 'com.adobe.pdf'
-              }) 
+              })
             },
             { text: 'OK' }
           ]
@@ -858,31 +858,31 @@ const getBase64Logo = async () => {
     Linking.openURL(`https://dev-backend-2025.epravaha.com${url}`);
   };
 
-  
-
-const openEditModal = (chawl: any) => {
-  setSelectedChawlCode(chawl.code); // 🔁 Save dynamic code
-  setEditForm({
-    length: chawl.length.toString(),
-    breadth: chawl.breadth.toString(),
-    height: chawl.height.toString(),
-   
-  });
-  setEditModalVisible(true);
-};
-
-const closeEditModal = () => {
-  setEditModalVisible(false);
-  setSelectedChawlCode('');
-  setEditForm({
-    length: '',
-    breadth: '',
-    height: '',
-  });
-};
 
 
- 
+  const openEditModal = (chawl: any) => {
+    setSelectedChawlCode(chawl.code); // 🔁 Save dynamic code
+    setEditForm({
+      length: chawl.length.toString(),
+      breadth: chawl.breadth.toString(),
+      height: chawl.height.toString(),
+
+    });
+    setEditModalVisible(true);
+  };
+
+  const closeEditModal = () => {
+    setEditModalVisible(false);
+    setSelectedChawlCode('');
+    setEditForm({
+      length: '',
+      breadth: '',
+      height: '',
+    });
+  };
+
+
+
 
   const handleInputChange = (field: string, value: string) => {
     setEditForm(prev => ({
@@ -891,54 +891,54 @@ const closeEditModal = () => {
     }));
   };
 
- const updateChawlSize = async () => {
-  if (!selectedChawlCode) {
-    Alert.alert('Error', 'No Chawl selected');
-    return;
-  }
+  const updateChawlSize = async () => {
+    if (!selectedChawlCode) {
+      Alert.alert('Error', 'No Chawl selected');
+      return;
+    }
 
-  const formData = new FormData();
-  formData.append('ChawlType', chawlType); 
-  formData.append('id', selectedChawlCode.toString());
-  formData.append('Length', Number(editForm.length).toString());
-  formData.append('Breadth', Number(editForm.breadth).toString());
-  formData.append('Height', Number(editForm.height).toString());
-  formData.append('EditComment' ,  comment);
+    const formData = new FormData();
+    formData.append('ChawlType', chawlType);
+    formData.append('id', selectedChawlCode.toString());
+    formData.append('Length', Number(editForm.length).toString());
+    formData.append('Breadth', Number(editForm.breadth).toString());
+    formData.append('Height', Number(editForm.height).toString());
+    formData.append('EditComment', comment);
 
-  // Debug logs
-  console.log('--- FormData ---');
-  console.log('ChawlType:', 'Chawl');
-  console.log('id:', selectedChawlCode.toString());
-  console.log('Lenght:', Number(editForm.length).toString());
-  console.log('Breadth:', Number(editForm.breadth).toString());
-  console.log('Height:', Number(editForm.height).toString());
-  console.log('EditComment' ,  comment);
+    // Debug logs
+    console.log('--- FormData ---');
+    console.log('ChawlType:', 'Chawl');
+    console.log('id:', selectedChawlCode.toString());
+    console.log('Lenght:', Number(editForm.length).toString());
+    console.log('Breadth:', Number(editForm.breadth).toString());
+    console.log('Height:', Number(editForm.height).toString());
+    console.log('EditComment', comment);
 
-  const apiUrl = `/api/InspectionReport/update/${selectedChawlCode}/ChawlSize`;
+    const apiUrl = `/api/InspectionReport/update/${selectedChawlCode}/ChawlSize`;
 
-  try {
-    const response = await apiClient.put(apiUrl, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    try {
+      const response = await apiClient.put(apiUrl, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-    Alert.alert('Success', 'Chawl size updated successfully');
-    setEditForm({ length: '', breadth: '', height: '' });
-    setComment('');
-    setSelectedChawlCode('');
+      Alert.alert('Success', 'Chawl size updated successfully');
+      setEditForm({ length: '', breadth: '', height: '' });
+      setComment('');
+      setSelectedChawlCode('');
 
-    // ✅ Close modal
-    setEditModalVisible(false);
+      // ✅ Close modal
+      setEditModalVisible(false);
 
       // Refresh the inspection data
-    const refreshResponse = await apiClient.get(`/api/InspectionReport/${id}`);
-    setInspectionData(refreshResponse.data);
-  } catch (error: any) {
-    console.error('Error updating chawl:', error?.response?.data || error.message);
-    Alert.alert('Error', 'Failed to update chawl size');
-  }
-};
+      const refreshResponse = await apiClient.get(`/api/InspectionReport/${id}`);
+      setInspectionData(refreshResponse.data);
+    } catch (error: any) {
+      console.error('Error updating chawl:', error?.response?.data || error.message);
+      Alert.alert('Error', 'Failed to update chawl size');
+    }
+  };
 
 
 
@@ -946,9 +946,9 @@ const closeEditModal = () => {
 
   if (loading) {
     return (
-      
-          <ActivityIndicator size="large" color="#4e8cff" />
-         
+
+      <ActivityIndicator size="large" color="#4e8cff" />
+
     );
   }
 
@@ -966,12 +966,12 @@ const closeEditModal = () => {
   return (
     <ScrollView style={styles.container}>
       {/* Header with solid color background */}
-       <View style={styles.header}>
-  <TouchableOpacity onPress={() => navigation.navigate('InspectionList')}>
-    <Icon name="arrow-back" size={24} color="#fff" />
-  </TouchableOpacity>
-  <Text style={styles.headerTitle}>Inspection Report</Text>
-</View>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('InspectionList')}>
+          <Icon name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Inspection Report</Text>
+      </View>
 
       {/* Summary Cards */}
       <View style={styles.summaryContainer}>
@@ -995,16 +995,16 @@ const closeEditModal = () => {
       </View>
 
       {/* Inspection Details */}
-      <TouchableOpacity 
-        style={styles.sectionHeader} 
+      <TouchableOpacity
+        style={styles.sectionHeader}
         onPress={() => toggleSection('details')}
         activeOpacity={0.8}
       >
         <Text style={styles.sectionTitle}>Inspection Details</Text>
-        <Icon 
-          name={expandedSection === 'details' ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
-          size={24} 
-          color="#495057" 
+        <Icon
+          name={expandedSection === 'details' ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+          size={24}
+          color="#495057"
         />
       </TouchableOpacity>
 
@@ -1018,16 +1018,16 @@ const closeEditModal = () => {
       )}
 
       {/* Chawl Sizes */}
-      <TouchableOpacity 
-        style={styles.sectionHeader} 
+      <TouchableOpacity
+        style={styles.sectionHeader}
         onPress={() => toggleSection('chawl')}
         activeOpacity={0.8}
       >
         <Text style={styles.sectionTitle}>Chawl Sizes ({inspectionData.chawlSizes?.length || 0})</Text>
-        <Icon 
-          name={expandedSection === 'chawl' ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
-          size={24} 
-          color="#495057" 
+        <Icon
+          name={expandedSection === 'chawl' ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+          size={24}
+          color="#495057"
         />
       </TouchableOpacity>
 
@@ -1035,7 +1035,7 @@ const closeEditModal = () => {
         <View key={chawl.code} style={styles.dataCard}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Chawl {index + 1}</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => openEditModal(chawl)}
               style={styles.editButton}
             >
@@ -1055,25 +1055,25 @@ const closeEditModal = () => {
       ))}
 
       {/* Bin Sizes */}
-      <TouchableOpacity 
-        style={styles.sectionHeader} 
+      <TouchableOpacity
+        style={styles.sectionHeader}
         onPress={() => toggleSection('bin')}
         activeOpacity={0.8}
       >
         <Text style={styles.sectionTitle}>Bin Sizes ({inspectionData.binsSizes?.length || 0})</Text>
-        <Icon 
-          name={expandedSection === 'bin' ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
-          size={24} 
-          color="#495057" 
+        <Icon
+          name={expandedSection === 'bin' ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+          size={24}
+          color="#495057"
         />
       </TouchableOpacity>
 
       {expandedSection === 'bin' && inspectionData.binsSizes?.map((bin: any, index: number) => (
-        
+
         <View key={index} style={styles.dataCard}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Bin {index + 1}</Text>
-              <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => openEditModal(bin)}
               style={styles.editButton}
             >
@@ -1130,20 +1130,20 @@ const closeEditModal = () => {
 
 
 
-      <TouchableOpacity 
-  style={styles.sectionHeader} 
-  onPress={() => toggleSection('files')}
-  activeOpacity={0.8}
->
-  <Text style={styles.sectionTitle}>Attachments ({inspectionData.files?.length || 0})</Text>
-  <Icon 
-    name={expandedSection === 'files' ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
-    size={24} 
-    color="#495057" 
-  />
-</TouchableOpacity>
+      <TouchableOpacity
+        style={styles.sectionHeader}
+        onPress={() => toggleSection('files')}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.sectionTitle}>Attachments ({inspectionData.files?.length || 0})</Text>
+        <Icon
+          name={expandedSection === 'files' ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+          size={24}
+          color="#495057"
+        />
+      </TouchableOpacity>
 
-{/* {expandedSection === 'files' && (
+      {/* {expandedSection === 'files' && (
   <View style={styles.imagesContainer}>
     {inspectionData.files?.map((file: string, index: number) => (
       <Image
@@ -1157,23 +1157,23 @@ const closeEditModal = () => {
 )} */}
 
 
-{expandedSection === 'files' && (
-  <View style={styles.imagesContainer}>
-    {inspectionData.files?.map((file: string, index: number) => (
-      <TouchableOpacity 
-        key={index} 
-        onPress={() => console.log("Image clicked")} // Optional: Add action later
-        activeOpacity={0.7}
-      >
-        <Image
-          source={{ uri: `https://dev-backend-2025.epravaha.com${file}` }}
-          style={styles.image}
-          resizeMode="cover"
-        />
-      </TouchableOpacity>
-    ))}
-  </View>
-)}
+      {expandedSection === 'files' && (
+        <View style={styles.imagesContainer}>
+          {inspectionData.files?.map((file: string, index: number) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => console.log("Image clicked")} // Optional: Add action later
+              activeOpacity={0.7}
+            >
+              <Image
+                source={{ uri: `https://dev-backend-2025.epravaha.com${file}` }}
+                style={styles.image}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* Edit Modal */}
       <Modal
@@ -1193,20 +1193,20 @@ const closeEditModal = () => {
 
             <ScrollView style={styles.modalContent}>
 
-                <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Chawl Type</Text>
-          <Picker
-            selectedValue={chawlType}
-            style={styles.dropdown}
-            onValueChange={(itemValue) => setChawltype(itemValue)}>
-            <Picker.Item label="Select Chawl Type" value="" />
-              <Picker.Item label="None" value="None" />
-            <Picker.Item label="Chawl" value="Chawl" />
-            <Picker.Item label="Bin" value="Bin" />
-          
-            {/* Add more types as needed */}
-          </Picker>
-        </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Chawl Type</Text>
+                <Picker
+                  selectedValue={chawlType}
+                  style={styles.dropdown}
+                  onValueChange={(itemValue) => setChawltype(itemValue)}>
+                  <Picker.Item label="Select Chawl Type" value="" />
+                  <Picker.Item label="None" value="None" />
+                  <Picker.Item label="Chawl" value="Chawl" />
+                  <Picker.Item label="Bin" value="Bin" />
+
+                  {/* Add more types as needed */}
+                </Picker>
+              </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Length</Text>
@@ -1249,7 +1249,7 @@ const closeEditModal = () => {
                 <TextInput
                   style={styles.input}
                   value={comment}
-        onChangeText={setComment}
+                  onChangeText={setComment}
                   placeholder="Enter Comments"
                 />
               </View>
@@ -1279,13 +1279,13 @@ const closeEditModal = () => {
         </View>
       </Modal>
 
-    <TouchableOpacity 
-  onPress={generatePDF} 
-  style={{ position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center' }}
->
-  <Text style={{ marginRight: 5, color: 'white' }}>Download </Text>
-  <Icon name="download" size={24} color="white" />
-</TouchableOpacity>
+      <TouchableOpacity
+        onPress={generatePDF}
+        style={{ position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center' }}
+      >
+        <Text style={{ marginRight: 5, color: 'white' }}>Download </Text>
+        <Icon name="download" size={24} color="white" />
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -1362,18 +1362,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 5,
-     flexDirection: 'row', // row-wise layout
-  alignItems: 'center'
+    flexDirection: 'row', // row-wise layout
+    alignItems: 'center'
   },
   headerTitle: {
     fontSize: 20,
-    fontFamily : 'Poppins-Medium',
+    fontFamily: 'Poppins-Medium',
     color: 'white',
     paddingLeft: 16,
-  
+
   },
 
- 
+
 
   summaryContainer: {
     flexDirection: 'row',
@@ -1511,16 +1511,16 @@ const styles = StyleSheet.create({
     color: '#343a40',
   },
   imagesContainer: {
- 
-  
+
+
     paddingHorizontal: 16,
     marginBottom: 20,
   },
   image: {
-   width: '100%',
-      height: 180,
-      resizeMode: 'cover',
-      marginBottom : 10
+    width: '100%',
+    height: 180,
+    resizeMode: 'cover',
+    marginBottom: 10
   },
   imageOverlay: {
     flex: 1,
@@ -1599,14 +1599,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   dropdown: {
-  height: 50,
-  borderWidth: 1,
-  borderColor: '#ced4da',
-  borderRadius: 4,
-  paddingHorizontal: 10,
-  backgroundColor: 'white',
-  marginBottom: 12,
-},
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    backgroundColor: 'white',
+    marginBottom: 12,
+  },
 });
 
 export default InspectionListDetails;

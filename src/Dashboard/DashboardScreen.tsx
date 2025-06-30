@@ -60,7 +60,7 @@ const Dashboard = ({ navigation }: any) => {
 
   const remainingcount = async () => {
     try {
-      const response = await apiClient.get('/api/InspectionReport/remainingcount');
+      const response = await apiClient.get('/api/mobile/inspectionreport/remainingcount');
       if (response.status === 200) {
         setRemainingData(response.data);
       } else {
