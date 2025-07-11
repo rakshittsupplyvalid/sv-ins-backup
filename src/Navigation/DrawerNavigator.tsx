@@ -10,7 +10,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Storage from '../utils/Storage';
 import { useNavigation } from '@react-navigation/native';
 import RemainingInspectionReport from '../Component/InspactionRemList/RemainingInspectionReport';
-import Warehousechecklist from '../Component/Warehousechecklist/Warehousechecklist';
+// import Warehousechecklist from '../Component/Warehousechecklist/Warehousechecklist';
 import WarehouseCamera from '../Component/Warehousechecklist/Warehousecamera';
 
 // import pdf from '../Component/Reviewformcomp/Rough';
@@ -194,7 +194,7 @@ export default function DrawerNavigator() {
         }}
       />
 
-
+{/* 
       <Drawer.Screen
         name="WarehouseChecklist"
         component={Warehousechecklist}
@@ -205,7 +205,7 @@ export default function DrawerNavigator() {
           ),
         }}
       />
-
+ */}
 
 
       <Drawer.Screen

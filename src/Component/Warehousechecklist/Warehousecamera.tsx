@@ -14,6 +14,8 @@ type WarehouseCameraStackParamList = {
   WarehouseCamera: { storageId: string };
 };
 
+
+
 type ImageAsset = {
   uri: string;
   fileName: string;

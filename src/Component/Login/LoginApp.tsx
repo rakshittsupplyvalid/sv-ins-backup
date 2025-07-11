@@ -28,14 +28,14 @@ const LoginApp = ({ navigation }: any) => {
 
   useDisableBackHandler(true);
 
-  useEffect(() => {
-    updateState({
-      form: {
-        mobileNo: '9634958888',
-        password: 'Password@123'
-      }
-    });
-  }, []);
+  // useEffect(() => {
+  //   updateState({
+  //     form: {
+  //       mobileNo: '9634958888',
+  //       password: 'Password@123'
+  //     }
+  //   });
+  // }, []);
 
   const handleChange = (field: string, value: string) => {
     updateState({
@@ -87,6 +87,7 @@ const LoginApp = ({ navigation }: any) => {
         'Login Failed',
         error.message || 'Invalid credentials or network error'
       );
+      console
     } finally {
       setIsLoading(false);
     }
