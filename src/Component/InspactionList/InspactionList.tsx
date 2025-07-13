@@ -7,13 +7,17 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     RefreshControl,
-    Button
+    Button,
+      BackHandler
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
 import useForm from '../../Common/UseForm';
 import { DrawerParamList } from '../../Type/DrawerParam';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { useRoute, RouteProp , useNavigation } from '@react-navigation/native';
+ import { useFocusEffect } from '@react-navigation/native';
+
+
 
 
 interface InspectionItem {
@@ -25,6 +29,7 @@ interface InspectionItem {
     totalProcuerQuantity: number;
     additionalComments?: string;
 }
+
 
 
 type RouteParams = {
@@ -42,6 +47,7 @@ type InspactionListRouteProp = RouteProp<DrawerParamList, 'InspectionList'>;
 const InspectionList = ({ navigation }: { navigation: any }) => {
     const { state, updateState } = useForm();
     const [loading, setLoading] = useState(true);
+    
     const [refreshing, setRefreshing] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -58,6 +64,25 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
             setShowButton(false); // Hide button if no storageId
         }
     }, [storageId]); // Re-run effect whenever storageId changes
+
+
+
+
+      useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.goBack();
+        return true; // Prevent default behavior
+      };
+
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => {
+        backHandler.remove();
+      };
+    }, [navigation])
+  );
+
 
     const handleButtonPress = () => {
         if (storageId) {

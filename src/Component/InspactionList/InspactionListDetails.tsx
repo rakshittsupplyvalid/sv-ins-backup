@@ -1279,13 +1279,13 @@ const InspectionListDetails = () => {
         </View>
       </Modal>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={generatePDF}
         style={{ position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center' }}
       >
         <Text style={{ marginRight: 5, color: 'white' }}>Download </Text>
         <Icon name="download" size={24} color="white" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </ScrollView>
   );
 };

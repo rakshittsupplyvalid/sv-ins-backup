@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, Text, Platform } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import styles from './CommonPickerstyles'; // Assuming you have a separate styles file
+import { View, Text } from 'react-native';
+import { Dropdown } from 'react-native-element-dropdown';
+import styles from './CommonPickerstyles';
 
 interface CommonPickerProps {
   selectedValue: string;
@@ -16,25 +16,28 @@ const CommonPicker: React.FC<CommonPickerProps> = ({
   items,
   label,
 }) => {
+  // Find index of the selected value (for onValueChange compatibility)
+  const selectedIndex = items.findIndex(item => item.value === selectedValue);
+
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={selectedValue}
-          onValueChange={onValueChange}
-          style={styles.picker}
-          dropdownIconColor="#555"
-        >
-          {items.map((item, index) => (
-            <Picker.Item key={index} label={item.label} value={item.value} />
-          ))}
-        </Picker>
-      </View>
+      <Dropdown
+        style={styles.picker}
+        data={items}
+        labelField="label"
+        valueField="value"
+        placeholder="Select item"
+        search
+        searchPlaceholder="Search..."
+        value={selectedValue}
+        onChange={item => {
+          const index = items.findIndex(i => i.value === item.value);
+          onValueChange(item.value, index);
+        }}
+      />
     </View>
   );
 };
 
 export default CommonPicker;
-
-

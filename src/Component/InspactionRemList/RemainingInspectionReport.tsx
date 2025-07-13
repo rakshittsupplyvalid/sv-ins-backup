@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,15 +7,37 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   ScrollView,
-  Linking
+  Linking,
+      BackHandler
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
+ import { useFocusEffect } from '@react-navigation/native';
+ import {  useNavigation } from '@react-navigation/native';
+
 
 const RemainingInspectionReport = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+      const navigation = useNavigation();
   const [error, setError] = useState<string | null>(null);
+
+
+      useFocusEffect(
+      useCallback(() => {
+        const onBackPress = () => {
+          navigation.goBack();
+          return true; // Prevent default behavior
+        };
+  
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+  
+        return () => {
+          backHandler.remove();
+        };
+      }, [navigation])
+    );
+  
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -37,10 +59,7 @@ const RemainingInspectionReport = () => {
     fetchReport();
   }, []);
 
-  const openMaps = (lat: number, lng: number) => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-    Linking.openURL(url).catch(err => console.error('Failed to open maps:', err));
-  };
+
 
   const renderStatusBadge = (status: any) => {
     let backgroundColor = '#FFA500'; // Orange for pending
@@ -63,22 +82,11 @@ const RemainingInspectionReport = () => {
 
       <View style={styles.infoRow}>
         <Icon name="location-on" size={18} color="#4285F4" style={styles.icon} />
+         <Text style={styles.statLabel}>Location Name</Text>
         <Text style={styles.infoText}>{item.location}</Text>
       </View>
 
-      <TouchableOpacity
-        style={styles.coordinatesContainer}
-        onPress={() => openMaps(item.latitude, item.longitude)}
-      >
-        <View style={styles.infoRow}>
-          <Icon name="map" size={18} color="#4285F4" style={styles.icon} />
-          <Text style={styles.coordinatesText}>
-            View on Map
-          </Text>
-          <Icon name="open-in-new" size={16} color="#4285F4" style={styles.mapIcon} />
-        </View>
-      </TouchableOpacity>
-
+     
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Shade Count</Text>

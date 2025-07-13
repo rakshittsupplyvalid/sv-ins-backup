@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Image, ActivityIndicator, FlatList, Button, Linking, Alert } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Image, ActivityIndicator, FlatList, Button, Linking, Alert ,  BackHandler } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import CommonPicker from '../../CommonCompoent/CommonPicker';
 import useForm from '../../Common/UseForm';
@@ -13,6 +13,7 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { validateStepOne, validateSteptwo, validateStepthree, validateStepFour, validateStepFive } from '../../FormValidation/Formvalidates';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { DrawerParamList } from '../../Type/DrawerParam';
+  import { useFocusEffect } from '@react-navigation/native';
 
 
 
@@ -27,9 +28,6 @@ type ImageAsset = {
   fileName: string;
   type: string;
 };
-
-
-
 type Chawl = {
   isCopiedFromFirst: boolean | undefined;
   isCopiedFromPrevious?: boolean; // Added property
@@ -42,10 +40,6 @@ type Chawl = {
     height: string;
   };
 };
-
-
-
-
 const ReviewForm = () => {
   const { state, updateState } = useForm();
   const [currentStep, setCurrentStep] = useState(1);
@@ -74,6 +68,23 @@ const ReviewForm = () => {
     Linking.openURL(url);
   };
 
+
+
+      useFocusEffect(
+      useCallback(() => {
+        const onBackPress = () => {
+          navigation.goBack();
+          return true; // Prevent default behavior
+        };
+  
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+  
+        return () => {
+          backHandler.remove();
+        };
+      }, [navigation])
+    );
+  
 
 
 
@@ -729,7 +740,7 @@ const ReviewForm = () => {
             <Text style={styles.stepIndicator}>Step {currentStep} of {totalSteps}</Text>
             <Text style={styles.sectionTitle}>Basic Information</Text>
             <CommonPicker
-              label="FEDERATION NAME"
+           
               selectedValue={state.form.option1 || ''}
               onValueChange={(value) => {
                 console.log('Selected Federation ID:', value);
@@ -1343,19 +1354,32 @@ const ReviewForm = () => {
             <Text style={styles.stepIndicator}>Step {currentStep} of {totalSteps}</Text>
             <Text style={styles.sectionTitle}>Documentation</Text>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Number of Farmers</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter Number of Farmers"
-                placeholderTextColor="#999"
-                keyboardType="numeric"
-                value={state.form.Farmers || ''}
-                onChangeText={(val) =>
-                  updateState({ form: { ...state.form, Farmers: val } })
-                }
-              />
-            </View>
+               <View style={styles.inputContainer}>
+        <Text style={styles.label}>Number of Farmers</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter Number of Farmers (Max 18,000)"
+          placeholderTextColor="#999"
+          keyboardType="numeric"
+          value={state.form.Farmers || ''}
+          onChangeText={(val) => {
+            // Only allow numbers and empty input
+            if (val === '' || /^\d+$/.test(val)) {
+              const num = parseInt(val, 10);
+              // If input is empty or ≤ 18,000, update state
+              if (val === '' || num <= 18000) {
+                updateState({ form: { ...state.form, Farmers: val } });
+              } else {
+                Alert.alert("Validation Error", "Number of Farmers cannot exceed 18,000");
+              }
+            }
+          }}
+          maxLength={5} // Prevent excessively long numbers
+        />
+        {state.form.Farmers && parseInt(state.form.Farmers) > 18000 && (
+          <Text style={{ color: 'red' }}>Cannot exceed 18,000</Text>
+        )}
+      </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Number of Weighment Slip</Text>

@@ -2,17 +2,22 @@ import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
 
-     container: {
-        marginVertical: 12,
-        paddingHorizontal: 5,
-     
-      },
-      label: {
-        fontSize: 14,
-    fontWeight: '600',
-        marginBottom: 6,
-        color: '#1e1e1e',
-      },
+   container: {
+    margin: 10,
+  },
+  label: {
+    marginBottom: 5,
+    fontSize: 14,
+    color: '#333',
+  },
+  picker: {
+    height: 50,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+  },
+
       pickerWrapper: {
         backgroundColor: '#ffffff',
         // backgroundColor : 'red',
@@ -26,10 +31,6 @@ export default StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 3,
       },
-      picker: {
-        height: 50,
-        color: '#333',
-        width: '100%',
-      },
+   
 
     });
