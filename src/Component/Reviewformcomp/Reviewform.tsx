@@ -14,6 +14,7 @@ import { validateStepOne, validateSteptwo, validateStepthree, validateStepFour, 
 import { StackNavigationProp } from '@react-navigation/stack';
 import { DrawerParamList } from '../../Type/DrawerParam';
 import { useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const isSmallDevice = width < 375;
@@ -57,7 +58,7 @@ const staffBehaviorOptions = [
 
 const ReviewForm = () => {
   const { state, updateState } = useForm();
-    const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const navigation = useNavigation<StackNavigationProp<DrawerParamList>>();
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
@@ -216,7 +217,7 @@ const ReviewForm = () => {
   useEffect(() => {
     if (state.form.fpofpcdata) {
       Storagelocation(state.form.fpofpcdata);
-      console.log('id' , state.form.fpofpcdata);
+      console.log('id', state.form.fpofpcdata);
     }
   }, [state.form.fpofpcdata]);
 
@@ -236,12 +237,7 @@ const ReviewForm = () => {
   };
 
 
-   useEffect(() => {
-     if (state.form.option3) {
-       console.log("📤 User selected storageId:", state.form.option3); // Log the selected ID
-       StorageById(state.form.option3);
-     }
-   }, [state.form.option3]);
+
 
 
   const CompanyDropdown = () => {
@@ -290,7 +286,7 @@ const ReviewForm = () => {
       .catch(console.error);
   };
 
-  
+
   const Society = (BranchId: string) => {
     const url = `/api/group?BranchId=${BranchId}&GroupType=Vendor&VendorType=SOCIETY&ApprovalStatus=APPROVED&IsActive=true`;
     apiClient.get(url)
@@ -357,8 +353,10 @@ const ReviewForm = () => {
 
   const Storagelocation = (groupId: string) => {
     const url = `/api/storagelocation?GroupId=${groupId}&StorageType=NORMAL&LocationType=STORAGELOCATION&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&IsActive=true&CompanyId=`;
+    console.log('API URL:', url); // URL bhi console pe dekh lo
     apiClient.get(url)
       .then((res) => {
+        console.log('STORAGE API response:', res.data); // Yeh pura response console pe print karega
         if (res?.data) {
           updateState({
             fielddata: {
@@ -368,11 +366,19 @@ const ReviewForm = () => {
           });
         }
       })
-      .catch(console.error);
+      .catch((error) => {
+        console.error('API error:', error); // Agar koi error aata hai toh usko bhi console pe dekh lo
+      });
   };
 
 
-  
+  useEffect(() => {
+    if (selectedStorageId) {
+      StorageById(selectedStorageId);
+      console.log(' use effect stoarge id', selectedStorageId);
+    }
+  }, [selectedStorageId]);
+
 
 
   const StorageById = (storageId: string) => {
@@ -380,6 +386,7 @@ const ReviewForm = () => {
     apiClient.get(url)
       .then((res) => {
         if (res?.data) {
+          console.log('API totalStockMT:', res.data.totalStockMT);
           updateState({
             fielddata: {
               ...state.fielddata,
@@ -387,13 +394,14 @@ const ReviewForm = () => {
             },
             form: {
               ...state.form,
-              quanityfoundsystem: res.data.totalStockMT?.toString() || ''
+              quanityfoundsystem: res.data.totalStockMT?.toString()
             }
           });
         }
       })
       .catch(console.error);
   };
+
 
   const fetchLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -481,6 +489,14 @@ const ReviewForm = () => {
   };
 
   const handleChawlCountChange = (val: string) => {
+    const noOfChawls = parseInt(val) || 0;
+
+    if (noOfChawls > 500) {
+      Alert.alert('Warning', 'You can enter a maximum of 500 chawls.');
+    }
+
+
+
     const numericValue = val.replace(/[^0-9]/g, '');
     updateState({
       form: {
@@ -517,6 +533,13 @@ const ReviewForm = () => {
   };
 
   const handleBinCountChange = (val: string) => {
+
+    const noOfBins = parseInt(val) || 0;
+
+    if (noOfBins > 500) {
+      Alert.alert('Warning', 'You can enter a maximum of 500 chawls.');
+    }
+
     const numericValue = val.replace(/[^0-9]/g, '');
     updateState({
       form: {
@@ -554,107 +577,154 @@ const ReviewForm = () => {
   };
 
   const handleSubmit = async () => {
-        if (!isSubmitted) {
-    try {
-      const formData = new FormData();
+    if (!isSubmitted) {
+      setIsSubmitted(true);
 
-      formData.append('NoOfFarmers', state.form.Farmers);
-      formData.append('TotalPhysicalQuantity', state.form.quanityfound);
-      formData.append('TotalProcuerQuantity', state.form.Depositedfound);
-      formData.append('NoOfWeighmentSlip', state.form.Weighmentslip);
-      formData.append('QualityOfStock', state.form.stockQuality);
-      formData.append('StaffBehavior', state.form.staffBehavior);
-      formData.append('AdditionalComments', state.form.additionalComments);
 
-      const chawlSizes = chawlList.map(chawl => ({
-        chawlType: "Chawl",
-        length: chawl.length,
-        breadth: chawl.breadth,
-        height: chawl.height,
-        quantity: Math.max(
-          1,
-          (Number(chawl.height) * Number(chawl.breadth) * Number(chawl.length) * 20) / 1000
-        )
-      }));
+      try {
+        const formData = new FormData();
 
-      const binSizes = binList.map(bin => ({
-        chawlType: "Bin",
-        length: bin.length,
-        breadth: bin.breadth,
-        height: bin.height,
-        quantity: Math.max(
-          1,
-          (Number(bin.height) * Number(bin.breadth) * Number(bin.length) * 20) / 1000
-        )
-      }));
+        formData.append('NoOfFarmers', state.form.Farmers);
+        formData.append('TotalPhysicalQuantity', state.form.quanityfound);
+        formData.append('TotalProcuerQuantity', state.form.Depositedfound);
+        formData.append('NoOfWeighmentSlip', state.form.Weighmentslip);
+        formData.append('QualityOfStock', state.form.stockQuality);
+        formData.append('StaffBehavior', state.form.staffBehavior);
+        formData.append('AdditionalComments', state.form.additionalComments);
 
-      const allSizes = [...chawlSizes, ...binSizes];
+        const chawlSizes = chawlList.map(chawl => ({
+          chawlType: "Chawl",
+          length: chawl.length,
+          breadth: chawl.breadth,
+          height: chawl.height,
+          quantity: Math.max(
+            1,
+            (Number(chawl.height) * Number(chawl.breadth) * Number(chawl.length) * 20) / 1000
+          )
+        }));
 
-      allSizes.forEach((item, index) => {
-        formData.append(`ChawlSizes[${index}][chawlType]`, item.chawlType);
-        formData.append(`ChawlSizes[${index}][length]`, item.length);
-        formData.append(`ChawlSizes[${index}][breadth]`, item.breadth);
-        formData.append(`ChawlSizes[${index}][height]`, item.height);
-        formData.append(`ChawlSizes[${index}][quantity]`, item.quantity.toString());
-      });
+        const binSizes = binList.map(bin => ({
+          chawlType: "Bin",
+          length: bin.length,
+          breadth: bin.breadth,
+          height: bin.height,
+          quantity: Math.max(
+            1,
+            (Number(bin.height) * Number(bin.breadth) * Number(bin.length) * 20) / 1000
+          )
+        }));
 
-      screenshots.forEach((image, index) => {
-        formData.append('Files', {
-          uri: image.uri,
-          name: image.fileName || `image_${index}.jpg`,
-          type: image.type || 'image/jpeg'
-        } as any);
-      });
+        const allSizes = [...chawlSizes, ...binSizes];
 
-      if (location) {
-        formData.append('location', `LOC${new Date().toISOString().replace(/[-:.]/g, '').slice(0, -5)}`);
+        allSizes.forEach((item, index) => {
+          formData.append(`ChawlSizes[${index}][chawlType]`, item.chawlType);
+          formData.append(`ChawlSizes[${index}][length]`, item.length);
+          formData.append(`ChawlSizes[${index}][breadth]`, item.breadth);
+          formData.append(`ChawlSizes[${index}][height]`, item.height);
+          formData.append(`ChawlSizes[${index}][quantity]`, item.quantity.toString());
+        });
+
+        screenshots.forEach((image, index) => {
+          formData.append('Files', {
+            uri: image.uri,
+            name: image.fileName || `image_${index}.jpg`,
+            type: image.type || 'image/jpeg'
+          } as any);
+        });
+
+        if (location) {
+          formData.append('location', `LOC${new Date().toISOString().replace(/[-:.]/g, '').slice(0, -5)}`);
+        }
+
+        const url = `/api/mobile?location=${state.form.Storagedata}`;
+        const response = await apiClient.post(url, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        console.log('Response:', response.data);
+        alert('Form submitted successfully!');
+
+        updateState({
+          form: {
+            option1: '',
+            option2: '',
+            federationType: '',
+            option3: '',
+            fpofpcdata: '',
+            Storagedata: '',
+            Farmers: '',
+            quanityfound: '',
+            Depositedfound: '',
+            Weighmentslip: '',
+            stockQuality: '',
+            staffBehavior: '',
+            additionalComments: '',
+            noOfChawls: '',
+            noofbins: '',
+            deterioration: '',
+            quanityfoundsystem: '',
+            assayingDone: '',
+            laborRegister: '',
+            inspectionStatus: '',
+            chawlDimensions: [],
+            binDimensions: []
+          }
+        });
+
+        setChawlList([]);
+        setImageUri([]);
+        setCurrentStep(1);
       }
 
-      const url = `/api/mobile?location=${state.form.Storagedata}`;
-      const response = await apiClient.post(url, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      catch (error) {
+        console.error('Error submitting form:', error);
 
-      console.log('Response:', response.data);
-      alert('Form submitted successfully!');
+        let errorMessage = 'Failed to submit form. Please try again.';
 
-      updateState({
-        form: {
-          option1: '',
-          option2: '',
-          federationType: '',
-          option3: '',
-          fpofpcdata: '',
-          Storagedata: '',
-          Farmers: '',
-          quanityfound: '',
-          Depositedfound: '',
-          Weighmentslip: '',
-          stockQuality: '',
-          staffBehavior: '',
-          additionalComments: '',
-          noOfChawls: '',
-          noofbins: '',
-          deterioration: '',
-          quanityfoundsystem: '',
-          assayingDone: '',
-          laborRegister: '',
-          inspectionStatus: '',
-          chawlDimensions: [],
-          binDimensions: []
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'response' in error &&
+          error.response &&
+          typeof error.response === 'object'
+        ) {
+          // Server responded with a status outside the 2xx range
+          const status = (error as any).response.status;
+
+          if (status === 502) {
+            errorMessage = 'Bad Gateway (502). The server is temporarily unavailable.';
+          } else {
+            errorMessage = `Error ${status}: ${(error as any).response.statusText || 'Unexpected error occurred.'}`;
+          }
+        } else if (
+          typeof error === 'object' &&
+          error !== null &&
+          'request' in error &&
+          (error as any).request
+        ) {
+          // Request was made but no response received
+          errorMessage = 'No response from server. Please check your internet connection.';
+        } else if (
+          typeof error === 'object' &&
+          error !== null &&
+          'message' in error &&
+          typeof (error as any).message === 'string'
+        ) {
+          // Something else caused the error
+          errorMessage = (error as any).message || errorMessage;
         }
-      });
 
-      setChawlList([]);
-      setImageUri([]);
-      setCurrentStep(1);
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      Alert.alert('Error', 'Failed to submit form. Please try again.');
-    }
-          setIsSubmitted(true);
+        Alert.alert('Error', errorMessage);
+      
+      }
+
+      finally {
+    setIsSubmitted(false); // ✅ Re-enable button, show "Submit"
+  }
+
+
     }
 
   };
@@ -1306,14 +1376,14 @@ const ReviewForm = () => {
                 }
               />
             </View>
-  <View style={styles.inputContainer}>
+            <View style={styles.inputContainer}>
               <Text style={styles.label}>Total Quantity Found as per System</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Total Quantity Found"
                 placeholderTextColor="#999"
                 keyboardType="numeric"
-                value={state.form.quanityfoundsystem || '0'}
+                value={state.form.quanityfoundsystem}
                 onChangeText={(val) =>
                   updateState({ form: { ...state.form, quanityfoundsystem: val } })
                 }
@@ -1484,6 +1554,12 @@ const ReviewForm = () => {
             </View>
 
             <View>
+              {imageUri.length < 3 && (
+                <Text style={{ color: 'red', marginBottom: 10 }}>
+                  Please upload at least 3 images.
+                </Text>
+              )}
+
               {imageUri.map((img, index) => (
                 <View key={index} style={{ marginBottom: 20 }}>
                   <ViewShot
@@ -1510,6 +1586,7 @@ const ReviewForm = () => {
               ))}
             </View>
 
+
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Additional Comments</Text>
               <TextInput
@@ -1532,67 +1609,81 @@ const ReviewForm = () => {
   };
 
   return (
-  <KeyboardAvoidingView
-    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
-  >
-    <ScrollView
-     contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-
-
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     >
 
- 
-    
-      {renderStep()}
-      
+      <SafeAreaView style={styles.safeArea}>
 
-      <View style={styles.navigationButtons}>
-        {currentStep > 1 && (
-          <TouchableOpacity style={styles.prevButton} onPress={prevStep}>
-            <Text style={styles.navButtonpreviousText}>Previous</Text>
-          </TouchableOpacity>
-        )}
 
-        {currentStep < totalSteps ? (
-          <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
-            <Text style={styles.navButtonText}>Next</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={[
-              styles.submitButton, 
-              isSubmitted && styles.disabledButton
-            ]} 
-            onPress={handleSubmit}
-            disabled={isSubmitted}
-          >
-            <Text style={styles.submitButtonText}>
-              {isSubmitted ? 'Submitting' : 'Submit'}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </ScrollView>
-  </KeyboardAvoidingView>
-);
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+
+
+        >
+
+          <View>
+
+
+
+            {renderStep()}
+
+
+            <View style={styles.navigationButtons}>
+              {currentStep > 1 && (
+                <TouchableOpacity style={styles.prevButton} onPress={prevStep}>
+                  <Text style={styles.navButtonpreviousText}>Previous</Text>
+                </TouchableOpacity>
+              )}
+
+              {currentStep < totalSteps ? (
+                <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
+                  <Text style={styles.navButtonText}>Next</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.submitButton,
+                    isSubmitted && styles.disabledButton
+                  ]}
+                  onPress={handleSubmit}
+                  disabled={isSubmitted}
+                >
+                  <Text style={styles.submitButtonText}>
+                    {isSubmitted ? 'Submitting' : 'Submit'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
+  );
 
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+
+    backgroundColor: '#ffffff',
+    height: '90%',
+  },
   viewShot: {
     width: '100%',
     alignSelf: 'center',
   },
-   disabledButton: {
+  disabledButton: {
     backgroundColor: '#cccccc', // Different color when disabled
   },
   keyboardAvoidingView: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -1600,8 +1691,10 @@ const styles = StyleSheet.create({
     marginTop: isSmallDevice ? 5 : 8,
   },
   scrollContainer: {
- flexGrow: 1, // Allows content to expand beyond screen
+    flexGrow: 1, // Allows content to expand beyond screen
     paddingBottom: 20, // Extra space at bottom
+
+
   },
   header: {
     backgroundColor: '#070738',
@@ -1666,6 +1759,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: isSmallDevice ? 20 : 30,
     paddingHorizontal: isSmallDevice ? 15 : 25,
+
   },
   prevButton: {
     backgroundColor: '#fff',

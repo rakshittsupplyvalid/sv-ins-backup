@@ -17,6 +17,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format, parseISO } from 'date-fns';
 
 const { width } = Dimensions.get('window');
 const PAGE_SIZE = 5;
@@ -35,6 +37,7 @@ type ProcurementItem = {
   quantityStoredMT: number;
   quantityDispatchedMT: number;
   remainingStoredMT: number;
+  rejectQuantityMT: number;
   subSeasonId: string;
   subSeasonName: string;
   latitude: number;
@@ -63,6 +66,21 @@ const ProcurementList = () => {
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  // Date formatting utilities
+  const formatDateForAPI = (date: Date) => {
+    return format(date, 'yyyy-MM-dd');
+  };
+
+  const formatDateForDisplay = (dateString: string) => {
+    try {
+      return format(parseISO(dateString), 'dd MMM yyyy');
+    } catch (e) {
+      return dateString; // fallback if parsing fails
+    }
+  };
 
   const openMapWithDirections = async (destLat: number, destLon: number) => {
     try {
@@ -82,40 +100,49 @@ const ProcurementList = () => {
     }
   };
 
-  const fetchStatusData = async (status: string, pageNumber: number, query: string = '') => {
+  const fetchStatusData = async (status: string, pageNumber: number, query: string = '', date: Date | null = null) => {
     if ((!hasMore && pageNumber !== 1) || loading) return;
 
     setLoading(true);
     try {
       let url = `/api/mobile/procurement/list?PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
-      
-      if (status !== 'ALL') {
-        url += `&ApprovalStatus=${status}`;
+
+      if (selectedPartialStatus.includes('PARTIALLYREJECTED')) {
+        url += `&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`;
+        url += `&PartialStatus=PARTIALLYAPPROVED&PartialStatus=FULLYREJECT`;
+      } else {
+        if (status !== 'ALL') {
+          url += `&ApprovalStatus=${status}`;
+        }
+
+        if (selectedPartialStatus.length > 0) {
+          selectedPartialStatus.forEach(partialStatus => {
+            url += `&PartialStatus=${partialStatus}`;
+          });
+        }
       }
-      
-      if ((status === 'APPROVED' || status === 'REJECTED') && selectedPartialStatus.length > 0) {
-        selectedPartialStatus.forEach(status => {
-          url += `&PartialStatus=${status}`;
-        });
-      }
-      
+
       if (query) {
         url += `&Search=${encodeURIComponent(query)}`;
       }
 
+      if (date) {
+        const dateStr = formatDateForAPI(date);
+        url += `&Search=${dateStr}`;
+      }
+
+      console.log('API URL:', url);
       const response = await apiClient.get(url);
 
       if (response.data.length > 0) {
         if (pageNumber === 1) {
           setData(response.data);
         } else {
-          setData(prevData => [...prevData, ...response.data]);
+          setData(prev => [...prev, ...response.data]);
         }
         setHasMore(response.data.length === PAGE_SIZE);
       } else {
-        if (pageNumber === 1) {
-          setData([]);
-        }
+        if (pageNumber === 1) setData([]);
         setHasMore(false);
       }
     } catch (error) {
@@ -132,12 +159,12 @@ const ProcurementList = () => {
       setIsSearching(true);
       setPage(1);
       setHasMore(true);
-      fetchStatusData(selectedStatus, 1, query);
+      fetchStatusData(selectedStatus, 1, query, selectedDate);
     } else {
       setIsSearching(false);
       setPage(1);
       setHasMore(true);
-      fetchStatusData(selectedStatus, 1);
+      fetchStatusData(selectedStatus, 1, '', selectedDate);
     }
   };
 
@@ -145,7 +172,7 @@ const ProcurementList = () => {
     if (!loading && hasMore) {
       const nextPage = page + 1;
       setPage(nextPage);
-      fetchStatusData(selectedStatus, nextPage, isSearching ? searchQuery : '');
+      fetchStatusData(selectedStatus, nextPage, isSearching ? searchQuery : '', selectedDate);
     }
   };
 
@@ -155,7 +182,7 @@ const ProcurementList = () => {
     setHasMore(true);
     setIsSearching(false);
     setSearchQuery('');
-    fetchStatusData(selectedStatus, 1);
+    fetchStatusData(selectedStatus, 1, '', selectedDate);
   };
 
   const handlePartialStatusChange = (status: string) => {
@@ -165,17 +192,6 @@ const ProcurementList = () => {
       } else {
         return [...prev, status];
       }
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     });
   };
 
@@ -206,7 +222,7 @@ const ProcurementList = () => {
     switch (status) {
       case 'FULLYAPPROVED': return 'FULLY APPROVED';
       case 'PARTIALLYAPPROVED': return 'PARTIALLY APPROVED';
-      case 'FULLYREJECTED': return 'FULLY REJECTED';
+      case 'FULLYREJECT': return 'FULLY REJECT';
       case 'PARTIALLYREJECTED': return 'PARTIALLY REJECTED';
       default: return status;
     }
@@ -217,22 +233,21 @@ const ProcurementList = () => {
     switch (status) {
       case 'FULLYAPPROVED': return '#28a745';
       case 'PARTIALLYAPPROVED': return '#ffc107';
-      case 'FULLYREJECTED': return '#dc3545';
+      case 'FULLYREJECT': return '#dc3545';
       case 'PARTIALLYREJECTED': return '#fd7e14';
       default: return '#6c757d';
     }
   };
 
   const renderItem = ({ item }: { item: ProcurementItem }) => (
-
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.approvalStatus) }]}>
           <Text style={styles.statusText}>{item.approvalStatus}</Text>
         </View>
         {item.partialStatus && (
-          <View style={[styles.partialStatusBadge, { 
-            backgroundColor: getPartialStatusColor(item.partialStatus) 
+          <View style={[styles.partialStatusBadge, {
+            backgroundColor: getPartialStatusColor(item.partialStatus)
           }]}>
             <Text style={styles.partialStatusText}>
               {getPartialStatusText(item.partialStatus)}
@@ -244,99 +259,101 @@ const ProcurementList = () => {
         </View>
       </View>
 
-         <View style={styles.cardBody}>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Procurement Details</Text>
-                <View style={styles.infoRow}>
-                  <Icon name="person" size={16} color="#6c757d" />
-                  <Text style={styles.infoText}>Farmer</Text>
-                  <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
-                    {item.farmerName}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Icon name="business" size={16} color="#6c757d" />
-                  <Text style={styles.infoText}>Federation</Text>
-                  <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
-                    {item.federationName}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Icon name="store" size={16} color="#6c757d" />
-                  <Text style={styles.infoText}>Vendor</Text>
-                  <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
-                    {item.vendorName}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Icon name="location-on" size={16} color="#6c757d" />
-                  <Text style={styles.infoText}>Center</Text>
-                  <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
-                    {item.procureCenterName}
-                  </Text>
-                </View>
-              </View>
-      
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Quantity Details (MT)</Text>
-                <View style={styles.detailRow}>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Procured</Text>
-                    <Text style={styles.detailValue}>{formatNumber(item.quantityMT)}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Stored</Text>
-                    <Text style={styles.detailValue}>{formatNumber(item.quantityStoredMT)}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Dispatched</Text>
-                    <Text style={styles.detailValue}>{formatNumber(item.quantityDispatchedMT)}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Remaining</Text>
-                    <Text style={styles.detailValue}>{formatNumber(item.remainingStoredMT)}</Text>
-                  </View>
-                </View>
-              </View>
-      
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Financial Details</Text>
-                <View style={styles.detailRow}>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Rate/Kg (₹)</Text>
-                    <Text style={styles.detailValue}>{formatNumber(item.ratePerKg)}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Value (₹)</Text>
-                    <Text style={styles.detailValue}>{formatNumber(item.purchaseValue)}</Text>
-                  </View>
-                </View>
-              </View>
-      
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Other Details</Text>
-                <View style={styles.infoRow}>
-                  <Icon name="date-range" size={16} color="#6c757d" />
-                  <Text style={styles.infoText}>Date</Text>
-                  <Text style={styles.infoValue}>{formatDate(item.procureDate)}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Icon name="ac-unit" size={16} color="#6c757d" />
-                  <Text style={styles.infoText}>Season</Text>
-                  <Text style={styles.infoValue}>{item.subSeasonName}</Text>
-                </View>
-              </View>
-      
-              {item.latitude && item.longitude && (
-                <TouchableOpacity 
-                  style={styles.mapButton}
-                  onPress={() => openMapWithDirections(item.latitude, item.longitude)}
-                >
-                  <Icon name="map" size={18} color="#fff" />
-                  <Text style={styles.mapButtonText}>View on Map</Text>
-                </TouchableOpacity>
-              )}
+      <View style={styles.cardBody}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Procurement Details</Text>
+          <View style={styles.infoRow}>
+            <Icon name="person" size={16} color="#6c757d" />
+            <Text style={styles.infoText}>Farmer</Text>
+            <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+              {item.farmerName}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Icon name="business" size={16} color="#6c757d" />
+            <Text style={styles.infoText}>Federation</Text>
+            <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+              {item.federationName}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Icon name="store" size={16} color="#6c757d" />
+            <Text style={styles.infoText}>Vendor</Text>
+            <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+              {item.vendorName}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Icon name="location-on" size={16} color="#6c757d" />
+            <Text style={styles.infoText}>Center</Text>
+            <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+              {item.procureCenterName}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quantity Details (MT)</Text>
+          <View style={styles.detailRow}>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Quantity Mt</Text>
+              <Text style={styles.detailValue}>{formatNumber(item.quantityMT)}</Text>
             </View>
+
+            {item.approvalStatus === 'APPROVED' && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Approved QuantityMT</Text>
+                <Text style={styles.detailValue}>{formatNumber(item.remainingStoredMT)}</Text>
+              </View>
+            )}
+
+            {item.approvalStatus === 'REJECTED' && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Reject Quantity</Text>
+                <Text style={styles.detailValue}>{formatNumber(item.rejectQuantityMT)}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Financial Details</Text>
+          <View style={styles.detailRow}>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Rate/Kg (₹)</Text>
+              <Text style={styles.detailValue}>{formatNumber(item.ratePerKg)}</Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Value (₹)</Text>
+              <Text style={styles.detailValue}>{formatNumber(item.purchaseValue)}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Other Details</Text>
+          <View style={styles.infoRow}>
+            <Icon name="date-range" size={16} color="#6c757d" />
+            <Text style={styles.infoText}>Date</Text>
+            <Text style={styles.infoValue}>{formatDateForDisplay(item.procureDate)}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Icon name="ac-unit" size={16} color="#6c757d" />
+            <Text style={styles.infoText}>Season</Text>
+            <Text style={styles.infoValue}>{item.subSeasonName}</Text>
+          </View>
+        </View>
+
+        {item.latitude && item.longitude && (
+          <TouchableOpacity
+            style={styles.mapButton}
+            onPress={() => openMapWithDirections(item.latitude, item.longitude)}
+          >
+            <Icon name="map" size={18} color="#fff" />
+            <Text style={styles.mapButtonText}>View on Map</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 
@@ -350,7 +367,7 @@ const ProcurementList = () => {
     if ((selectedStatus === 'APPROVED' || selectedStatus === 'REJECTED') && selectedPartialStatus.length > 0) {
       setPage(1);
       setHasMore(true);
-      fetchStatusData(selectedStatus, 1, isSearching ? searchQuery : '');
+      fetchStatusData(selectedStatus, 1, isSearching ? searchQuery : '', selectedDate);
     }
   }, [selectedPartialStatus]);
 
@@ -362,7 +379,8 @@ const ProcurementList = () => {
       setSearchQuery('');
       setIsSearching(false);
       setSelectedPartialStatus([]);
-      fetchStatusData(selectedStatus, 1, '');
+      setSelectedDate(null);
+      fetchStatusData(selectedStatus, 1, '', null);
     }, [selectedStatus])
   );
 
@@ -407,7 +425,8 @@ const ProcurementList = () => {
               setSearchQuery('');
               setIsSearching(false);
               setSelectedPartialStatus([]);
-              fetchStatusData(itemValue, 1);
+              setSelectedDate(null);
+              fetchStatusData(itemValue, 1, '', null);
             }}
             style={styles.picker}
             dropdownIconColor="#495057"
@@ -419,62 +438,119 @@ const ProcurementList = () => {
           </Picker>
         </View>
 
-      {selectedStatus === 'APPROVED' && (
-  <View style={styles.partialStatusContainer}>
-    <Text style={styles.filterLabel}>FILTER BY APPROVAL TYPE</Text>
-    <View style={styles.checkboxContainer}>
-      <TouchableOpacity
-        style={[
-          styles.checkbox, 
-          selectedPartialStatus.includes('FULLYAPPROVED') && styles.checkboxSelected,
-          selectedPartialStatus.includes('PARTIALLYAPPROVED') && styles.checkboxDisabled
-        ]}
-        onPress={() => !selectedPartialStatus.includes('PARTIALLYAPPROVED') && handlePartialStatusChange('FULLYAPPROVED')}
-        disabled={selectedPartialStatus.includes('PARTIALLYAPPROVED')}
-      >
-        <Text style={[
-          styles.checkboxText,
-          selectedPartialStatus.includes('PARTIALLYAPPROVED') && styles.disabledText
-        ]}>Fully Approved</Text>
-        {selectedPartialStatus.includes('FULLYAPPROVED') && (
-          <Icon name="check" size={16} color="#fff" />
+        <TouchableOpacity
+          style={styles.datePickerButton}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Icon name="calendar-today" size={18} color="#495057" />
+          <Text style={styles.datePickerButtonText}>Select Date</Text>
+        </TouchableOpacity>
+
+        {selectedDate && (
+          <View style={styles.dateContainer}>
+            <Text style={styles.selectedDateText}>
+              Selected Date: {formatDateForDisplay(selectedDate.toISOString())}
+            </Text>
+            <TouchableOpacity
+              style={styles.clearDateButton}
+              onPress={() => {
+                setSelectedDate(null);
+                setPage(1);
+                fetchStatusData(selectedStatus, 1, isSearching ? searchQuery : '', null);
+              }}
+            >
+              <Text style={styles.clearDateText}>Clear Date</Text>
+            </TouchableOpacity>
+          </View>
         )}
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[
-          styles.checkbox, 
-          selectedPartialStatus.includes('PARTIALLYAPPROVED') && styles.checkboxSelected,
-          selectedPartialStatus.includes('FULLYAPPROVED') && styles.checkboxDisabled
-        ]}
-        onPress={() => !selectedPartialStatus.includes('FULLYAPPROVED') && handlePartialStatusChange('PARTIALLYAPPROVED')}
-        disabled={selectedPartialStatus.includes('FULLYAPPROVED')}
-      >
-        <Text style={[
-          styles.checkboxText,
-          selectedPartialStatus.includes('FULLYAPPROVED') && styles.disabledText
-        ]}>Partially Approved</Text>
-        {selectedPartialStatus.includes('PARTIALLYAPPROVED') && (
-          <Icon name="check" size={16} color="#fff" />
+
+
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={selectedDate || new Date()}
+            mode="date"
+            display="default"
+            onChange={(event, date) => {
+              setShowDatePicker(false);
+              if (event.type === 'set' && date) {
+                // Create a new Date object with just the date components (UTC)
+                const utcDate = new Date(Date.UTC(
+                  date.getFullYear(),
+                  date.getMonth(),
+                  date.getDate()
+                ));
+                setSelectedDate(utcDate);
+                setPage(1);
+                fetchStatusData(selectedStatus, 1, isSearching ? searchQuery : '', utcDate);
+              }
+            }}
+          />
         )}
-      </TouchableOpacity>
-    </View>
-  </View>
-)}
+
+        {selectedStatus === 'APPROVED' && (
+          <View style={styles.partialStatusContainer}>
+            <Text style={styles.filterLabel}>FILTER BY APPROVAL TYPE</Text>
+            <View style={styles.checkboxContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.checkbox,
+                  selectedPartialStatus.includes('FULLYAPPROVED') && styles.checkboxSelected,
+                  selectedPartialStatus.includes('PARTIALLYAPPROVED') && styles.checkboxDisabled
+                ]}
+                onPress={() => !selectedPartialStatus.includes('PARTIALLYAPPROVED') && handlePartialStatusChange('FULLYAPPROVED')}
+                disabled={selectedPartialStatus.includes('PARTIALLYAPPROVED')}
+              >
+                <Text style={[
+                  styles.checkboxText,
+                  selectedPartialStatus.includes('PARTIALLYAPPROVED') && styles.disabledText
+                ]}>Fully Approved</Text>
+                {selectedPartialStatus.includes('FULLYAPPROVED') && (
+                  <Icon name="check" size={16} color="#fff" />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.checkbox,
+                  selectedPartialStatus.includes('PARTIALLYAPPROVED') && styles.checkboxSelected,
+                  selectedPartialStatus.includes('FULLYAPPROVED') && styles.checkboxDisabled
+                ]}
+                onPress={() => !selectedPartialStatus.includes('FULLYAPPROVED') && handlePartialStatusChange('PARTIALLYAPPROVED')}
+                disabled={selectedPartialStatus.includes('FULLYAPPROVED')}
+              >
+                <Text style={[
+                  styles.checkboxText,
+                  selectedPartialStatus.includes('FULLYAPPROVED') && styles.disabledText
+                ]}>Partially Approved</Text>
+                {selectedPartialStatus.includes('PARTIALLYAPPROVED') && (
+                  <Icon name="check" size={16} color="#fff" />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {selectedStatus === 'REJECTED' && (
           <View style={styles.partialStatusContainer}>
             <Text style={styles.filterLabel}>FILTER BY REJECTION TYPE</Text>
             <View style={styles.checkboxContainer}>
               <TouchableOpacity
-                style={[styles.checkbox, selectedPartialStatus.includes('FULLYREJECT') && styles.checkboxSelected]}
-                onPress={() => handlePartialStatusChange('FULLYREJECT')}
+                style={[
+                  styles.checkbox,
+                  selectedPartialStatus.includes('FULLYREJECT') && styles.checkboxSelected,
+                  selectedPartialStatus.includes('PARTIALLYREJECTED') && styles.checkboxDisabled
+                ]}
+                onPress={() => !selectedPartialStatus.includes('PARTIALLYREJECTED') && handlePartialStatusChange('FULLYREJECT')}
+                disabled={selectedPartialStatus.includes('PARTIALLYREJECTED')}
               >
-                <Text style={styles.checkboxText}>Fully Rejected</Text>
+                <Text style={[
+                  styles.checkboxText,
+                  selectedPartialStatus.includes('PARTIALLYREJECTED') && styles.disabledText
+                ]}>Fully Rejected</Text>
                 {selectedPartialStatus.includes('FULLYREJECT') && (
                   <Icon name="check" size={16} color="#fff" />
                 )}
               </TouchableOpacity>
-             
             </View>
           </View>
         )}
@@ -725,12 +801,70 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   checkboxDisabled: {
-  backgroundColor: '#e0e0e0',
-  borderColor: '#e0e0e0',
-},
-disabledText: {
-  color: '#a0a0a0',
-}
+    backgroundColor: '#e0e0e0',
+    borderColor: '#e0e0e0',
+  },
+  disabledText: {
+    color: '#a0a0a0',
+  },
+ 
+    datePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    marginVertical: 8,
+  },
+  datePickerButtonText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#495057',
+    fontWeight: '500',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#e9ecef',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  selectedDateText: {
+    fontSize: 14,
+    color: '#212529',
+    fontWeight: '500',
+  },
+  clearDateButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ced4da',
+  },
+  clearDateText: {
+    fontSize: 12,
+    color: '#dc3545',
+    fontWeight: '500',
+  },
 });
+
+
+
+// ... (keep the same styles as in your original code)
 
 export default ProcurementList;

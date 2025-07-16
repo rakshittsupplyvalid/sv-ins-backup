@@ -8,17 +8,15 @@ import {
     ActivityIndicator,
     RefreshControl,
     Button,
-      BackHandler
+    BackHandler,
+    TextInput
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
 import useForm from '../../Common/UseForm';
 import { DrawerParamList } from '../../Type/DrawerParam';
-import { useRoute, RouteProp , useNavigation } from '@react-navigation/native';
- import { useFocusEffect } from '@react-navigation/native';
-
-
-
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface InspectionItem {
     id: number;
@@ -30,13 +28,9 @@ interface InspectionItem {
     additionalComments?: string;
 }
 
-
-
 type RouteParams = {
     params: {
         id: string;
-
-
     };
 };
 
@@ -47,7 +41,6 @@ type InspactionListRouteProp = RouteProp<DrawerParamList, 'InspectionList'>;
 const InspectionList = ({ navigation }: { navigation: any }) => {
     const { state, updateState } = useForm();
     const [loading, setLoading] = useState(true);
-    
     const [refreshing, setRefreshing] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -55,34 +48,31 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
     const route = useRoute<InspactionListRouteProp>();
     const storageId = route.params?.storageId;
     const [showButton, setShowButton] = useState(false);
-
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchType, setSearchType] = useState<'location' | 'vendor'>('location');
 
     useEffect(() => {
         if (storageId) {
-            setShowButton(true); // Show button only if storageId exists
+            setShowButton(true);
         } else {
-            setShowButton(false); // Hide button if no storageId
+            setShowButton(false);
         }
-    }, [storageId]); // Re-run effect whenever storageId changes
+    }, [storageId]);
 
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                navigation.goBack();
+                return true;
+            };
 
+            const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
-
-      useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        navigation.goBack();
-        return true; // Prevent default behavior
-      };
-
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-      return () => {
-        backHandler.remove();
-      };
-    }, [navigation])
-  );
-
+            return () => {
+                backHandler.remove();
+            };
+        }, [navigation])
+    );
 
     const handleButtonPress = () => {
         if (storageId) {
@@ -91,19 +81,13 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
         }
     };
 
-
-
-
     const navigateToDrawer = (item: InspectionItem) => {
         navigation.navigate('Inspection List Details', {
             id: item.id,
             locationName: item.locationName,
             vendorName: item.vendorName,
         });
-
-
     };
-
 
     const fetchInspectionList = async (pageNumber: number, isRefreshing = false) => {
         if (!hasMore && !isRefreshing) return;
@@ -115,18 +99,24 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
                 setLoading(true);
             }
 
-            // Build the base URL
             let url = `/api/mobile/InspectionReport/list?PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
 
-            // Add StorageLocationId to the URL if it exists
             if (storageId) {
-                url = `/api/mobile/InspectionReport/list?StorageLocationId=${storageId}&PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
+                url += `&StorageLocationId=${storageId}`;
+            }
+
+            // Add search parameters if search query exists
+            if (searchQuery.trim()) {
+                if (searchType === 'location') {
+                    url += `&LocationName=${encodeURIComponent(searchQuery.trim())}`;
+                } else {
+                    url += `&VendorName=${encodeURIComponent(searchQuery.trim())}`;
+                }
             }
 
             const response = await apiClient.get(url);
 
             const receivedItems = response.data || [];
-
             setHasMore(receivedItems.length >= PAGE_SIZE);
 
             updateState({
@@ -161,9 +151,29 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
         fetchInspectionList(1, true);
     };
 
+    const handleSearch = () => {
+        setPage(1);
+        setHasMore(true);
+        fetchInspectionList(1, true);
+    };
+
+    const handleClearSearch = () => {
+    setSearchQuery(''); // Clear the search query
+    setPage(1); // Reset to first page
+    setHasMore(true); // Reset pagination
+    fetchInspectionList(1, true); // Fetch fresh data without search filters
+};
+
+
     useEffect(() => {
         fetchInspectionList(page);
     }, [page]);
+
+    useEffect(() => {
+        // Reset search when component mounts
+        setSearchQuery('');
+        setSearchType('location');
+    }, []);
 
     const formatNumber = (num: number) => {
         return num?.toLocaleString('en-US', {
@@ -264,26 +274,68 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
                 </View>
             </View>
 
+            {/* Search Section */}
+            <View style={styles.searchContainer}>
+                <View style={styles.searchInputContainer}>
+                    <MaterialIcons name="search" size={20} color="#6c757d" style={styles.searchIcon} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder={`Search by ${searchType === 'location' ? 'location' : 'vendor'}...`}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onSubmitEditing={handleSearch}
+                        returnKeyType="search"
+                    />
+                    {searchQuery ? (
+                        <TouchableOpacity onPress={handleClearSearch}>
+                            <MaterialIcons name="close" size={20} color="#6c757d" />
+                        </TouchableOpacity>
+                    ) : null}
+                </View>
+                <View style={styles.searchTypeContainer}>
+                    <TouchableOpacity
+                        style={[
+                            styles.searchTypeButton,
+                            searchType === 'location' && styles.searchTypeButtonActive
+                        ]}
+                        onPress={() => setSearchType('location')}
+                    >
+                        <Text style={[
+                            styles.searchTypeText,
+                            searchType === 'location' && styles.searchTypeTextActive
+                        ]}>
+                            Location
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[
+                            styles.searchTypeButton,
+                            searchType === 'vendor' && styles.searchTypeButtonActive
+                        ]}
+                        onPress={() => setSearchType('vendor')}
+                    >
+                        <Text style={[
+                            styles.searchTypeText,
+                            searchType === 'vendor' && styles.searchTypeTextActive
+                        ]}>
+                            Vendor
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
 
             <View style={styles.buttonContainer}>
                 {showButton && (
-                    // <Button
-                    //   title="Go to Review Form"
-                    //   onPress={handleButtonPress}
-                    // />
-
                     <TouchableOpacity
                         style={styles.inspectionButton}
                         onPress={handleButtonPress}
                         activeOpacity={0.7}
-                    > <Text style={styles.buttonTexti}>Go to Review Form</Text>
-                        <MaterialIcons name="search" size={20} color="#fff" style={styles.icon} /></TouchableOpacity>
+                    >
+                        <Text style={styles.buttonTexti}>Go to Review Form</Text>
+                        <MaterialIcons name="search" size={20} color="#fff" style={styles.icon} />
+                    </TouchableOpacity>
                 )}
-
             </View>
-
-
-
 
             {error && (
                 <View style={styles.errorContainer}>
@@ -582,6 +634,51 @@ const styles = StyleSheet.create({
     },
     icon: {
         marginLeft: 5,
+    },
+    // Search styles
+    searchContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: 8,
+    },
+    searchInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f1f3f5',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginBottom: 8,
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 16,
+        color: '#495057',
+    },
+    searchTypeContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginBottom: 8,
+    },
+    searchTypeButton: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        marginHorizontal: 4,
+        backgroundColor: '#e9ecef',
+    },
+    searchTypeButtonActive: {
+        backgroundColor: '#4a6da7',
+    },
+    searchTypeText: {
+        color: '#495057',
+        fontWeight: '500',
+    },
+    searchTypeTextActive: {
+        color: 'white',
     },
 });
 
