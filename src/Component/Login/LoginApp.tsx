@@ -28,14 +28,14 @@ const LoginApp = ({ navigation }: any) => {
 
   useDisableBackHandler(true);
 
-  // useEffect(() => {
-  //   updateState({
-  //     form: {
-  //       mobileNo: '9634958888',
-  //       password: 'Password@123'
-  //     }
-  //   });
-  // }, []);
+  useEffect(() => {
+    updateState({
+      form: {
+        mobileNo: '9634958888',
+        password: 'Password@123'
+      }
+    });
+  }, []);
 
   const handleChange = (field: string, value: string) => {
     updateState({
@@ -79,8 +79,10 @@ const LoginApp = ({ navigation }: any) => {
       Storage.setString('userToken', token);
       console.log('Login successful, token:', token);
 
-      updateState(null);
-      navigation.navigate('DrawerNavigator');
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'DrawerNavigator' }],
+    });
     } catch (error: any) {
       console.error('Login error:', error);
       Alert.alert(

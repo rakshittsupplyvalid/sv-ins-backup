@@ -16,6 +16,8 @@ import { DrawerParamList } from '../../Type/DrawerParam';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
 const { width } = Dimensions.get('window');
 const isSmallDevice = width < 375;
 
@@ -78,7 +80,10 @@ const ReviewForm = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.goBack();
+    navigation.reset({
+              index: 0,
+              routes: [{ name: 'Dashboard' }],
+            }); 
         return true;
       };
 
@@ -90,44 +95,44 @@ const ReviewForm = () => {
     }, [navigation])
   );
 
-  useEffect(() => {
-    if (isFocused) {
-      updateState({
-        form: {
-          option1: '',
-          option2: '',
-          federationType: '',
-          option3: '',
-          fpofpcdata: '',
-          Storagedata: '',
-          Farmers: '',
-          quanityfound: '',
-          Depositedfound: '',
-          Weighmentslip: '',
-          stockQuality: '',
-          staffBehavior: '',
-          additionalComments: '',
-          noOfChawls: '',
-          noofbins: '',
-          deterioration: '',
-          quanityfoundsystem: '',
-          assayingDone: '',
-          laborRegister: '',
-          inspectionStatus: '',
-          chawlDimensions: [],
-          binDimensions: []
-        },
-        hidden: { ...state.hidden, currentStep: 1 }
-      });
+  // useEffect(() => {
+  //   if (isFocused) {
+  //     updateState({
+  //       form: {
+  //         option1: '',
+  //         option2: '',
+  //         federationType: '',
+  //         option3: '',
+  //         fpofpcdata: '',
+  //         Storagedata: '',
+  //         Farmers: '',
+  //         quanityfound: '',
+  //         Depositedfound: '',
+  //         Weighmentslip: '',
+  //         stockQuality: '',
+  //         staffBehavior: '',
+  //         additionalComments: '',
+  //         noOfChawls: '',
+  //         noofbins: '',
+  //         deterioration: '',
+  //         quanityfoundsystem: '',
+  //         assayingDone: '',
+  //         laborRegister: '',
+  //         inspectionStatus: '',
+  //         chawlDimensions: [],
+  //         binDimensions: []
+  //       },
+  //       hidden: { ...state.hidden, currentStep: 1 }
+  //     });
 
-      setCurrentStep(1);
-      setImageUri([]);
-      setChawlList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
-      setBinList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
-      setShowInspectionButton(false);
-      setSelectedStorageId('');
-    }
-  }, [isFocused]);
+  //     setCurrentStep(1);
+  //     setImageUri([]);
+  //     setChawlList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
+  //     setBinList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
+  //     setShowInspectionButton(false);
+  //     setSelectedStorageId('');
+  //   }
+  // }, [isFocused]);
 
   useEffect(() => {
     CompanyDropdown();
@@ -462,7 +467,7 @@ const ReviewForm = () => {
           fetchLocation();
           setTimeout(() => {
             captureSingleScreenshot(newIndex);
-          }, 2000);
+          }, 4000);
           return updatedList;
         });
       }
@@ -675,6 +680,7 @@ const ReviewForm = () => {
 
         setChawlList([]);
         setImageUri([]);
+         setShowInspectionButton(false);  
         setCurrentStep(1);
       }
 
@@ -717,12 +723,12 @@ const ReviewForm = () => {
         }
 
         Alert.alert('Error', errorMessage);
-      
+
       }
 
       finally {
-    setIsSubmitted(false); // ✅ Re-enable button, show "Submit"
-  }
+        setIsSubmitted(false); // ✅ Re-enable button, show "Submit"
+      }
 
 
     }
@@ -739,12 +745,73 @@ const ReviewForm = () => {
     }
 
     if (currentStep === 2) {
-      const validation = validateSteptwo(state.form);
-      if (!validation.isValid) {
-        Alert.alert('Validation Error', validation.message);
+    // Validate chawls
+    const chawlCount = parseInt(state.form.noOfChawls) || 0;
+    if (chawlCount === 0) {
+      Alert.alert('Validation Error', 'Please enter number of chawls');
+      return;
+    }
+
+    if (chawlList.length !== chawlCount) {
+      Alert.alert('Validation Error', `Please provide dimensions for all ${chawlCount} chawls`);
+      return;
+    }
+
+    for (let i = 0; i < chawlList.length; i++) {
+      const chawl = chawlList[i];
+      if (!chawl.length || !chawl.breadth || !chawl.height) {
+        Alert.alert('Validation Error', `Please fill all dimensions for Chawl ${i + 1}`);
+        return;
+      }
+
+      
+      if (isNaN(parseFloat(chawl.length))) {
+        Alert.alert('Validation Error', `Invalid length for Chawl ${i + 1}`);
+        return;
+      }
+      if (isNaN(parseFloat(chawl.breadth))) {
+        Alert.alert('Validation Error', `Invalid breadth for Chawl ${i + 1}`);
+        return;
+      }
+      if (isNaN(parseFloat(chawl.height))) {
+        Alert.alert('Validation Error', `Invalid height for Chawl ${i + 1}`);
         return;
       }
     }
+
+    // Validate bins
+    const binCount = parseInt(state.form.noofbins) || 0;
+    if (binCount === 0) {
+      Alert.alert('Validation Error', 'Please enter number of bins');
+      return;
+    }
+
+    if (binList.length !== binCount) {
+      Alert.alert('Validation Error', `Please provide dimensions for all ${binCount} bins`);
+      return;
+    }
+
+    for (let i = 0; i < binList.length; i++) {
+      const bin = binList[i];
+      if (!bin.length || !bin.breadth || !bin.height) {
+        Alert.alert('Validation Error', `Please fill all dimensions for Bin ${i + 1}`);
+        return;
+      }
+      
+      if (isNaN(parseFloat(bin.length))) {
+        Alert.alert('Validation Error', `Invalid length for Bin ${i + 1}`);
+        return;
+      }
+      if (isNaN(parseFloat(bin.breadth))) {
+        Alert.alert('Validation Error', `Invalid breadth for Bin ${i + 1}`);
+        return;
+      }
+      if (isNaN(parseFloat(bin.height))) {
+        Alert.alert('Validation Error', `Invalid height for Bin ${i + 1}`);
+        return;
+      }
+    }
+  }
 
     if (currentStep === 3) {
       const validation = validateStepthree(state.form);
@@ -1335,6 +1402,8 @@ const ReviewForm = () => {
                 )}
               />
             </View>
+
+            
           </View>
         );
       case 3:
@@ -1617,6 +1686,20 @@ const ReviewForm = () => {
 
       <SafeAreaView style={styles.safeArea}>
 
+        <View style={styles.customHeader}>
+          <TouchableOpacity onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Dashboard' }],
+            });
+          }}>
+            <Icon name="arrow-back" size={24} color="#fff" />
+    
+          </TouchableOpacity>
+                <Text style={styles.headerTitle}>Review Form</Text>
+        </View>
+
+
 
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
@@ -1672,8 +1755,32 @@ const styles = StyleSheet.create({
   safeArea: {
 
     backgroundColor: '#ffffff',
-    height: '90%',
+ height: '100%',
   },
+  // customHeader: {
+  //   backgroundColor: '#F79B00',
+  //   paddingVertical: 15,
+  //   paddingHorizontal: 20,
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   justifyContent: 'space-between', // if you want to add a button on right
+  // },
+   customHeader: {
+       backgroundColor: '#F79B00',
+    paddingVertical: 15,
+  paddingHorizontal: 20,
+   
+    flexDirection: 'row', // row-wise layo
+    alignItems: 'center'
+  },
+
+  
+  headerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+
   viewShot: {
     width: '100%',
     alignSelf: 'center',

@@ -1,6 +1,6 @@
 export function validateStepOne(formData: any) {
   // Check if all required fields are selected
-  if (!formData.option1 || !formData.option2 || !formData.option3) {
+  if (!formData.option1 || !formData.option2 || !formData.option3  || !formData.Storagedata) {
     return {
       isValid: false,
       message: 'Please select all dropdown options before proceeding'

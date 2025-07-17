@@ -53,8 +53,13 @@ type RouteParams = {
   };
 };
 
+type RootStackParamList = {
+  Dashboard: undefined;
+  // add other route names if needed
+};
+
 const ProcurementList = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<RouteParams, 'params'>>();
   const { status } = route.params;
   const [selectedStatus, setSelectedStatus] = useState(status || 'ALL');
@@ -387,7 +392,10 @@ const ProcurementList = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.goBack();
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Dashboard' }],
+        });
         return true;
       };
 

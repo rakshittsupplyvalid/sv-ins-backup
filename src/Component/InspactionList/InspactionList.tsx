@@ -17,6 +17,7 @@ import useForm from '../../Common/UseForm';
 import { DrawerParamList } from '../../Type/DrawerParam';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useIsFocused } from '@react-navigation/native';
 
 interface InspectionItem {
     id: number;
@@ -50,6 +51,18 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
     const [showButton, setShowButton] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchType, setSearchType] = useState<'location' | 'vendor'>('location');
+    const isFocused = useIsFocused();
+
+
+
+    useEffect(() => {
+        if (isFocused && storageId) {
+            fetchInspectionList(1, true);
+        }
+
+    }, [isFocused, storageId]);
+
+
 
     useEffect(() => {
         if (storageId) {
@@ -62,7 +75,10 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
     useFocusEffect(
         useCallback(() => {
             const onBackPress = () => {
-                navigation.goBack();
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Dashboard' }],
+                });
                 return true;
             };
 
@@ -77,7 +93,8 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
     const handleButtonPress = () => {
         if (storageId) {
             navigation.navigate('Review Form', { storageId });
-            setShowButton(false);
+
+            // setShowButton(false);
         }
     };
 
@@ -89,7 +106,22 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
         });
     };
 
-    const fetchInspectionList = async (pageNumber: number, isRefreshing = false) => {
+    const handleSearch = (query: string) => {
+        setSearchQuery(query);
+        if (query.length > 0) {
+            fetchInspectionList(1, true, query, searchType); // Pass the current searchType
+        } else {
+            fetchInspectionList(1, true); // Fetch fresh data without filters when query is empty
+        }
+    };
+
+
+    const fetchInspectionList = async (
+        pageNumber: number,
+        isRefreshing = false,
+        query: string = '',
+        type: 'location' | 'vendor' = 'location'
+    ) => {
         if (!hasMore && !isRefreshing) return;
 
         try {
@@ -106,16 +138,15 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
             }
 
             // Add search parameters if search query exists
-            if (searchQuery.trim()) {
-                if (searchType === 'location') {
-                    url += `&LocationName=${encodeURIComponent(searchQuery.trim())}`;
+            if (query) {
+                if (type === 'location') {
+                    url += `&LocationName=${encodeURIComponent(query)}`;
                 } else {
-                    url += `&VendorName=${encodeURIComponent(searchQuery.trim())}`;
+                    url += `&VendorName=${encodeURIComponent(query)}`;
                 }
             }
 
             const response = await apiClient.get(url);
-
             const receivedItems = response.data || [];
             setHasMore(receivedItems.length >= PAGE_SIZE);
 
@@ -139,6 +170,10 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
         }
     };
 
+
+
+
+
     const handleLoadMore = () => {
         if (!loading && hasMore && !refreshing) {
             setPage(prevPage => prevPage + 1);
@@ -151,18 +186,6 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
         fetchInspectionList(1, true);
     };
 
-    const handleSearch = () => {
-        setPage(1);
-        setHasMore(true);
-        fetchInspectionList(1, true);
-    };
-
-    const handleClearSearch = () => {
-    setSearchQuery(''); // Clear the search query
-    setPage(1); // Reset to first page
-    setHasMore(true); // Reset pagination
-    fetchInspectionList(1, true); // Fetch fresh data without search filters
-};
 
 
     useEffect(() => {
@@ -280,48 +303,13 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
                     <MaterialIcons name="search" size={20} color="#6c757d" style={styles.searchIcon} />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder={`Search by ${searchType === 'location' ? 'location' : 'vendor'}...`}
+                        placeholder={`Search by ${searchType}...`}  // Dynamic placeholder
                         value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        onSubmitEditing={handleSearch}
+                        onChangeText={handleSearch}
                         returnKeyType="search"
                     />
-                    {searchQuery ? (
-                        <TouchableOpacity onPress={handleClearSearch}>
-                            <MaterialIcons name="close" size={20} color="#6c757d" />
-                        </TouchableOpacity>
-                    ) : null}
                 </View>
-                <View style={styles.searchTypeContainer}>
-                    <TouchableOpacity
-                        style={[
-                            styles.searchTypeButton,
-                            searchType === 'location' && styles.searchTypeButtonActive
-                        ]}
-                        onPress={() => setSearchType('location')}
-                    >
-                        <Text style={[
-                            styles.searchTypeText,
-                            searchType === 'location' && styles.searchTypeTextActive
-                        ]}>
-                            Location
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[
-                            styles.searchTypeButton,
-                            searchType === 'vendor' && styles.searchTypeButtonActive
-                        ]}
-                        onPress={() => setSearchType('vendor')}
-                    >
-                        <Text style={[
-                            styles.searchTypeText,
-                            searchType === 'vendor' && styles.searchTypeTextActive
-                        ]}>
-                            Vendor
-                        </Text>
-                    </TouchableOpacity>
-                </View>
+
             </View>
 
             <View style={styles.buttonContainer}>

@@ -108,438 +108,40 @@ const InspectionListDetails = () => {
   };
 
 
-
-  // const generatePDF = async () => {
-
-  //    const formattedDate = new Date(inspectionData.createdOn).toLocaleString('en-IN', {
-  //    day: 'numeric',
-  //      month: 'long',
-  //      year: 'numeric',
-  //      hour: '2-digit',
-  //      minute: '2-digit'
-  //    });
-
-  //   if (!inspectionData) {
-  //     Alert.alert('Error', 'No inspection data available');
-  //     return;
-  //   }
-
-  //   try {
-  //     // Show loading indicator
-  //     Alert.alert('Generating PDF', 'Please wait...');
-
-  //     // Generate the PDF (your existing code)
-
-  //      const htmlContent = `
-  //     <html>
-  //       <head>
-  //         <style>
-  //           @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-
-  //           body {
-  //             font-family: 'Roboto', sans-serif;
-  //             color: #333;
-  //             line-height: 1.5;
-  //             padding: 0;
-  //             margin: 0;
-  //             background-color: #f9f9f9;
-  //           }
-  //           .container {
-  //             max-width: 800px;
-  //             margin: 0 auto;
-  //             background: white;
-  //             box-shadow: 0 0 20px rgba(0,0,0,0.05);
-  //           }
-  //           .letterhead {
-  //             background: #2c3e50;
-  //             color: white;
-  //             padding: 30px 40px;
-  //             display: flex;
-  //             justify-content: space-between;
-  //             align-items: center;
-  //           }
-  //           .company-info {
-  //             line-height: 1.4;
-  //           }
-  //           .company-name {
-  //             font-size: 22px;
-  //             font-weight: 700;
-  //             margin: 0 0 5px 0;
-  //           }
-  //           .company-tagline {
-  //             font-size: 13px;
-  //             opacity: 0.8;
-  //             margin: 0;
-  //           }
-  //           .report-title {
-  //             text-align: right;
-  //           }
-  //           .report-main-title {
-  //             font-size: 28px;
-  //             margin: 0;
-  //             font-weight: 300;
-  //           }
-  //           .report-subtitle {
-  //             font-size: 14px;
-  //             margin: 5px 0 0 0;
-  //             font-weight: 400;
-  //           }
-  //           .document-body {
-  //             padding: 40px;
-  //           }
-  //           .section {
-  //             margin-bottom: 30px;
-  //           }
-  //           .section-header {
-  //             border-bottom: 2px solid #eaeaea;
-  //             padding-bottom: 8px;
-  //             margin-bottom: 20px;
-  //             display: flex;
-  //             justify-content: space-between;
-  //             align-items: flex-end;
-  //           }
-  //           .section-title {
-  //             font-size: 18px;
-  //             font-weight: 500;
-  //             color: #2c3e50;
-  //             margin: 0;
-  //           }
-  //           .section-icon {
-  //             color: #7f8c8d;
-  //             font-size: 14px;
-  //           }
-  //           .two-column {
-  //             display: flex;
-  //             flex-wrap: wrap;
-  //             gap: 20px;
-  //           }
-  //           .column {
-  //             flex: 1;
-  //             min-width: 250px;
-  //           }
-  //           .info-item {
-  //             margin-bottom: 15px;
-  //           }
-  //           .info-label {
-  //             font-size: 13px;
-  //             color: #7f8c8d;
-  //             margin-bottom: 3px;
-  //             font-weight: 500;
-  //           }
-  //           .info-value {
-  //             font-size: 15px;
-  //             font-weight: 400;
-  //           }
-  //           .status {
-  //             display: inline-block;
-  //             padding: 3px 10px;
-  //             border-radius: 4px;
-  //             font-size: 12px;
-  //             font-weight: 500;
-  //             background-color: ${inspectionData.isActive ? '#27ae60' : '#e74c3c'};
-  //             color: white;
-  //           }
-  //           .comments-box {
-  //             background: #f8f9fa;
-  //             border-left: 4px solid #bdc3c7;
-  //             padding: 15px;
-  //             font-size: 14px;
-  //             line-height: 1.6;
-  //           }
-  //           .image-gallery {
-  //             display: grid;
-  //             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  //             gap: 15px;
-  //             margin-top: 15px;
-  //           }
-  //           .image-container {
-  //             border: 1px solid #eaeaea;
-  //             padding: 5px;
-  //             border-radius: 4px;
-  //           }
-  //           .footer {
-  //             text-align: center;
-  //             padding: 20px;
-  //             font-size: 11px;
-  //             color: #7f8c8d;
-  //             border-top: 1px solid #eaeaea;
-  //             background: #f8f9fa;
-  //           }
-  //           .signature-area {
-  //             margin-top: 50px;
-  //             display: flex;
-  //             justify-content: space-between;
-  //           }
-  //           .signature-line {
-  //             width: 200px;
-  //             border-top: 1px solid #bdc3c7;
-  //             margin-top: 40px;
-  //             text-align: center;
-  //             padding-top: 5px;
-  //             font-size: 12px;
-  //           }
-  //         </style>
-  //       </head>
-  //       <body>
-  //         <div class="container">
-  //           <!-- Letterhead -->
-  //           <div class="letterhead">
-  //             <div class="company-info">
-  //               <div class="company-name">Supply Valid</div>
-  //               <div class="company-tagline">Quality Inspection & Procurement Solutions</div>
-  //             </div>
-  //             <div class="report-title">
-  //               <h1 class="report-main-title">INSPECTION REPORT</h1>
-  //               <p class="report-subtitle">Document ID: ${inspectionData.id || 'N/A'}</p>
-  //             </div>
-  //           </div>
-
-  //           <!-- Document Body -->
-  //           <div class="document-body">
-  //             <!-- Metadata Section -->
-  //             <div class="section">
-  //               <div class="two-column">
-  //                 <div class="column">
-  //                   <div class="info-item">
-  //                     <div class="info-label">LOCATION</div>
-  //                     <div class="info-value">${locationName || 'N/A'}</div>
-  //                   </div>
-  //                   <div class="info-item">
-  //                     <div class="info-label">VENDOR</div>
-  //                     <div class="info-value">${vendorName || 'N/A'}</div>
-  //                   </div>
-  //                 </div>
-  //                 <div class="column">
-  //                   <div class="info-item">
-  //                     <div class="info-label">REPORT DATE</div>
-  //                     <div class="info-value">${formattedDate}</div>
-  //                   </div>
-  //                   <div class="info-item">
-  //                     <div class="info-label">STATUS</div>
-  //                     <div class="info-value"><span class="status">${inspectionData.isActive ? 'ACTIVE' : 'INACTIVE'}</span></div>
-  //                   </div>
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             <!-- Procurement Data -->
-  //             <div class="section">
-  //               <div class="section-header">
-  //                 <h2 class="section-title">PROCUREMENT DETAILS</h2>
-  //                 <span class="section-icon">Section 1 of 4</span>
-  //               </div>
-  //               <div class="two-column">
-  //                 <div class="column">
-  //                   <div class="info-item">
-  //                     <div class="info-label">NUMBER OF FARMERS</div>
-  //                     <div class="info-value">${inspectionData.noOfFarmers || 'N/A'}</div>
-  //                   </div>
-  //                   <div class="info-item">
-  //                     <div class="info-label">TOTAL PHYSICAL QUANTITY</div>
-  //                     <div class="info-value">${inspectionData.totalPhysicalQuantity || 'N/A'}</div>
-  //                   </div>
-  //                 </div>
-  //                 <div class="column">
-  //                   <div class="info-item">
-  //                     <div class="info-label">TOTAL PROCURED QUANTITY</div>
-  //                     <div class="info-value">${inspectionData.totalProcuerQuantity || 'N/A'}</div>
-  //                   </div>
-  //                   <div class="info-item">
-  //                     <div class="info-label">WEIGHMENT SLIPS</div>
-  //                     <div class="info-value">${inspectionData.noOfWeighmentSlip || 'N/A'}</div>
-  //                   </div>
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             <!-- Quality Assessment -->
-  //             <div class="section">
-  //               <div class="section-header">
-  //                 <h2 class="section-title">QUALITY ASSESSMENT</h2>
-  //                 <span class="section-icon">Section 2 of 4</span>
-  //               </div>
-  //               <div class="two-column">
-  //                 <div class="column">
-  //                   <div class="info-item">
-  //                     <div class="info-label">STOCK QUALITY RATING</div>
-  //                     <div class="info-value">${inspectionData.qualityOfStock || 'N/A'}</div>
-  //                   </div>
-  //                 </div>
-  //                 <div class="column">
-  //                   <div class="info-item">
-  //                     <div class="info-label">STAFF BEHAVIOR RATING</div>
-  //                     <div class="info-value">${inspectionData.staffBehavior || 'N/A'}</div>
-  //                   </div>
-  //                 </div>
-  //               </div>
-  //             </div>
-
-  //             <!-- Comments -->
-  //             <div class="section">
-  //               <div class="section-header">
-  //                 <h2 class="section-title">INSPECTOR COMMENTS</h2>
-  //                 <span class="section-icon">Section 3 of 4</span>
-  //               </div>
-  //               <div class="comments-box">
-  //                 ${inspectionData.additionalComments || 'No additional comments were recorded for this inspection.'}
-  //               </div>
-  //             </div>
-
-  //             <!-- Attachments -->
-  //             ${inspectionData.files?.length ? `
-  //             <div class="section">
-  //               <div class="section-header">
-  //                 <h2 class="section-title">ATTACHMENTS</h2>
-  //                 <span class="section-icon">Section 4 of 4</span>
-  //               </div>
-  //               <div class="image-gallery">
-  //                 ${inspectionData.files.map(
-  //                   (file: string) => `
-  //                   <div class="image-container">
-  //                     <img src="https://dev-backend-2024.epravaha.com${file}" width="100%" style="display: block;" />
-  //                   </div>
-  //                   `
-  //                 ).join('')}
-  //               </div>
-  //             </div>
-  //             ` : ''}
-
-  //             <!-- Signature Area -->
-  //             <div class="signature-area">
-  //               <div>
-  //                 <div class="signature-line">Inspector's Signature</div>
-  //               </div>
-  //               <div>
-  //                 <div class="signature-line">Authorized Signatory</div>
-  //               </div>
-  //             </div>
-  //           </div>
-
-  //           <!-- Footer -->
-  //           <div class="footer">
-  //             <p>This document is computer generated and does not require a physical signature • ${new Date().toLocaleDateString()}</p>
-  //             <p>© ${new Date().getFullYear()} Agriculture Produce Network. All Rights Reserved.</p>
-  //           </div>
-  //         </div>
-  //       </body>
-  //     </html>
-  //   `;
-
-  //     const { uri } = await Print.printToFileAsync({
-  //       html: htmlContent,
-  //       base64: false,
-  //       width: 794,
-  //       height: 1123,
-  //       margins: {
-  //         top: 40,
-  //         bottom: 40,
-  //         left: 40,
-  //         right: 40
-  //       }
-  //     });
-
-  //     // Define PDF filename
-  //     const pdfName = `Inspection_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-
-  //     if (Platform.OS === 'android') {
-  //       // For Android - use DownloadManager for automatic download
-  //       try {
-  //         // Create a download request
-  //         const downloadResumable = FileSystem.createDownloadResumable(
-  //           uri,
-  //           FileSystem.documentDirectory + pdfName,
-  //           {},
-  //           (downloadProgress) => {
-  //             const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
-  //             console.log(`Download progress: ${progress * 100}%`);
-  //           }
-  //         );
-
-  //         const downloadResult = await downloadResumable.downloadAsync();
-  //         if (!downloadResult || !downloadResult.uri) {
-  //           throw new Error('Download failed or returned undefined');
-  //         }
-  //         // Use Android's DownloadManager to make it appear in notifications
-  //         const downloadUri = await FileSystem.getContentUriAsync(downloadResult.uri);
-  //         await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-  //           data: downloadUri,
-  //           type: 'application/pdf',
-  //           flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
-  //         });
-
-  //         Alert.alert('Success', 'PDF download started in background');
-
-  //       } catch (androidError) {
-  //         console.warn('Android DownloadManager failed:', androidError);
-  //         // Fallback to direct share
-  //         await Sharing.shareAsync(uri, {
-  //           mimeType: 'application/pdf',
-  //           dialogTitle: 'Save Inspection Report',
-  //           UTI: 'com.adobe.pdf'
-  //         });
-  //       }
-  //     } else {
-  //       // For iOS - save to temporary location and share
-  //       const newPath = FileSystem.cacheDirectory + pdfName;
-  //       await FileSystem.copyAsync({
-  //         from: uri,
-  //         to: newPath
-  //       });
-
-  //       // Automatically open share dialog
-  //       await Sharing.shareAsync(newPath, {
-  //         mimeType: 'application/pdf',
-  //         dialogTitle: 'Save Inspection Report',
-  //         UTI: 'com.adobe.pdf'
-  //       });
-  //     }
-
-  //     // Clean up temporary file
-  //     await FileSystem.deleteAsync(uri, { idempotent: true });
-
-  //   } catch (error) {
-  //     console.error('PDF download failed:', error);
-  //     let errorMessage = 'Unknown error';
-  //     if (error instanceof Error) {
-  //       errorMessage = error.message;
-  //     } else if (typeof error === 'string') {
-  //       errorMessage = error;
-  //     }
-  //     Alert.alert('Error', `Failed to download PDF: ${errorMessage}`);
-  //   }
-  // };
+  
 
 
-
+ 
 
   const generatePDF = async () => {
-    if (!inspectionData) {
-      Alert.alert('Error', 'No inspection data available');
-      return;
+  if (!inspectionData) {
+    Alert.alert('Error', 'No inspection data available');
+    return;
+  }
+
+  try {
+    const formattedDate = new Date(inspectionData.createdOn).toLocaleString();
+    const logoBase64 = await getBase64Logo();
+
+    // Prepare image HTML for each file if they exist
+    let imagesHtml = '';
+    if (inspectionData.files?.length) {
+      imagesHtml = `
+        <div class="section">
+          <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Attachments (${inspectionData.files.length})</h2>
+          <div class="image-grid">
+            ${inspectionData.files.map((file: string) => `
+              <div class="image-container">
+                <img src="https://dev-backend-2025.epravaha.com${file}" style="width: 100%; height: auto;" />
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
     }
 
-    try {
-      const formattedDate = new Date(inspectionData.createdOn).toLocaleString();
-      const logoBase64 = await getBase64Logo();
 
-      // Prepare image HTML for each file if they exist
-      let imagesHtml = '';
-      if (inspectionData.files?.length) {
-        imagesHtml = `
-          <div class="section">
-            <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Attachments (${inspectionData.files.length})</h2>
-            <div class="image-grid">
-              ${inspectionData.files.map((file: string) => `
-                <div class="image-container">
-                  <img src="https://dev-backend-2025.epravaha.com${file}" style="width: 100%; height: auto;" />
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      }
-
-      const htmlContent = `
+       const htmlContent = `
       <html>
         <head>
           <style>
@@ -757,62 +359,32 @@ const InspectionListDetails = () => {
       </html>
     `;
 
-      const { uri } = await Print.printToFileAsync({
-        html: htmlContent,
-        base64: false,
-        width: 794,
-        height: 1123,
-        margins: {
-          top: 40,
-          bottom: 40,
-          left: 40,
-          right: 40
-        }
-      });
+    const { uri } = await Print.printToFileAsync({
+      html: htmlContent,
+      base64: false,
+      width: 794,
+      height: 1123,
+      margins: {
+        top: 40,
+        bottom: 40,
+        left: 40,
+        right: 40
+      }
+    });
 
-      const pdfName = `Inspection_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+    const pdfName = `Inspection_Report_${new Date().toISOString().split('T')[0]}.pdf`;
 
-      if (Platform.OS === 'android') {
-        try {
-          const downloadsDir = FileSystem.StorageAccessFramework.getUriForDirectoryInRoot('Downloads');
-          const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync(downloadsDir);
-
-          if (permissions.granted) {
-            const pdfContent = await FileSystem.readAsStringAsync(uri, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
-
-            const newUri = await FileSystem.StorageAccessFramework.createFileAsync(
-              permissions.directoryUri,
-              pdfName,
-              'application/pdf'
-            );
-
-            await FileSystem.writeAsStringAsync(newUri, pdfContent, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
-
-            Alert.alert(
-              'Success',
-              'PDF downloaded to your Downloads folder',
-              [
-                { text: 'Open', onPress: () => Sharing.shareAsync(newUri) },
-                { text: 'OK' }
-              ]
-            );
-          } else {
-            throw new Error('Permission denied');
-          }
-        } catch (androidError) {
-          console.warn('Android direct save failed:', androidError);
-          await Sharing.shareAsync(uri, {
-            mimeType: 'application/pdf',
-            dialogTitle: 'Save Inspection Report',
-            UTI: 'com.adobe.pdf'
-          });
-        }
-      } else {
-        const newPath = FileSystem.documentDirectory + pdfName;
+    if (Platform.OS === 'android') {
+      try {
+        // For Android, use the Downloads directory
+        const downloadsDir = `${FileSystem.documentDirectory}Download/`;
+        
+        // Ensure the Download directory exists
+        await FileSystem.makeDirectoryAsync(downloadsDir, { intermediates: true });
+        
+        const newPath = `${downloadsDir}${pdfName}`;
+        
+        // Copy the file to the Download directory
         await FileSystem.copyAsync({
           from: uri,
           to: newPath
@@ -820,34 +392,396 @@ const InspectionListDetails = () => {
 
         Alert.alert(
           'Success',
-          'PDF ready to save',
+          'PDF downloaded successfully',
           [
-            {
-              text: 'Save to Files',
-              onPress: () => Sharing.shareAsync(newPath, {
-                mimeType: 'application/pdf',
-                dialogTitle: 'Save Inspection Report',
-                UTI: 'com.adobe.pdf'
-              })
-            },
+            { text: 'Open', onPress: () => Sharing.shareAsync(newPath) },
             { text: 'OK' }
           ]
         );
+      } catch (androidError) {
+        console.warn('Android direct save failed:', androidError);
+        // Fallback to sharing if direct save fails
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Save Inspection Report',
+          UTI: 'com.adobe.pdf'
+        });
       }
+    } else {
+      // iOS implementation remains the same
+      const newPath = FileSystem.documentDirectory + pdfName;
+      await FileSystem.copyAsync({
+        from: uri,
+        to: newPath
+      });
 
-      await FileSystem.deleteAsync(uri, { idempotent: true });
-
-    } catch (error) {
-      console.error('PDF download failed:', error);
-      let errorMessage = 'Unknown error';
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-      Alert.alert('Error', `Failed to download PDF: ${errorMessage}`);
+      Alert.alert(
+        'Success',
+        'PDF ready to save',
+        [
+          {
+            text: 'Save to Files',
+            onPress: () => Sharing.shareAsync(newPath, {
+              mimeType: 'application/pdf',
+              dialogTitle: 'Save Inspection Report',
+              UTI: 'com.adobe.pdf'
+            })
+          },
+          { text: 'OK' }
+        ]
+      );
     }
-  };
+
+    await FileSystem.deleteAsync(uri, { idempotent: true });
+
+  } catch (error) {
+    console.error('PDF download failed:', error);
+    let errorMessage = 'Unknown error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    Alert.alert('Error', `Failed to download PDF: ${errorMessage}`);
+  }
+};
+
+  // const generatePDF = async () => {
+  //   if (!inspectionData) {
+  //     Alert.alert('Error', 'No inspection data available');
+  //     return;
+  //   }
+
+  //   try {
+  //     const formattedDate = new Date(inspectionData.createdOn).toLocaleString();
+  //     const logoBase64 = await getBase64Logo();
+
+  //     // Prepare image HTML for each file if they exist
+  //     let imagesHtml = '';
+  //     if (inspectionData.files?.length) {
+  //       imagesHtml = `
+  //         <div class="section">
+  //           <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Attachments (${inspectionData.files.length})</h2>
+  //           <div class="image-grid">
+  //             ${inspectionData.files.map((file: string) => `
+  //               <div class="image-container">
+  //                 <img src="https://dev-backend-2025.epravaha.com${file}" style="width: 100%; height: auto;" />
+  //               </div>
+  //             `).join('')}
+  //           </div>
+  //         </div>
+  //       `;
+  //     }
+
+  //     const htmlContent = `
+  //     <html>
+  //       <head>
+  //         <style>
+  //           * {
+  //             box-sizing: border-box;
+  //             margin: 0;
+  //             padding: 0;
+  //           }
+            
+  //           body {
+  //             font-family: 'Segoe UI', Roboto, sans-serif;
+  //             width: 100%;
+  //             min-height: 100vh;
+  //             padding: 1.5cm;
+  //             color: #333;
+  //             line-height: 1.5;
+  //           }
+            
+  //           .document {
+  //             width: 100%;
+  //             max-width: 21cm;
+  //             margin: 0 auto;
+  //             display: flex;
+  //             flex-direction: column;
+  //             gap: 15px;
+  //           }
+            
+  //           .header {
+  //             display: flex;
+  //             justify-content: space-between;
+  //             align-items: flex-end;
+  //             padding-bottom: 15px;
+  //             border-bottom: 2px solid #2c3e50;
+  //             margin-bottom: 20px;
+  //           }
+            
+  //           .logo {
+  //             height: 1.8cm;
+  //             max-width: 4cm;
+  //             object-fit: contain;
+  //           }
+            
+  //           .section {
+  //             width: 100%;
+  //             page-break-inside: avoid;
+  //             margin-bottom: 15px;
+  //           }
+            
+  //           .info-table {
+  //             width: 100%;
+  //             border-collapse: collapse;
+  //           }
+            
+  //           .info-table td {
+  //             padding: 8px 5px;
+  //             border-bottom: 1px solid #eee;
+  //             vertical-align: top;
+  //           }
+            
+  //           .info-label {
+  //             font-weight: 600;
+  //             color: #555;
+  //             width: 40%;
+  //           }
+            
+  //           .image-grid {
+  //             display: grid;
+  //             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  //             gap: 10px;
+  //             margin-top: 10px;
+  //           }
+            
+  //           .image-container {
+  //             border: 1px solid #ddd;
+  //             padding: 3px;
+  //             border-radius: 3px;
+  //             page-break-inside: avoid;
+  //           }
+            
+  //           .image-container img {
+  //             width: 100%;
+  //             height: auto;
+  //             display: block;
+  //             max-height: 200px;
+  //             object-fit: contain;
+  //           }
+            
+  //           @media print {
+  //             body {
+  //               padding: 0;
+  //             }
+  //             .document {
+  //               max-width: 100%;
+  //               padding: 1.5cm;
+  //             }
+  //             .no-print {
+  //               display: none !important;
+  //             }
+  //           }
+            
+  //           .page-break {
+  //             page-break-after: always;
+  //           }
+            
+  //           .footer {
+  //             margin-top: auto;
+  //             padding-top: 15px;
+  //             border-top: 1px solid #eee;
+  //             font-size: 0.8rem;
+  //             color: #777;
+  //             text-align: center;
+  //           }
+  //         </style>
+  //       </head>
+  //       <body>
+  //         <div class="document">
+  //           <div class="header">
+  //             <div>
+  //               <h1 style="margin: 0; font-size: 1.5rem;">Inspection Report</h1>
+  //               <p style="margin-top: 5px; font-size: 0.9rem;">${formattedDate}</p>
+  //             </div>
+  //             <img src="${logoBase64}" class="logo" alt="Company Logo" />
+  //           </div>
+            
+  //           <div class="section">
+  //             <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Basic Information</h2>
+  //             <table class="info-table">
+  //               <tr>
+  //                 <td class="info-label">Location Name:</td>
+  //                 <td>${locationName || 'N/A'}</td>
+  //               </tr>
+  //               <tr>
+  //                 <td class="info-label">Vendor Name:</td>
+  //                 <td>${vendorName || 'N/A'}</td>
+  //               </tr>
+  //               <tr>
+  //                 <td class="info-label">Status:</td>
+  //                 <td>
+  //                   <span style="
+  //                     display: inline-block;
+  //                     padding: 2px 8px;
+  //                     border-radius: 3px;
+  //                     background: ${inspectionData.isActive ? '#4CAF50' : '#F44336'};
+  //                     color: white;
+  //                     font-size: 0.9rem;
+  //                   ">
+  //                     ${inspectionData.isActive ? 'Active' : 'Inactive'}
+  //                   </span>
+  //                 </td>
+  //               </tr>
+  //             </table>
+  //           </div>
+            
+  //           <div class="section">
+  //             <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Procurement Details</h2>
+  //             <table class="info-table">
+  //               <tr>
+  //                 <td class="info-label">No. of Farmers:</td>
+  //                 <td>${inspectionData.noOfFarmers || 'N/A'}</td>
+  //               </tr>
+  //               <tr>
+  //                 <td class="info-label">Physical Quantity:</td>
+  //                 <td>${inspectionData.totalPhysicalQuantity || 'N/A'}</td>
+  //               </tr>
+  //               <tr>
+  //                 <td class="info-label">Procured Quantity:</td>
+  //                 <td>${inspectionData.totalProcuerQuantity || 'N/A'}</td>
+  //               </tr>
+  //               <tr>
+  //                 <td class="info-label">Weighment Slips:</td>
+  //                 <td>${inspectionData.noOfWeighmentSlip || 'N/A'}</td>
+  //               </tr>
+  //             </table>
+  //           </div>
+            
+  //           ${inspectionData.chawlSizes?.length ? `
+  //             <div class="section">
+  //               <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Chawl Sizes (${inspectionData.chawlSizes.length})</h2>
+  //               ${inspectionData.chawlSizes.map((chawl: any, index: number) => `
+  //                 <table class="info-table" style="margin-bottom: 10px;">
+  //                   <tr><td class="info-label">Chawl ${index + 1}</td><td></td></tr>
+  //                   <tr><td class="info-label">Type</td><td>${chawl.chawlType || 'N/A'}</td></tr>
+  //                   <tr><td class="info-label">Length</td><td>${chawl.length || 'N/A'}</td></tr>
+  //                   <tr><td class="info-label">Breadth</td><td>${chawl.breadth || 'N/A'}</td></tr>
+  //                   <tr><td class="info-label">Height</td><td>${chawl.height || 'N/A'}</td></tr>
+  //                   <tr><td class="info-label">Quantity</td><td>${chawl.quantity || 'N/A'}</td></tr>
+  //                 </table>
+  //               `).join('')}
+  //             </div>
+  //           ` : ''}
+
+  //           ${inspectionData.binsSizes?.length ? `
+  //             <div class="section">
+  //               <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Bin Sizes (${inspectionData.binsSizes.length})</h2>
+  //               ${inspectionData.binsSizes.map((bin: any, index: number) => `
+  //                 <table class="info-table" style="margin-bottom: 10px;">
+  //                   <tr><td class="info-label">Bin ${index + 1}</td><td></td></tr>
+  //                   <tr><td class="info-label">Type</td><td>${bin.chawlType || 'N/A'}</td></tr>
+  //                   <tr><td class="info-label">Length</td><td>${bin.length || 'N/A'}</td></tr>
+  //                   <tr><td class="info-label">Breadth</td><td>${bin.breadth || 'N/A'}</td></tr>
+  //                   <tr><td class="info-label">Height</td><td>${bin.height || 'N/A'}</td></tr>
+  //                   <tr><td class="info-label">Quantity</td><td>${bin.quantity || 'N/A'}</td></tr>
+  //                 </table>
+  //               `).join('')}
+  //             </div>
+  //           ` : ''}
+
+  //           ${imagesHtml}
+
+  //           <div class="footer">
+  //             <p>Generated on ${new Date().toLocaleDateString()} • © ${new Date().getFullYear()} Supply Valid</p>
+  //           </div>
+  //         </div>
+  //       </body>
+  //     </html>
+  //   `;
+
+  //     const { uri } = await Print.printToFileAsync({
+  //       html: htmlContent,
+  //       base64: false,
+  //       width: 794,
+  //       height: 1123,
+  //       margins: {
+  //         top: 40,
+  //         bottom: 40,
+  //         left: 40,
+  //         right: 40
+  //       }
+  //     });
+
+  //     const pdfName = `Inspection_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+
+  //     if (Platform.OS === 'android') {
+  //       try {
+  //         const downloadsDir = FileSystem.StorageAccessFramework.getUriForDirectoryInRoot('Downloads');
+  //         const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync(downloadsDir);
+
+  //         if (permissions.granted) {
+  //           const pdfContent = await FileSystem.readAsStringAsync(uri, {
+  //             encoding: FileSystem.EncodingType.Base64,
+  //           });
+
+  //           const newUri = await FileSystem.StorageAccessFramework.createFileAsync(
+  //             permissions.directoryUri,
+  //             pdfName,
+  //             'application/pdf'
+  //           );
+
+  //           await FileSystem.writeAsStringAsync(newUri, pdfContent, {
+  //             encoding: FileSystem.EncodingType.Base64,
+  //           });
+
+  //           Alert.alert(
+  //             'Success',
+  //             'PDF downloaded to your Downloads folder',
+  //             [
+  //               { text: 'Open', onPress: () => Sharing.shareAsync(newUri) },
+  //               { text: 'OK' }
+  //             ]
+  //           );
+  //         } else {
+  //           throw new Error('Permission denied');
+  //         }
+  //       } catch (androidError) {
+  //         console.warn('Android direct save failed:', androidError);
+  //         await Sharing.shareAsync(uri, {
+  //           mimeType: 'application/pdf',
+  //           dialogTitle: 'Save Inspection Report',
+  //           UTI: 'com.adobe.pdf'
+  //         });
+  //       }
+  //     } else {
+  //       const newPath = FileSystem.documentDirectory + pdfName;
+  //       await FileSystem.copyAsync({
+  //         from: uri,
+  //         to: newPath
+  //       });
+
+  //       Alert.alert(
+  //         'Success',
+  //         'PDF ready to save',
+  //         [
+  //           {
+  //             text: 'Save to Files',
+  //             onPress: () => Sharing.shareAsync(newPath, {
+  //               mimeType: 'application/pdf',
+  //               dialogTitle: 'Save Inspection Report',
+  //               UTI: 'com.adobe.pdf'
+  //             })
+  //           },
+  //           { text: 'OK' }
+  //         ]
+  //       );
+  //     }
+
+  //     await FileSystem.deleteAsync(uri, { idempotent: true });
+
+  //   } catch (error) {
+  //     console.error('PDF download failed:', error);
+  //     let errorMessage = 'Unknown error';
+  //     if (error instanceof Error) {
+  //       errorMessage = error.message;
+  //     } else if (typeof error === 'string') {
+  //       errorMessage = error;
+  //     }
+  //     Alert.alert('Error', `Failed to download PDF: ${errorMessage}`);
+  //   }
+  // };
 
 
   const toggleSection = (section: string) => {
@@ -1279,13 +1213,13 @@ const InspectionListDetails = () => {
         </View>
       </Modal>
 
-      {/* <TouchableOpacity
+      <TouchableOpacity
         onPress={generatePDF}
         style={{ position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center' }}
       >
         <Text style={{ marginRight: 5, color: 'white' }}>Download </Text>
         <Icon name="download" size={24} color="white" />
-      </TouchableOpacity> */}
+      </TouchableOpacity>
     </ScrollView>
   );
 };

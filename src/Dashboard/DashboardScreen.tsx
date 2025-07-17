@@ -81,13 +81,22 @@ const Dashboard = ({ navigation }: any) => {
     });
   }, []);
 
-  const handleCardPress = (status: string) => {
+   const handleCardPress = (status: string) => {
     if (status === 'ALL') {
-      navigation.navigate('InspectionList');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'InspectionList' }],
+      });
     } else if (status === 'Remaining') {
-      navigation.navigate('RemainingInspectionReport');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'RemainingInspectionReport' }],
+      });
     } else {
-      navigation.navigate('Procurement List', { status });
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Procurement List', params: { status } }],
+      });
     }
   };
 

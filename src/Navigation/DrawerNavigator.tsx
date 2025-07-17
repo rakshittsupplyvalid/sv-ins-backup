@@ -103,23 +103,20 @@ export default function DrawerNavigator() {
         }}
       />
 
-      {/* Review Form */}
+
+
+
+
+
       <Drawer.Screen
         name="Review Form"
         component={ReviewForm}
-        options={({ navigation }) => ({
+        options={() => ({
+          headerShown: false,
           drawerIcon: ({ color, size }) => (
             <Icon name="list-alt" size={size} color={color} />
-          ),
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Dashboard')}
-              style={styles.dashboardButton}
-            >
-              <Text style={styles.buttonText}> Go To Dashboard</Text>
-              <Icon name="dashboard" size={20} color="#FFF" style={styles.buttonIcon} />
-            </TouchableOpacity>
-          ),
+          )
+
         })}
 
       />
@@ -133,15 +130,20 @@ export default function DrawerNavigator() {
           drawerIcon: ({ color, size }) => (
             <Icon name="list-alt" size={size} color={color} />
           ),
-          headerRight: () => (
+                 headerRight: () => (
             <TouchableOpacity
-              onPress={() => navigation.navigate('Dashboard')}
+              onPress={() => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Dashboard' }],
+                });
+              }}
               style={styles.dashboardButton}
             >
               <Text style={styles.buttonText}> Go To Dashboard</Text>
               <Icon name="dashboard" size={20} color="#FFF" style={styles.buttonIcon} />
             </TouchableOpacity>
-          ),
+          )
         })}
       />
 
@@ -171,13 +173,19 @@ export default function DrawerNavigator() {
           ),
           headerRight: () => (
             <TouchableOpacity
-              onPress={() => navigation.navigate('Dashboard')}
+              onPress={() => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Dashboard' }],
+                });
+              }}
               style={styles.dashboardButton}
             >
               <Text style={styles.buttonText}> Go To Dashboard</Text>
               <Icon name="dashboard" size={20} color="#FFF" style={styles.buttonIcon} />
             </TouchableOpacity>
-          ),
+          )
+
         })}
 
       />
