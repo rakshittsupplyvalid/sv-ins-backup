@@ -19,6 +19,14 @@ import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useIsFocused } from '@react-navigation/native';
 
+
+
+
+
+
+
+
+
 interface InspectionItem {
     id: number;
     locationName: string;
@@ -27,6 +35,7 @@ interface InspectionItem {
     totalPhysicalQuantity: number;
     totalProcuerQuantity: number;
     additionalComments?: string;
+     storageLocationId?: string; 
 }
 
 type RouteParams = {
@@ -47,7 +56,7 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
     const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const route = useRoute<InspactionListRouteProp>();
-    const storageId = route.params?.storageId;
+    const InsepectionId = route.params?.storageId;
     const [showButton, setShowButton] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchType, setSearchType] = useState<'location' | 'vendor'>('location');
@@ -56,21 +65,22 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
 
 
     useEffect(() => {
-        if (isFocused && storageId) {
+        if (isFocused && InsepectionId) {
+                 console.log('Current storageId:', InsepectionId); // Add this line
             fetchInspectionList(1, true);
         }
 
-    }, [isFocused, storageId]);
+    }, [isFocused,InsepectionId]);
 
 
 
     useEffect(() => {
-        if (storageId) {
+        if (InsepectionId) {
             setShowButton(true);
         } else {
             setShowButton(false);
         }
-    }, [storageId]);
+    }, [InsepectionId]);
 
     useFocusEffect(
         useCallback(() => {
@@ -91,8 +101,8 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
     );
 
     const handleButtonPress = () => {
-        if (storageId) {
-            navigation.navigate('Review Form', { storageId });
+        if (InsepectionId) {
+            navigation.navigate('Review Form', { InsepectionId });
 
             // setShowButton(false);
         }
@@ -103,6 +113,8 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
             id: item.id,
             locationName: item.locationName,
             vendorName: item.vendorName,
+            Storage : item.storageLocationId,
+           
         });
     };
 
@@ -133,9 +145,14 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
 
             let url = `/api/mobile/InspectionReport/list?PageNumber=${pageNumber}&PageSize=${PAGE_SIZE}`;
 
-            if (storageId) {
-                url += `&StorageLocationId=${storageId}`;
+
+            if (InsepectionId) {
+                url += `&StorageLocationId=${InsepectionId}`;
+                console.log('abc' , url);    
+           
             }
+
+
 
             // Add search parameters if search query exists
             if (query) {
@@ -147,6 +164,9 @@ const InspectionList = ({ navigation }: { navigation: any }) => {
             }
 
             const response = await apiClient.get(url);
+            console.log('API Response:', response.data); // Log the response
+
+
             const receivedItems = response.data || [];
             setHasMore(receivedItems.length >= PAGE_SIZE);
 

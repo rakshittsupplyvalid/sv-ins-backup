@@ -28,14 +28,14 @@ const LoginApp = ({ navigation }: any) => {
 
   useDisableBackHandler(true);
 
-  useEffect(() => {
-    updateState({
-      form: {
-        mobileNo: '9634958888',
-        password: 'Password@123'
-      }
-    });
-  }, []);
+  // useEffect(() => {
+  //   updateState({
+  //     form: {
+  //       mobileNo: '9634958888',
+  //       password: 'Password@123'
+  //     }
+  //   });
+  // }, []);
 
   const handleChange = (field: string, value: string) => {
     updateState({
@@ -84,13 +84,37 @@ const LoginApp = ({ navigation }: any) => {
       routes: [{ name: 'DrawerNavigator' }],
     });
     } catch (error: any) {
-      console.error('Login error:', error);
-      Alert.alert(
-        'Login Failed',
-        error.message || 'Invalid credentials or network error'
-      );
-      console
-    } finally {
+  console.error('Login error:', error);
+
+  // Check if it's an Axios error with a response
+  if (error.response) {
+    console.log('Error response data:', error.response.data);
+    console.log('Error response status:', error.response.status);
+    console.log('Error response headers:', error.response.headers);
+
+    Alert.alert(
+      'Login Failed',
+      error.response.data?.message || 'Something went wrong on the server.'
+    );
+  } else if (error.request) {
+    // The request was made but no response was received
+    console.log('No response received:', error.request);
+
+    Alert.alert(
+      'Network Error',
+      'No response received from server. Please check your internet connection.'
+    );
+  } else {
+    // Something happened in setting up the request
+    console.log('Error message:', error.message);
+
+    Alert.alert(
+      'Error',
+      error.message || 'An unexpected error occurred.'
+    );
+  }
+}
+ finally {
       setIsLoading(false);
     }
   };

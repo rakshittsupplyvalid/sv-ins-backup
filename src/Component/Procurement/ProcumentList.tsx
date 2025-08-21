@@ -35,7 +35,9 @@ type ProcurementItem = {
   ratePerKg: number;
   approvalStatus: string;
   quantityStoredMT: number;
+
   quantityDispatchedMT: number;
+  approvedQuantityMT: number;
   remainingStoredMT: number;
   rejectQuantityMT: number;
   subSeasonId: string;
@@ -308,7 +310,7 @@ const ProcurementList = () => {
             {item.approvalStatus === 'APPROVED' && (
               <View style={styles.detailItem}>
                 <Text style={styles.detailLabel}>Approved QuantityMT</Text>
-                <Text style={styles.detailValue}>{formatNumber(item.remainingStoredMT)}</Text>
+                <Text style={styles.detailValue}>{formatNumber(item.approvedQuantityMT)}</Text>
               </View>
             )}
 

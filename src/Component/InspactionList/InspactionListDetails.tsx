@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
+import useForm from '../../Common/UseForm';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useDisableBackHandler } from '../../service/useDisableBackHandler';
 import { useNavigation } from '@react-navigation/native';
@@ -46,9 +47,12 @@ type RouteParams = {
     id: string;
     locationName: string;
     vendorName: string;
+     Storage : string;
 
   };
 };
+
+
 
 const { width } = Dimensions.get('window');
 
@@ -58,12 +62,13 @@ const InspectionListDetails = () => {
 
   useDisableBackHandler(true);
   const route = useRoute<RouteProp<RouteParams, 'params'>>();
-  const { id, locationName, vendorName } = route.params;
+  const { id, locationName, vendorName , Storage } = route.params;
 
 
 
 
   const [inspectionData, setInspectionData] = useState<any>(null);
+    const { state, updateState } = useForm();
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
@@ -79,13 +84,50 @@ const InspectionListDetails = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+
+
+    useEffect(() => {
+    if (Storage) {
+      StorageById(Storage);
+      console.log(' use effect stoarge id',Storage);
+    }
+  }, [Storage]);
+
+
+
+  const StorageById = (storageId: string) => {
+    const url = `/api/storagelocation/${storageId}`;
+    apiClient.get(url)
+      .then((res) => {
+        if (res?.data) {
+    
+          updateState({
+            fielddata: {
+              ...state.fielddata,
+              Storagebyid: res.data
+            },
+            form: {
+              ...state.form,
+             
+              quanityfoundsystem: res.data.totalStockMT?.toString(),
+             chamberCapacityMT  : res.data.chamberCapacityMT?.toString(),
+
+            }
+          });
+        }
+      })
+      .catch(console.error);
+  };
+
+
   useEffect(() => {
     const fetchInspectionDetails = async () => {
       try {
         const response = await apiClient.get(`/api/mobile/InspectionReport/${id}`);
+      
         setInspectionData(response.data);
-        console.log('id response', response.data);
-        console.log('Inspection Data:', response.data);
+ 
+    
       } catch (error) {
         console.error('Error fetching inspection details:', error);
       } finally {
@@ -98,15 +140,17 @@ const InspectionListDetails = () => {
 
 
 
-  const getBase64Logo = async () => {
-    const asset = Asset.fromModule(require('../../../assets/logo.png'));
-    await asset.downloadAsync(); // Ensure it's loaded
-    const base64 = await FileSystem.readAsStringAsync(asset.localUri!, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    return `data:image/png;base64,${base64}`;
-  };
+  // const getBase64Logo = async () => {
+  //   const asset = Asset.fromModule(require('../../../assets/logo.png'));
+  //   await asset.downloadAsync(); // Ensure it's loaded
+  //   const base64 = await FileSystem.readAsStringAsync(asset.localUri!, {
+  //     encoding: FileSystem.EncodingType.Base64,
+  //   });
+  //   return `data:image/png;base64,${base64}`;
+  // };
 
+
+  
 
   
 
@@ -121,7 +165,7 @@ const InspectionListDetails = () => {
 
   try {
     const formattedDate = new Date(inspectionData.createdOn).toLocaleString();
-    const logoBase64 = await getBase64Logo();
+    // const logoBase64 = await getBase64Logo();
 
     // Prepare image HTML for each file if they exist
     let imagesHtml = '';
@@ -132,7 +176,7 @@ const InspectionListDetails = () => {
           <div class="image-grid">
             ${inspectionData.files.map((file: string) => `
               <div class="image-container">
-                <img src="https://dev-backend-2025.epravaha.com${file}" style="width: 100%; height: auto;" />
+                <img src="https://stage-backend-2025.epravaha.com${file}" style="width: 100%; height: auto;" />
               </div>
             `).join('')}
           </div>
@@ -263,7 +307,7 @@ const InspectionListDetails = () => {
                 <h1 style="margin: 0; font-size: 1.5rem;">Inspection Report</h1>
                 <p style="margin-top: 5px; font-size: 0.9rem;">${formattedDate}</p>
               </div>
-              <img src="${logoBase64}" class="logo" alt="Company Logo" />
+             
             </div>
             
             <div class="section">
@@ -316,6 +360,29 @@ const InspectionListDetails = () => {
                 </tr>
               </table>
             </div>
+
+
+            <div class="section">
+  <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Storage Details</h2>
+  <table class="info-table">
+    <tr>
+      <td class="info-label">Chamber Capacity (MT):</td>
+      <td>${state.form.chamberCapacityMT}</td>
+    </tr>
+    <tr>
+      <td class="info-label">Shade Count:</td>
+      <td>${state.fielddata?.Storagebyid?.shadeCount || 'N/A'}</td>
+    </tr>
+    <tr>
+      <td class="info-label">Storage Capacity (MT):</td>
+      <td>${state.fielddata?.Storagebyid?.storageCapacityMT || 'N/A'}</td>
+    </tr>
+    <tr>
+      <td class="info-label">Total Stock (MT):</td>
+      <td>${state.form.quanityfoundsystem}</td>
+    </tr>
+  </table>
+</div>
             
             ${inspectionData.chawlSizes?.length ? `
               <div class="section">
@@ -395,7 +462,7 @@ const InspectionListDetails = () => {
           'PDF downloaded successfully',
           [
             { text: 'Open', onPress: () => Sharing.shareAsync(newPath) },
-            { text: 'OK' }
+          
           ]
         );
       } catch (androidError) {
@@ -446,350 +513,13 @@ const InspectionListDetails = () => {
   }
 };
 
-  // const generatePDF = async () => {
-  //   if (!inspectionData) {
-  //     Alert.alert('Error', 'No inspection data available');
-  //     return;
-  //   }
-
-  //   try {
-  //     const formattedDate = new Date(inspectionData.createdOn).toLocaleString();
-  //     const logoBase64 = await getBase64Logo();
-
-  //     // Prepare image HTML for each file if they exist
-  //     let imagesHtml = '';
-  //     if (inspectionData.files?.length) {
-  //       imagesHtml = `
-  //         <div class="section">
-  //           <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Attachments (${inspectionData.files.length})</h2>
-  //           <div class="image-grid">
-  //             ${inspectionData.files.map((file: string) => `
-  //               <div class="image-container">
-  //                 <img src="https://dev-backend-2025.epravaha.com${file}" style="width: 100%; height: auto;" />
-  //               </div>
-  //             `).join('')}
-  //           </div>
-  //         </div>
-  //       `;
-  //     }
-
-  //     const htmlContent = `
-  //     <html>
-  //       <head>
-  //         <style>
-  //           * {
-  //             box-sizing: border-box;
-  //             margin: 0;
-  //             padding: 0;
-  //           }
-            
-  //           body {
-  //             font-family: 'Segoe UI', Roboto, sans-serif;
-  //             width: 100%;
-  //             min-height: 100vh;
-  //             padding: 1.5cm;
-  //             color: #333;
-  //             line-height: 1.5;
-  //           }
-            
-  //           .document {
-  //             width: 100%;
-  //             max-width: 21cm;
-  //             margin: 0 auto;
-  //             display: flex;
-  //             flex-direction: column;
-  //             gap: 15px;
-  //           }
-            
-  //           .header {
-  //             display: flex;
-  //             justify-content: space-between;
-  //             align-items: flex-end;
-  //             padding-bottom: 15px;
-  //             border-bottom: 2px solid #2c3e50;
-  //             margin-bottom: 20px;
-  //           }
-            
-  //           .logo {
-  //             height: 1.8cm;
-  //             max-width: 4cm;
-  //             object-fit: contain;
-  //           }
-            
-  //           .section {
-  //             width: 100%;
-  //             page-break-inside: avoid;
-  //             margin-bottom: 15px;
-  //           }
-            
-  //           .info-table {
-  //             width: 100%;
-  //             border-collapse: collapse;
-  //           }
-            
-  //           .info-table td {
-  //             padding: 8px 5px;
-  //             border-bottom: 1px solid #eee;
-  //             vertical-align: top;
-  //           }
-            
-  //           .info-label {
-  //             font-weight: 600;
-  //             color: #555;
-  //             width: 40%;
-  //           }
-            
-  //           .image-grid {
-  //             display: grid;
-  //             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  //             gap: 10px;
-  //             margin-top: 10px;
-  //           }
-            
-  //           .image-container {
-  //             border: 1px solid #ddd;
-  //             padding: 3px;
-  //             border-radius: 3px;
-  //             page-break-inside: avoid;
-  //           }
-            
-  //           .image-container img {
-  //             width: 100%;
-  //             height: auto;
-  //             display: block;
-  //             max-height: 200px;
-  //             object-fit: contain;
-  //           }
-            
-  //           @media print {
-  //             body {
-  //               padding: 0;
-  //             }
-  //             .document {
-  //               max-width: 100%;
-  //               padding: 1.5cm;
-  //             }
-  //             .no-print {
-  //               display: none !important;
-  //             }
-  //           }
-            
-  //           .page-break {
-  //             page-break-after: always;
-  //           }
-            
-  //           .footer {
-  //             margin-top: auto;
-  //             padding-top: 15px;
-  //             border-top: 1px solid #eee;
-  //             font-size: 0.8rem;
-  //             color: #777;
-  //             text-align: center;
-  //           }
-  //         </style>
-  //       </head>
-  //       <body>
-  //         <div class="document">
-  //           <div class="header">
-  //             <div>
-  //               <h1 style="margin: 0; font-size: 1.5rem;">Inspection Report</h1>
-  //               <p style="margin-top: 5px; font-size: 0.9rem;">${formattedDate}</p>
-  //             </div>
-  //             <img src="${logoBase64}" class="logo" alt="Company Logo" />
-  //           </div>
-            
-  //           <div class="section">
-  //             <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Basic Information</h2>
-  //             <table class="info-table">
-  //               <tr>
-  //                 <td class="info-label">Location Name:</td>
-  //                 <td>${locationName || 'N/A'}</td>
-  //               </tr>
-  //               <tr>
-  //                 <td class="info-label">Vendor Name:</td>
-  //                 <td>${vendorName || 'N/A'}</td>
-  //               </tr>
-  //               <tr>
-  //                 <td class="info-label">Status:</td>
-  //                 <td>
-  //                   <span style="
-  //                     display: inline-block;
-  //                     padding: 2px 8px;
-  //                     border-radius: 3px;
-  //                     background: ${inspectionData.isActive ? '#4CAF50' : '#F44336'};
-  //                     color: white;
-  //                     font-size: 0.9rem;
-  //                   ">
-  //                     ${inspectionData.isActive ? 'Active' : 'Inactive'}
-  //                   </span>
-  //                 </td>
-  //               </tr>
-  //             </table>
-  //           </div>
-            
-  //           <div class="section">
-  //             <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Procurement Details</h2>
-  //             <table class="info-table">
-  //               <tr>
-  //                 <td class="info-label">No. of Farmers:</td>
-  //                 <td>${inspectionData.noOfFarmers || 'N/A'}</td>
-  //               </tr>
-  //               <tr>
-  //                 <td class="info-label">Physical Quantity:</td>
-  //                 <td>${inspectionData.totalPhysicalQuantity || 'N/A'}</td>
-  //               </tr>
-  //               <tr>
-  //                 <td class="info-label">Procured Quantity:</td>
-  //                 <td>${inspectionData.totalProcuerQuantity || 'N/A'}</td>
-  //               </tr>
-  //               <tr>
-  //                 <td class="info-label">Weighment Slips:</td>
-  //                 <td>${inspectionData.noOfWeighmentSlip || 'N/A'}</td>
-  //               </tr>
-  //             </table>
-  //           </div>
-            
-  //           ${inspectionData.chawlSizes?.length ? `
-  //             <div class="section">
-  //               <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Chawl Sizes (${inspectionData.chawlSizes.length})</h2>
-  //               ${inspectionData.chawlSizes.map((chawl: any, index: number) => `
-  //                 <table class="info-table" style="margin-bottom: 10px;">
-  //                   <tr><td class="info-label">Chawl ${index + 1}</td><td></td></tr>
-  //                   <tr><td class="info-label">Type</td><td>${chawl.chawlType || 'N/A'}</td></tr>
-  //                   <tr><td class="info-label">Length</td><td>${chawl.length || 'N/A'}</td></tr>
-  //                   <tr><td class="info-label">Breadth</td><td>${chawl.breadth || 'N/A'}</td></tr>
-  //                   <tr><td class="info-label">Height</td><td>${chawl.height || 'N/A'}</td></tr>
-  //                   <tr><td class="info-label">Quantity</td><td>${chawl.quantity || 'N/A'}</td></tr>
-  //                 </table>
-  //               `).join('')}
-  //             </div>
-  //           ` : ''}
-
-  //           ${inspectionData.binsSizes?.length ? `
-  //             <div class="section">
-  //               <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Bin Sizes (${inspectionData.binsSizes.length})</h2>
-  //               ${inspectionData.binsSizes.map((bin: any, index: number) => `
-  //                 <table class="info-table" style="margin-bottom: 10px;">
-  //                   <tr><td class="info-label">Bin ${index + 1}</td><td></td></tr>
-  //                   <tr><td class="info-label">Type</td><td>${bin.chawlType || 'N/A'}</td></tr>
-  //                   <tr><td class="info-label">Length</td><td>${bin.length || 'N/A'}</td></tr>
-  //                   <tr><td class="info-label">Breadth</td><td>${bin.breadth || 'N/A'}</td></tr>
-  //                   <tr><td class="info-label">Height</td><td>${bin.height || 'N/A'}</td></tr>
-  //                   <tr><td class="info-label">Quantity</td><td>${bin.quantity || 'N/A'}</td></tr>
-  //                 </table>
-  //               `).join('')}
-  //             </div>
-  //           ` : ''}
-
-  //           ${imagesHtml}
-
-  //           <div class="footer">
-  //             <p>Generated on ${new Date().toLocaleDateString()} • © ${new Date().getFullYear()} Supply Valid</p>
-  //           </div>
-  //         </div>
-  //       </body>
-  //     </html>
-  //   `;
-
-  //     const { uri } = await Print.printToFileAsync({
-  //       html: htmlContent,
-  //       base64: false,
-  //       width: 794,
-  //       height: 1123,
-  //       margins: {
-  //         top: 40,
-  //         bottom: 40,
-  //         left: 40,
-  //         right: 40
-  //       }
-  //     });
-
-  //     const pdfName = `Inspection_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-
-  //     if (Platform.OS === 'android') {
-  //       try {
-  //         const downloadsDir = FileSystem.StorageAccessFramework.getUriForDirectoryInRoot('Downloads');
-  //         const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync(downloadsDir);
-
-  //         if (permissions.granted) {
-  //           const pdfContent = await FileSystem.readAsStringAsync(uri, {
-  //             encoding: FileSystem.EncodingType.Base64,
-  //           });
-
-  //           const newUri = await FileSystem.StorageAccessFramework.createFileAsync(
-  //             permissions.directoryUri,
-  //             pdfName,
-  //             'application/pdf'
-  //           );
-
-  //           await FileSystem.writeAsStringAsync(newUri, pdfContent, {
-  //             encoding: FileSystem.EncodingType.Base64,
-  //           });
-
-  //           Alert.alert(
-  //             'Success',
-  //             'PDF downloaded to your Downloads folder',
-  //             [
-  //               { text: 'Open', onPress: () => Sharing.shareAsync(newUri) },
-  //               { text: 'OK' }
-  //             ]
-  //           );
-  //         } else {
-  //           throw new Error('Permission denied');
-  //         }
-  //       } catch (androidError) {
-  //         console.warn('Android direct save failed:', androidError);
-  //         await Sharing.shareAsync(uri, {
-  //           mimeType: 'application/pdf',
-  //           dialogTitle: 'Save Inspection Report',
-  //           UTI: 'com.adobe.pdf'
-  //         });
-  //       }
-  //     } else {
-  //       const newPath = FileSystem.documentDirectory + pdfName;
-  //       await FileSystem.copyAsync({
-  //         from: uri,
-  //         to: newPath
-  //       });
-
-  //       Alert.alert(
-  //         'Success',
-  //         'PDF ready to save',
-  //         [
-  //           {
-  //             text: 'Save to Files',
-  //             onPress: () => Sharing.shareAsync(newPath, {
-  //               mimeType: 'application/pdf',
-  //               dialogTitle: 'Save Inspection Report',
-  //               UTI: 'com.adobe.pdf'
-  //             })
-  //           },
-  //           { text: 'OK' }
-  //         ]
-  //       );
-  //     }
-
-  //     await FileSystem.deleteAsync(uri, { idempotent: true });
-
-  //   } catch (error) {
-  //     console.error('PDF download failed:', error);
-  //     let errorMessage = 'Unknown error';
-  //     if (error instanceof Error) {
-  //       errorMessage = error.message;
-  //     } else if (typeof error === 'string') {
-  //       errorMessage = error;
-  //     }
-  //     Alert.alert('Error', `Failed to download PDF: ${errorMessage}`);
-  //   }
-  // };
-
-
+  
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
   const openImage = (url: string) => {
-    Linking.openURL(`https://dev-backend-2025.epravaha.com${url}`);
+    Linking.openURL(`https://backend-2025.epravaha.com${url}`);
   };
 
 
@@ -906,6 +636,7 @@ const InspectionListDetails = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Inspection Report</Text>
       </View>
+
 
       {/* Summary Cards */}
       <View style={styles.summaryContainer}>
@@ -1026,6 +757,55 @@ const InspectionListDetails = () => {
         </View>
       ))}
 
+
+      {/* Storage Details Section */}
+<TouchableOpacity
+  style={styles.sectionHeader}
+  onPress={() => toggleSection('storage')}
+  activeOpacity={0.8}
+>
+  <Text style={styles.sectionTitle}>Storage Details</Text>
+  <Icon
+    name={expandedSection === 'storage' ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+    size={24}
+    color="#495057"
+  />
+</TouchableOpacity>
+
+
+
+{expandedSection === 'storage' && (
+  <View style={styles.detailsContainer}>
+    <DetailRow 
+      icon="storage" 
+      label="Chamber Capacity (MT)" 
+      value={state.form.chamberCapacityMT} 
+    />
+    <DetailRow 
+      icon="layers"
+      label="Shade Count" 
+      value={state.fielddata?.Storagebyid?.shadeCount } 
+    />
+    <DetailRow 
+      icon="warehouse" 
+      label="Storage Capacity (MT)" 
+      value={state.fielddata?.Storagebyid?.storageCapacityMT } 
+    />
+    <DetailRow 
+      icon="inventory" 
+      label="Total Stock (MT)" 
+      value={state.form.quanityfoundsystem} 
+    />
+  </View>
+)}
+
+
+
+
+
+
+
+
       {/* Files */}
       {/* <TouchableOpacity 
         style={styles.sectionHeader} 
@@ -1100,7 +880,7 @@ const InspectionListDetails = () => {
               activeOpacity={0.7}
             >
               <Image
-                source={{ uri: `https://dev-backend-2025.epravaha.com${file}` }}
+                source={{ uri: `https://backend-2025.epravaha.com${file}` }}
                 style={styles.image}
                 resizeMode="cover"
               />
@@ -1226,7 +1006,7 @@ const InspectionListDetails = () => {
 
 const DetailRow = ({ icon, label, value }: { icon: string, label: string, value: string | number }) => (
   <View style={styles.detailRow}>
-    <Icon name={icon} size={20} color="#6c757d" style={styles.detailIcon} />
+    <Icon name={icon} size={17} color="#6c757d" style={styles.detailIcon} />
     <Text style={styles.detailLabel}>{label}:</Text>
     <Text style={styles.detailValue}>{value || 'N/A'}</Text>
   </View>
@@ -1454,7 +1234,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 180,
     resizeMode: 'cover',
-    marginBottom: 10
+    marginBottom: 10,
+
   },
   imageOverlay: {
     flex: 1,

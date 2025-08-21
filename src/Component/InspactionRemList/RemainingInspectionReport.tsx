@@ -1,4 +1,4 @@
-import React, { useState, useEffect , useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,37 +7,49 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   ScrollView,
-  Linking,
-      BackHandler
+  TextInput,
+  BackHandler
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import apiClient from '../../service/api/apiInterceptors';
- import { useFocusEffect } from '@react-navigation/native';
- import {  useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
+type Report = {
+  id: string;
+  name: string;
+  location: string;
+  approvalStatus: string;
+  shadeCount: number;
+  chamberCapacityMT: number;
+  totalStockMT: number;
+  vendorName: string;
+  federationName: string;
+  createdDate: string;
+};
 
 const RemainingInspectionReport = () => {
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [filteredReports, setFilteredReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-      const navigation = useNavigation();
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigation = useNavigation();
 
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.goBack();
+        return true;
+      };
 
-      useFocusEffect(
-      useCallback(() => {
-        const onBackPress = () => {
-          navigation.goBack();
-          return true; // Prevent default behavior
-        };
-  
-        const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-  
-        return () => {
-          backHandler.remove();
-        };
-      }, [navigation])
-    );
-  
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => {
+        backHandler.remove();
+      };
+    }, [navigation])
+  );
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -45,6 +57,7 @@ const RemainingInspectionReport = () => {
         const response = await apiClient.get('/api/mobile/InspectionReport/remaininglist');
         if (response.status === 200) {
           setReports(response.data);
+          setFilteredReports(response.data);
         } else {
           setError('Failed to fetch data');
         }
@@ -59,12 +72,21 @@ const RemainingInspectionReport = () => {
     fetchReport();
   }, []);
 
-
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredReports(reports);
+    } else {
+      const filtered = reports.filter(report => 
+        report.location.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredReports(filtered);
+    }
+  }, [searchQuery, reports]);
 
   const renderStatusBadge = (status: any) => {
-    let backgroundColor = '#FFA500'; // Orange for pending
-    if (status === 'APPROVED') backgroundColor = '#4CAF50'; // 
-    if (status === 'REJECTED') backgroundColor = '#F44336'; // Red
+    let backgroundColor = '#FFA500';
+    if (status === 'APPROVED') backgroundColor = '#4CAF50';
+    if (status === 'REJECTED') backgroundColor = '#F44336';
 
     return (
       <View style={[styles.badge, { backgroundColor }]}>
@@ -82,11 +104,10 @@ const RemainingInspectionReport = () => {
 
       <View style={styles.infoRow}>
         <Icon name="location-on" size={18} color="#4285F4" style={styles.icon} />
-         <Text style={styles.statLabel}>Location Name</Text>
+        <Text style={styles.statLabel}>Location Name   </Text>
         <Text style={styles.infoText}>{item.location}</Text>
       </View>
 
-     
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Shade Count</Text>
@@ -160,19 +181,45 @@ const RemainingInspectionReport = () => {
       <View style={styles.headerContainer}>
         <Text style={styles.headerTitle}>Pending Storage Inspection</Text>
         <Text style={styles.headerSubtitle}>
-          {reports.length} {reports.length === 1 ? 'report' : 'reports'} pending inspection
+          {filteredReports.length} {filteredReports.length === 1 ? 'report' : 'reports'} found
         </Text>
       </View>
 
-      {reports.length === 0 ? (
+      <View style={styles.searchContainer}>
+        <Icon name="search" size={20} color="#6c757d" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by location..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholderTextColor="#6c757d"
+        />
+        {searchQuery ? (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Icon name="close" size={20} color="#6c757d" />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
+      {filteredReports.length === 0 ? (
         <View style={styles.centeredEmptyContainer}>
-          <Icon name="check-circle" size={48} color="#4CAF50" />
-          <Text style={styles.emptyText}>All inspections completed!</Text>
-          <Text style={styles.emptySubtext}>No pending reports found</Text>
+          {searchQuery ? (
+            <>
+              <Icon name="search-off" size={48} color="#FFA500" />
+              <Text style={styles.emptyText}>No matching reports found</Text>
+              <Text style={styles.emptySubtext}>Try a different search term</Text>
+            </>
+          ) : (
+            <>
+              <Icon name="check-circle" size={48} color="#4CAF50" />
+              <Text style={styles.emptyText}>All inspections completed!</Text>
+              <Text style={styles.emptySubtext}>No pending reports found</Text>
+            </>
+          )}
         </View>
       ) : (
         <FlatList
-          data={reports}
+          data={filteredReports}
           renderItem={renderItem}
           keyExtractor={item => item.id}
           scrollEnabled={false}
@@ -208,7 +255,7 @@ const styles = StyleSheet.create({
     color: '#5F6368',
   },
   headerContainer: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   headerTitle: {
     fontSize: 20,
@@ -221,6 +268,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#5F6368',
     fontWeight: '500',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    paddingVertical: 4,
   },
   listContainer: {
     paddingBottom: 24,
@@ -285,28 +352,11 @@ const styles = StyleSheet.create({
   arrowIcon: {
     marginHorizontal: 3,
   },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  }
-  ,
   infoValue: {
     fontSize: 15,
     color: '#4a6da7',
     fontWeight: '500',
     flexShrink: 1,
-  },
-  coordinatesContainer: {
-    marginBottom: 12,
-  },
-  coordinatesText: {
-    fontSize: 15,
-    color: '#4285F4',
-    fontWeight: '500',
-  },
-  mapIcon: {
-    marginLeft: 8,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -333,9 +383,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   statValue: {
- fontSize: 14,
-        fontWeight: '500',
-        color: '#4a6da7',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#4a6da7',
     textAlign: 'center',
   },
   divider: {

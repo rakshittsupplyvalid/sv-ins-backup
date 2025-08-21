@@ -80,10 +80,10 @@ const ReviewForm = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-    navigation.reset({
-              index: 0,
-              routes: [{ name: 'Dashboard' }],
-            }); 
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Dashboard' }],
+        });
         return true;
       };
 
@@ -585,10 +585,10 @@ const ReviewForm = () => {
     if (!isSubmitted) {
       setIsSubmitted(true);
 
-
       try {
         const formData = new FormData();
 
+        // Append basic form data
         formData.append('NoOfFarmers', state.form.Farmers);
         formData.append('TotalPhysicalQuantity', state.form.quanityfound);
         formData.append('TotalProcuerQuantity', state.form.Depositedfound);
@@ -597,30 +597,32 @@ const ReviewForm = () => {
         formData.append('StaffBehavior', state.form.staffBehavior);
         formData.append('AdditionalComments', state.form.additionalComments);
 
-        const chawlSizes = chawlList.map(chawl => ({
-          chawlType: "Chawl",
-          length: chawl.length,
-          breadth: chawl.breadth,
-          height: chawl.height,
-          quantity: Math.max(
-            1,
-            (Number(chawl.height) * Number(chawl.breadth) * Number(chawl.length) * 20) / 1000
-          )
-        }));
+        // Process Chawl Sizes (only include if ALL dimensions are filled)
+        const chawlSizes = chawlList
+          .filter(chawl => chawl.length && chawl.breadth && chawl.height) // Skip if any dimension is empty
+          .map(chawl => ({
+            chawlType: "Chawl",
+            length: chawl.length,
+            breadth: chawl.breadth,
+            height: chawl.height,
+            quantity: (Number(chawl.height) * Number(chawl.breadth) * Number(chawl.length) * 20 / 1000)
+          }));
 
-        const binSizes = binList.map(bin => ({
-          chawlType: "Bin",
-          length: bin.length,
-          breadth: bin.breadth,
-          height: bin.height,
-          quantity: Math.max(
-            1,
-            (Number(bin.height) * Number(bin.breadth) * Number(bin.length) * 20) / 1000
-          )
-        }));
+        // Process BIN Sizes (only include if ALL dimensions are filled)
+        const binSizes = (binList || [])
+          .filter(bin => bin.length && bin.breadth && bin.height) // Skip if any dimension is empty
+          .map(bin => ({
+            chawlType: "BIN",
+            length: bin.length,
+            breadth: bin.breadth,
+            height: bin.height,
+            quantity: (Number(bin.height) * Number(bin.breadth) * Number(bin.length) * 20 / 1000)
+          }));
 
+        // Combine valid Chawl & BIN sizes
         const allSizes = [...chawlSizes, ...binSizes];
 
+        // Append to formData (only valid entries)
         allSizes.forEach((item, index) => {
           formData.append(`ChawlSizes[${index}][chawlType]`, item.chawlType);
           formData.append(`ChawlSizes[${index}][length]`, item.length);
@@ -629,6 +631,7 @@ const ReviewForm = () => {
           formData.append(`ChawlSizes[${index}][quantity]`, item.quantity.toString());
         });
 
+        // Append screenshots
         screenshots.forEach((image, index) => {
           formData.append('Files', {
             uri: image.uri,
@@ -641,7 +644,7 @@ const ReviewForm = () => {
           formData.append('location', `LOC${new Date().toISOString().replace(/[-:.]/g, '').slice(0, -5)}`);
         }
 
-        const url = `/api/mobile?location=${state.form.Storagedata}`;
+        const url = `/api/mobile/inspectionreport?location=${state.form.Storagedata}`;
         const response = await apiClient.post(url, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -651,6 +654,7 @@ const ReviewForm = () => {
         console.log('Response:', response.data);
         alert('Form submitted successfully!');
 
+        // Reset form state
         updateState({
           form: {
             option1: '',
@@ -679,11 +683,11 @@ const ReviewForm = () => {
         });
 
         setChawlList([]);
+        setBinList([]); // Make sure to also reset binList
         setImageUri([]);
-         setShowInspectionButton(false);  
+        setShowInspectionButton(false);
         setCurrentStep(1);
       }
-
       catch (error) {
         console.error('Error submitting form:', error);
 
@@ -744,74 +748,74 @@ const ReviewForm = () => {
       }
     }
 
-    if (currentStep === 2) {
-    // Validate chawls
-    const chawlCount = parseInt(state.form.noOfChawls) || 0;
-    if (chawlCount === 0) {
-      Alert.alert('Validation Error', 'Please enter number of chawls');
-      return;
-    }
+    //   if (currentStep === 2) {
+    //   // Validate chawls
+    //   const chawlCount = parseInt(state.form.noOfChawls) || 0;
+    //   if (chawlCount === 0) {
+    //     Alert.alert('Validation Error', 'Please enter number of chawls');
+    //     return;
+    //   }
 
-    if (chawlList.length !== chawlCount) {
-      Alert.alert('Validation Error', `Please provide dimensions for all ${chawlCount} chawls`);
-      return;
-    }
+    //   if (chawlList.length !== chawlCount) {
+    //     Alert.alert('Validation Error', `Please provide dimensions for all ${chawlCount} chawls`);
+    //     return;
+    //   }
 
-    for (let i = 0; i < chawlList.length; i++) {
-      const chawl = chawlList[i];
-      if (!chawl.length || !chawl.breadth || !chawl.height) {
-        Alert.alert('Validation Error', `Please fill all dimensions for Chawl ${i + 1}`);
-        return;
-      }
+    //   for (let i = 0; i < chawlList.length; i++) {
+    //     const chawl = chawlList[i];
+    //     if (!chawl.length || !chawl.breadth || !chawl.height) {
+    //       Alert.alert('Validation Error', `Please fill all dimensions for Chawl ${i + 1}`);
+    //       return;
+    //     }
 
-      
-      if (isNaN(parseFloat(chawl.length))) {
-        Alert.alert('Validation Error', `Invalid length for Chawl ${i + 1}`);
-        return;
-      }
-      if (isNaN(parseFloat(chawl.breadth))) {
-        Alert.alert('Validation Error', `Invalid breadth for Chawl ${i + 1}`);
-        return;
-      }
-      if (isNaN(parseFloat(chawl.height))) {
-        Alert.alert('Validation Error', `Invalid height for Chawl ${i + 1}`);
-        return;
-      }
-    }
 
-    // Validate bins
-    const binCount = parseInt(state.form.noofbins) || 0;
-    if (binCount === 0) {
-      Alert.alert('Validation Error', 'Please enter number of bins');
-      return;
-    }
+    //     if (isNaN(parseFloat(chawl.length))) {
+    //       Alert.alert('Validation Error', `Invalid length for Chawl ${i + 1}`);
+    //       return;
+    //     }
+    //     if (isNaN(parseFloat(chawl.breadth))) {
+    //       Alert.alert('Validation Error', `Invalid breadth for Chawl ${i + 1}`);
+    //       return;
+    //     }
+    //     if (isNaN(parseFloat(chawl.height))) {
+    //       Alert.alert('Validation Error', `Invalid height for Chawl ${i + 1}`);
+    //       return;
+    //     }
+    //   }
 
-    if (binList.length !== binCount) {
-      Alert.alert('Validation Error', `Please provide dimensions for all ${binCount} bins`);
-      return;
-    }
+    //   // Validate bins
+    //   const binCount = parseInt(state.form.noofbins) || 0;
+    //   if (binCount === 0) {
+    //     Alert.alert('Validation Error', 'Please enter number of bins');
+    //     return;
+    //   }
 
-    for (let i = 0; i < binList.length; i++) {
-      const bin = binList[i];
-      if (!bin.length || !bin.breadth || !bin.height) {
-        Alert.alert('Validation Error', `Please fill all dimensions for Bin ${i + 1}`);
-        return;
-      }
-      
-      if (isNaN(parseFloat(bin.length))) {
-        Alert.alert('Validation Error', `Invalid length for Bin ${i + 1}`);
-        return;
-      }
-      if (isNaN(parseFloat(bin.breadth))) {
-        Alert.alert('Validation Error', `Invalid breadth for Bin ${i + 1}`);
-        return;
-      }
-      if (isNaN(parseFloat(bin.height))) {
-        Alert.alert('Validation Error', `Invalid height for Bin ${i + 1}`);
-        return;
-      }
-    }
-  }
+    //   if (binList.length !== binCount) {
+    //     Alert.alert('Validation Error', `Please provide dimensions for all ${binCount} bins`);
+    //     return;
+    //   }
+
+    //   for (let i = 0; i < binList.length; i++) {
+    //     const bin = binList[i];
+    //     if (!bin.length || !bin.breadth || !bin.height) {
+    //       Alert.alert('Validation Error', `Please fill all dimensions for Bin ${i + 1}`);
+    //       return;
+    //     }
+
+    //     if (isNaN(parseFloat(bin.length))) {
+    //       Alert.alert('Validation Error', `Invalid length for Bin ${i + 1}`);
+    //       return;
+    //     }
+    //     if (isNaN(parseFloat(bin.breadth))) {
+    //       Alert.alert('Validation Error', `Invalid breadth for Bin ${i + 1}`);
+    //       return;
+    //     }
+    //     if (isNaN(parseFloat(bin.height))) {
+    //       Alert.alert('Validation Error', `Invalid height for Bin ${i + 1}`);
+    //       return;
+    //     }
+    //   }
+    // }
 
     if (currentStep === 3) {
       const validation = validateStepthree(state.form);
@@ -858,7 +862,7 @@ const ReviewForm = () => {
 
             <CommonPicker
               label="COMPANY NAME"
-              selectedValue={state.form.option1 || ''}
+              selectedValue={state.form.option1}
               onValueChange={(value) => {
                 updateState({
                   form: {
@@ -1403,7 +1407,7 @@ const ReviewForm = () => {
               />
             </View>
 
-            
+
           </View>
         );
       case 3:
@@ -1519,22 +1523,33 @@ const ReviewForm = () => {
               )}
             </View>
 
+
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Number of Weighment Slip</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter Number Weighment Slip"
-                placeholderTextColor="#999"
-                keyboardType="numeric"
-                value={state.form.Weighmentslip || ''}
-                onChangeText={(val) => {
-                  if (state.form.laborRegister !== 'NO') {
-                    updateState({ form: { ...state.form, Weighmentslip: val } });
-                  }
-                }}
-                editable={state.form.laborRegister !== 'NO'}
-              />
-            </View>
+  <Text style={styles.label}>Number of Weighment Slip</Text>
+  <TextInput
+    style={styles.input}
+    placeholder="Enter Number Weighment Slip"
+    placeholderTextColor="#999"
+    keyboardType="numeric"
+    value={state.form.Weighmentslip || ''}
+    onChangeText={(val) => {
+      if (/^\d{0,9}$/.test(val)) {  // sirf 0 se 9 digit tak allow
+        if (state.form.laborRegister !== 'NO') {
+          updateState({ form: { ...state.form, Weighmentslip: val } });
+        }
+      } else {
+        Alert.alert(
+          "Invalid Input",
+          "Number cannot exceed 9 digits",
+          [{ text: "OK" }]
+        );
+      }
+    }}
+  
+    editable={state.form.laborRegister !== 'NO'}
+  />
+</View>
+
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Labor Register Available</Text>
@@ -1677,15 +1692,16 @@ const ReviewForm = () => {
     }
   };
 
+
+
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
-
-      <SafeAreaView style={styles.safeArea}>
-
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.customHeader}>
           <TouchableOpacity onPress={() => {
             navigation.reset({
@@ -1694,57 +1710,48 @@ const ReviewForm = () => {
             });
           }}>
             <Icon name="arrow-back" size={24} color="#fff" />
-    
+
           </TouchableOpacity>
-                <Text style={styles.headerTitle}>Review Form</Text>
+          <Text style={styles.headerTitle}>Review Form</Text>
         </View>
 
 
-
+        {/* ScrollView with content */}
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-
-
         >
+          {renderStep()}
 
-          <View>
-
-
-
-            {renderStep()}
-
-
-            <View style={styles.navigationButtons}>
-              {currentStep > 1 && (
-                <TouchableOpacity style={styles.prevButton} onPress={prevStep}>
-                  <Text style={styles.navButtonpreviousText}>Previous</Text>
-                </TouchableOpacity>
-              )}
-
-              {currentStep < totalSteps ? (
-                <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
-                  <Text style={styles.navButtonText}>Next</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={[
-                    styles.submitButton,
-                    isSubmitted && styles.disabledButton
-                  ]}
-                  onPress={handleSubmit}
-                  disabled={isSubmitted}
-                >
-                  <Text style={styles.submitButtonText}>
-                    {isSubmitted ? 'Submitting' : 'Submit'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-          </View>
+          {/* Add spacer to prevent content from being hidden behind buttons */}
+          <View style={{ height: 80 }} />
         </ScrollView>
+
+        {/* Navigation buttons - moved outside ScrollView */}
+        <View style={styles.navigationButtons}>
+          {currentStep > 1 && (
+            <TouchableOpacity style={styles.prevButton} onPress={prevStep}>
+              <Text style={styles.navButtonpreviousText}>Previous</Text>
+            </TouchableOpacity>
+          )}
+
+          {currentStep < totalSteps ? (
+            <TouchableOpacity style={styles.nextButton} onPress={nextStep}>
+              <Text style={styles.navButtonText}>Next</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[styles.submitButton, isSubmitted && styles.disabledButton]}
+              onPress={handleSubmit}
+              disabled={isSubmitted}
+            >
+              <Text style={styles.submitButtonText}>
+                {isSubmitted ? 'Submitting' : 'Submit'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -1755,7 +1762,7 @@ const styles = StyleSheet.create({
   safeArea: {
 
     backgroundColor: '#ffffff',
- height: '100%',
+    height: '100%',
   },
   // customHeader: {
   //   backgroundColor: '#F79B00',
@@ -1765,16 +1772,16 @@ const styles = StyleSheet.create({
   //   alignItems: 'center',
   //   justifyContent: 'space-between', // if you want to add a button on right
   // },
-   customHeader: {
-       backgroundColor: '#F79B00',
+  customHeader: {
+    backgroundColor: '#F79B00',
     paddingVertical: 15,
-  paddingHorizontal: 20,
-   
+    paddingHorizontal: 20,
+
     flexDirection: 'row', // row-wise layo
     alignItems: 'center'
   },
 
-  
+
   headerTitle: {
     color: '#fff',
     fontSize: 18,
@@ -1798,9 +1805,9 @@ const styles = StyleSheet.create({
     marginTop: isSmallDevice ? 5 : 8,
   },
   scrollContainer: {
-    flexGrow: 1, // Allows content to expand beyond screen
-    paddingBottom: 20, // Extra space at bottom
-
+    flexGrow: 1,
+    paddingBottom: 100, // Extra space for buttons
+    paddingHorizontal: 16,
 
   },
   header: {
@@ -1864,8 +1871,16 @@ const styles = StyleSheet.create({
   navigationButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: isSmallDevice ? 20 : 30,
-    paddingHorizontal: isSmallDevice ? 15 : 25,
+    marginBottom: 20,
+    paddingHorizontal: 25,
+    paddingBottom: 10, // Add padding at bottom
+    backgroundColor: '#ffffff', // Match background color
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0', // subtle separator
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
 
   },
   prevButton: {

@@ -87,7 +87,7 @@ const Dashboard = ({ navigation }: any) => {
         index: 0,
         routes: [{ name: 'InspectionList' }],
       });
-    } else if (status === 'Remaining') {
+    } else if (status === 'Remaining') { 
       navigation.reset({
         index: 0,
         routes: [{ name: 'RemainingInspectionReport' }],
