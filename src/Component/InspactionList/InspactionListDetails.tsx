@@ -70,6 +70,7 @@ const InspectionListDetails = () => {
   const [inspectionData, setInspectionData] = useState<any>(null);
     const { state, updateState } = useForm();
   const [comment, setComment] = useState('');
+    const [isEditingBin, setIsEditingBin] = useState(false); // Add this state
   const [loading, setLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -79,6 +80,7 @@ const InspectionListDetails = () => {
     length: '',
     breadth: '',
     height: '',
+     radius: '' 
 
 
   });
@@ -126,6 +128,7 @@ const InspectionListDetails = () => {
         const response = await apiClient.get(`/api/mobile/InspectionReport/${id}`);
       
         setInspectionData(response.data);
+        console.log('Fetched inspection data:', response.data);
  
     
       } catch (error) {
@@ -157,7 +160,7 @@ const InspectionListDetails = () => {
 
  
 
-  const generatePDF = async () => {
+const generatePDF = async () => {
   if (!inspectionData) {
     Alert.alert('Error', 'No inspection data available');
     return;
@@ -165,7 +168,6 @@ const InspectionListDetails = () => {
 
   try {
     const formattedDate = new Date(inspectionData.createdOn).toLocaleString();
-    // const logoBase64 = await getBase64Logo();
 
     // Prepare image HTML for each file if they exist
     let imagesHtml = '';
@@ -184,8 +186,7 @@ const InspectionListDetails = () => {
       `;
     }
 
-
-       const htmlContent = `
+    const htmlContent = `
       <html>
         <head>
           <style>
@@ -194,7 +195,6 @@ const InspectionListDetails = () => {
               margin: 0;
               padding: 0;
             }
-            
             body {
               font-family: 'Segoe UI', Roboto, sans-serif;
               width: 100%;
@@ -203,7 +203,6 @@ const InspectionListDetails = () => {
               color: #333;
               line-height: 1.5;
             }
-            
             .document {
               width: 100%;
               max-width: 21cm;
@@ -212,7 +211,6 @@ const InspectionListDetails = () => {
               flex-direction: column;
               gap: 15px;
             }
-            
             .header {
               display: flex;
               justify-content: space-between;
@@ -221,50 +219,42 @@ const InspectionListDetails = () => {
               border-bottom: 2px solid #2c3e50;
               margin-bottom: 20px;
             }
-            
             .logo {
               height: 1.8cm;
               max-width: 4cm;
               object-fit: contain;
             }
-            
             .section {
               width: 100%;
               page-break-inside: avoid;
               margin-bottom: 15px;
             }
-            
             .info-table {
               width: 100%;
               border-collapse: collapse;
             }
-            
             .info-table td {
               padding: 8px 5px;
               border-bottom: 1px solid #eee;
               vertical-align: top;
             }
-            
             .info-label {
               font-weight: 600;
               color: #555;
               width: 40%;
             }
-            
             .image-grid {
               display: grid;
               grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
               gap: 10px;
               margin-top: 10px;
             }
-            
             .image-container {
               border: 1px solid #ddd;
               padding: 3px;
               border-radius: 3px;
               page-break-inside: avoid;
             }
-            
             .image-container img {
               width: 100%;
               height: auto;
@@ -272,7 +262,6 @@ const InspectionListDetails = () => {
               max-height: 200px;
               object-fit: contain;
             }
-            
             @media print {
               body {
                 padding: 0;
@@ -285,11 +274,9 @@ const InspectionListDetails = () => {
                 display: none !important;
               }
             }
-            
             .page-break {
               page-break-after: always;
             }
-            
             .footer {
               margin-top: auto;
               padding-top: 15px;
@@ -307,7 +294,6 @@ const InspectionListDetails = () => {
                 <h1 style="margin: 0; font-size: 1.5rem;">Inspection Report</h1>
                 <p style="margin-top: 5px; font-size: 0.9rem;">${formattedDate}</p>
               </div>
-             
             </div>
             
             <div class="section">
@@ -361,28 +347,27 @@ const InspectionListDetails = () => {
               </table>
             </div>
 
-
             <div class="section">
-  <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Storage Details</h2>
-  <table class="info-table">
-    <tr>
-      <td class="info-label">Chamber Capacity (MT):</td>
-      <td>${state.form.chamberCapacityMT}</td>
-    </tr>
-    <tr>
-      <td class="info-label">Shade Count:</td>
-      <td>${state.fielddata?.Storagebyid?.shadeCount || 'N/A'}</td>
-    </tr>
-    <tr>
-      <td class="info-label">Storage Capacity (MT):</td>
-      <td>${state.fielddata?.Storagebyid?.storageCapacityMT || 'N/A'}</td>
-    </tr>
-    <tr>
-      <td class="info-label">Total Stock (MT):</td>
-      <td>${state.form.quanityfoundsystem}</td>
-    </tr>
-  </table>
-</div>
+              <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Storage Details</h2>
+              <table class="info-table">
+                <tr>
+                  <td class="info-label">Chamber Capacity (MT):</td>
+                  <td>${state.form.chamberCapacityMT}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">Shade Count:</td>
+                  <td>${state.fielddata?.Storagebyid?.shadeCount || 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">Storage Capacity (MT):</td>
+                  <td>${state.fielddata?.Storagebyid?.storageCapacityMT || 'N/A'}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">Total Stock (MT):</td>
+                  <td>${state.form.quanityfoundsystem}</td>
+                </tr>
+              </table>
+            </div>
             
             ${inspectionData.chawlSizes?.length ? `
               <div class="section">
@@ -407,8 +392,7 @@ const InspectionListDetails = () => {
                   <table class="info-table" style="margin-bottom: 10px;">
                     <tr><td class="info-label">Bin ${index + 1}</td><td></td></tr>
                     <tr><td class="info-label">Type</td><td>${bin.chawlType || 'N/A'}</td></tr>
-                    <tr><td class="info-label">Length</td><td>${bin.length || 'N/A'}</td></tr>
-                    <tr><td class="info-label">Breadth</td><td>${bin.breadth || 'N/A'}</td></tr>
+                    <tr><td class="info-label">Radius</td><td>${bin.radius || 'N/A'}</td></tr>
                     <tr><td class="info-label">Height</td><td>${bin.height || 'N/A'}</td></tr>
                     <tr><td class="info-label">Quantity</td><td>${bin.quantity || 'N/A'}</td></tr>
                   </table>
@@ -431,43 +415,25 @@ const InspectionListDetails = () => {
       base64: false,
       width: 794,
       height: 1123,
-      margins: {
-        top: 40,
-        bottom: 40,
-        left: 40,
-        right: 40
-      }
+      margins: { top: 40, bottom: 40, left: 40, right: 40 }
     });
 
     const pdfName = `Inspection_Report_${new Date().toISOString().split('T')[0]}.pdf`;
 
     if (Platform.OS === 'android') {
       try {
-        // For Android, use the Downloads directory
         const downloadsDir = `${FileSystem.documentDirectory}Download/`;
-        
-        // Ensure the Download directory exists
         await FileSystem.makeDirectoryAsync(downloadsDir, { intermediates: true });
-        
         const newPath = `${downloadsDir}${pdfName}`;
-        
-        // Copy the file to the Download directory
-        await FileSystem.copyAsync({
-          from: uri,
-          to: newPath
-        });
+        await FileSystem.copyAsync({ from: uri, to: newPath });
 
         Alert.alert(
           'Success',
           'PDF downloaded successfully',
-          [
-            { text: 'Open', onPress: () => Sharing.shareAsync(newPath) },
-          
-          ]
+          [{ text: 'Open', onPress: () => Sharing.shareAsync(newPath) }]
         );
       } catch (androidError) {
         console.warn('Android direct save failed:', androidError);
-        // Fallback to sharing if direct save fails
         await Sharing.shareAsync(uri, {
           mimeType: 'application/pdf',
           dialogTitle: 'Save Inspection Report',
@@ -475,12 +441,8 @@ const InspectionListDetails = () => {
         });
       }
     } else {
-      // iOS implementation remains the same
       const newPath = FileSystem.documentDirectory + pdfName;
-      await FileSystem.copyAsync({
-        from: uri,
-        to: newPath
-      });
+      await FileSystem.copyAsync({ from: uri, to: newPath });
 
       Alert.alert(
         'Success',
@@ -500,7 +462,6 @@ const InspectionListDetails = () => {
     }
 
     await FileSystem.deleteAsync(uri, { idempotent: true });
-
   } catch (error) {
     console.error('PDF download failed:', error);
     let errorMessage = 'Unknown error';
@@ -513,6 +474,7 @@ const InspectionListDetails = () => {
   }
 };
 
+
   
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -523,17 +485,76 @@ const InspectionListDetails = () => {
   };
 
 
+const openEditModal = (item: any, isBin: boolean = false) => {
+  setSelectedChawlCode(item.code);
 
-  const openEditModal = (chawl: any) => {
-    setSelectedChawlCode(chawl.code); // 🔁 Save dynamic code
+  // Type ko lock kar do, jo backend se aaya wahi rehna chahiye
+  setChawltype(item.chawlType || (isBin ? "Bin" : "Chawl"));
+
+  if (item.chawlType === "Bin") {
+    setIsEditingBin(true);
     setEditForm({
-      length: chawl.length.toString(),
-      breadth: chawl.breadth.toString(),
-      height: chawl.height.toString(),
-
+      radius: item.radius?.toString() || '',
+      height: item.height?.toString() || '',
+      length: '',
+      breadth: ''
     });
-    setEditModalVisible(true);
-  };
+  } else {
+    setIsEditingBin(false);
+    setEditForm({
+      length: item.length?.toString() || '',
+      breadth: item.breadth?.toString() || '',
+      height: item.height?.toString() || '',
+      radius: ''
+    });
+  }
+
+  setEditModalVisible(true);
+};
+
+const updateChawlSize = async () => {
+  if (!selectedChawlCode) {
+    Alert.alert('Error', 'No Chawl selected');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('id', selectedChawlCode.toString());
+  formData.append('ChawlType', chawlType); // 👈 type lock ho gaya
+
+  if (chawlType === "Bin") {
+    if (editForm.radius) formData.append('Radius', editForm.radius);
+    if (editForm.height) formData.append('Height', editForm.height);
+
+    formData.append('Length', '');
+    formData.append('Breadth', '');
+  } else {
+    if (editForm.length) formData.append('Length', editForm.length);
+    if (editForm.breadth) formData.append('Breadth', editForm.breadth);
+    if (editForm.height) formData.append('Height', editForm.height);
+
+    formData.append('Radius', '');
+  }
+
+  formData.append('EditComment', comment);
+
+  try {
+    const apiUrl = `/api/InspectionReport/update/${selectedChawlCode}/ChawlSize`;
+    await apiClient.put(apiUrl, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    Alert.alert('Success', 'Size updated successfully');
+    setEditModalVisible(false);
+
+    // refresh data
+    const refresh = await apiClient.get(`/api/InspectionReport/${id}`);
+    setInspectionData(refresh.data);
+  } catch (error) {
+    console.error('Update error:', error);
+    Alert.alert('Error', 'Failed to update size');
+  }
+};
 
   const closeEditModal = () => {
     setEditModalVisible(false);
@@ -542,6 +563,8 @@ const InspectionListDetails = () => {
       length: '',
       breadth: '',
       height: '',
+      
+        radius: ''  // ✅ Added
     });
   };
 
@@ -555,54 +578,8 @@ const InspectionListDetails = () => {
     }));
   };
 
-  const updateChawlSize = async () => {
-    if (!selectedChawlCode) {
-      Alert.alert('Error', 'No Chawl selected');
-      return;
-    }
 
-    const formData = new FormData();
-    formData.append('ChawlType', chawlType);
-    formData.append('id', selectedChawlCode.toString());
-    formData.append('Length', Number(editForm.length).toString());
-    formData.append('Breadth', Number(editForm.breadth).toString());
-    formData.append('Height', Number(editForm.height).toString());
-    formData.append('EditComment', comment);
 
-    // Debug logs
-    console.log('--- FormData ---');
-    console.log('ChawlType:', 'Chawl');
-    console.log('id:', selectedChawlCode.toString());
-    console.log('Lenght:', Number(editForm.length).toString());
-    console.log('Breadth:', Number(editForm.breadth).toString());
-    console.log('Height:', Number(editForm.height).toString());
-    console.log('EditComment', comment);
-
-    const apiUrl = `/api/InspectionReport/update/${selectedChawlCode}/ChawlSize`;
-
-    try {
-      const response = await apiClient.put(apiUrl, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      Alert.alert('Success', 'Chawl size updated successfully');
-      setEditForm({ length: '', breadth: '', height: '' });
-      setComment('');
-      setSelectedChawlCode('');
-
-      // ✅ Close modal
-      setEditModalVisible(false);
-
-      // Refresh the inspection data
-      const refreshResponse = await apiClient.get(`/api/InspectionReport/${id}`);
-      setInspectionData(refreshResponse.data);
-    } catch (error: any) {
-      console.error('Error updating chawl:', error?.response?.data || error.message);
-      Alert.alert('Error', 'Failed to update chawl size');
-    }
-  };
 
 
 
@@ -733,29 +710,28 @@ const InspectionListDetails = () => {
         />
       </TouchableOpacity>
 
-      {expandedSection === 'bin' && inspectionData.binsSizes?.map((bin: any, index: number) => (
+    {expandedSection === 'bin' && inspectionData.binsSizes?.map((bin: any, index: number) => (
+  <View key={index} style={styles.dataCard}>
+    <View style={styles.cardHeader}>
+      <Text style={styles.cardTitle}>Bin {index + 1}</Text>
+      <TouchableOpacity
+        onPress={() => openEditModal(bin, true)} // ✅ yaha true pass karo bin ke liye
+        style={styles.editButton}
+      >
+        <Icon name="edit" size={18} color="#4e8cff" />
+      </TouchableOpacity>
+    </View>
 
-        <View key={index} style={styles.dataCard}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Bin {index + 1}</Text>
-            <TouchableOpacity
-              onPress={() => openEditModal(bin)}
-              style={styles.editButton}
-            >
-              <Icon name="edit" size={18} color="#4e8cff" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.cardRow}>
-            <DetailItem icon="straighten" label="Type" value={bin.chawlType} />
-            <DetailItem icon="height" label="Length" value={bin.length} />
-          </View>
-          <View style={styles.cardRow}>
-            <DetailItem icon="width-full" label="Breadth" value={bin.breadth} />
-            <DetailItem icon="height" label="Height" value={bin.height} />
-          </View>
-          <DetailItem icon="layers" label="Quantity" value={bin.quantity} />
-        </View>
-      ))}
+    <View style={styles.cardRow}>
+      <DetailItem icon="circle" label="Radius" value={bin.radius} />
+      <DetailItem icon="height" label="Height" value={bin.height} />
+    </View>
+
+    {/* ✅ ab backend se aayi quantity show hogi */}
+    <DetailItem icon="layers" label="Quantity (MT)" value={bin.quantity} />
+  </View>
+))}
+
 
 
       {/* Storage Details Section */}
@@ -889,109 +865,130 @@ const InspectionListDetails = () => {
         </View>
       )}
 
-      {/* Edit Modal */}
-      <Modal
-        visible={editModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={closeEditModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Chawl Size</Text>
-              <TouchableOpacity onPress={closeEditModal}>
-                <Icon name="close" size={24} color="#495057" />
-              </TouchableOpacity>
-            </View>
+   <Modal
+  visible={editModalVisible}
+  animationType="slide"
+  transparent={true}
+  onRequestClose={closeEditModal}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContainer}>
+      {/* Header */}
+      <View style={styles.modalHeader}>
+        <Text style={styles.modalTitle}>Edit Size</Text>
+        <TouchableOpacity onPress={closeEditModal}>
+          <Icon name="close" size={24} color="#495057" />
+        </TouchableOpacity>
+      </View>
 
-            <ScrollView style={styles.modalContent}>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Chawl Type</Text>
-                <Picker
-                  selectedValue={chawlType}
-                  style={styles.dropdown}
-                  onValueChange={(itemValue) => setChawltype(itemValue)}>
-                  <Picker.Item label="Select Chawl Type" value="" />
-                  <Picker.Item label="None" value="None" />
-                  <Picker.Item label="Chawl" value="Chawl" />
-                  <Picker.Item label="Bin" value="Bin" />
-
-                  {/* Add more types as needed */}
-                </Picker>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Length</Text>
-                <TextInput
-                  style={styles.input}
-                  value={editForm.length}
-                  onChangeText={(text) => {
-                    handleInputChange('length', text);
-                    console.log('Length:', text);
-                  }}
-                  keyboardType="numeric"
-                  placeholder="Enter length"
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Breadth</Text>
-                <TextInput
-                  style={styles.input}
-                  value={editForm.breadth}
-                  onChangeText={(text) => handleInputChange('breadth', text)}
-                  keyboardType="numeric"
-                  placeholder="Enter breadth"
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Height</Text>
-                <TextInput
-                  style={styles.input}
-                  value={editForm.height}
-                  onChangeText={(text) => handleInputChange('height', text)}
-                  keyboardType="numeric"
-                  placeholder="Enter height"
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Comments</Text>
-                <TextInput
-                  style={styles.input}
-                  value={comment}
-                  onChangeText={setComment}
-                  placeholder="Enter Comments"
-                />
-              </View>
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={closeEditModal}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
-                onPress={updateChawlSize}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.saveButtonText}>Save Changes</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
+      {/* Content */}
+      <ScrollView style={styles.modalContent}>
+        {/* Chawl Type Dropdown */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Chawl Type</Text>
+          <Picker
+            selectedValue={chawlType}
+            style={styles.dropdown}
+            onValueChange={(itemValue) => setChawltype(itemValue)}
+          >
+            <Picker.Item label="Select Chawl Type" value="" />
+            <Picker.Item label="None" value="None" />
+            <Picker.Item label="Chawl" value="Chawl" />
+            <Picker.Item label="Bin" value="Bin" />
+          </Picker>
         </View>
-      </Modal>
+
+        {/* Show different fields based on chawl type */}
+        {chawlType === "Chawl" && (
+          <>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Length</Text>
+              <TextInput
+                style={styles.input}
+                value={editForm.length}
+                onChangeText={(text) => handleInputChange("length", text)}
+                keyboardType="numeric"
+                placeholder="Enter length"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Breadth</Text>
+              <TextInput
+                style={styles.input}
+                value={editForm.breadth}
+                onChangeText={(text) => handleInputChange("breadth", text)}
+                keyboardType="numeric"
+                placeholder="Enter breadth"
+              />
+            </View>
+          </>
+        )}
+
+        {chawlType === "Bin" && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Radius</Text>
+            <TextInput
+              style={styles.input}
+              value={editForm.radius}
+              onChangeText={(text) => handleInputChange("radius", text)}
+              keyboardType="numeric"
+              placeholder="Enter radius"
+            />
+          </View>
+        )}
+
+        {/* Height for both chawl and bin */}
+        {(chawlType === "Chawl" || chawlType === "Bin") && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Height</Text>
+            <TextInput
+              style={styles.input}
+              value={editForm.height}
+              onChangeText={(text) => handleInputChange("height", text)}
+              keyboardType="numeric"
+              placeholder="Enter height"
+            />
+          </View>
+        )}
+
+        {/* Comments */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Comments</Text>
+          <TextInput
+            style={styles.input}
+            value={comment}
+            onChangeText={setComment}
+            placeholder="Enter Comments"
+          />
+        </View>
+      </ScrollView>
+
+      {/* Footer */}
+      <View style={styles.modalFooter}>
+        <TouchableOpacity
+          style={[styles.modalButton, styles.cancelButton]}
+          onPress={closeEditModal}
+          disabled={isSubmitting}
+        >
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.modalButton, styles.saveButton]}
+          onPress={updateChawlSize}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveButtonText}>Save Changes</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
 
       <TouchableOpacity
         onPress={generatePDF}

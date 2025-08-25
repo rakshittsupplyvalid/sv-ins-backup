@@ -40,7 +40,16 @@ type Chawl = {
   };
 };
 
-
+type Bin = {
+  isCopiedFromFirst: boolean | undefined;
+  isCopiedFromPrevious?: boolean;
+  Radius: string;
+  height: string;
+  originalValues?: {
+    Radius: string;
+    height: string;
+  };
+};
 
 const qualityOptions = [
   { label: 'Select Quality', value: '' },
@@ -67,7 +76,7 @@ const ReviewForm = () => {
   const [address, setAddress] = useState<Location.LocationGeocodedAddress | null>(null);
   const [formattedAddress, setFormattedAddress] = useState('');
   const [chawlList, setChawlList] = useState<Chawl[]>([]);
-  const [binList, setBinList] = useState<Chawl[]>([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
+  const [binList, setBinList] = useState<Bin[]>([{ isCopiedFromFirst: false, Radius: '', height: '' }]);
   const [imageUri, setImageUri] = useState<ImageAsset[]>([]);
   const [screenshots, setScreenshots] = useState<ImageAsset[]>([]);
   const [showInspectionButton, setShowInspectionButton] = useState(false);
@@ -94,45 +103,6 @@ const ReviewForm = () => {
       };
     }, [navigation])
   );
-
-  // useEffect(() => {
-  //   if (isFocused) {
-  //     updateState({
-  //       form: {
-  //         option1: '',
-  //         option2: '',
-  //         federationType: '',
-  //         option3: '',
-  //         fpofpcdata: '',
-  //         Storagedata: '',
-  //         Farmers: '',
-  //         quanityfound: '',
-  //         Depositedfound: '',
-  //         Weighmentslip: '',
-  //         stockQuality: '',
-  //         staffBehavior: '',
-  //         additionalComments: '',
-  //         noOfChawls: '',
-  //         noofbins: '',
-  //         deterioration: '',
-  //         quanityfoundsystem: '',
-  //         assayingDone: '',
-  //         laborRegister: '',
-  //         inspectionStatus: '',
-  //         chawlDimensions: [],
-  //         binDimensions: []
-  //       },
-  //       hidden: { ...state.hidden, currentStep: 1 }
-  //     });
-
-  //     setCurrentStep(1);
-  //     setImageUri([]);
-  //     setChawlList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
-  //     setBinList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
-  //     setShowInspectionButton(false);
-  //     setSelectedStorageId('');
-  //   }
-  // }, [isFocused]);
 
   useEffect(() => {
     CompanyDropdown();
@@ -241,10 +211,6 @@ const ReviewForm = () => {
     });
   };
 
-
-
-
-
   const CompanyDropdown = () => {
     apiClient.get('/api/dropdown/company')
       .then((res) => {
@@ -290,7 +256,6 @@ const ReviewForm = () => {
       })
       .catch(console.error);
   };
-
 
   const Society = (BranchId: string) => {
     const url = `/api/group?BranchId=${BranchId}&GroupType=Vendor&VendorType=SOCIETY&ApprovalStatus=APPROVED&IsActive=true`;
@@ -358,10 +323,10 @@ const ReviewForm = () => {
 
   const Storagelocation = (groupId: string) => {
     const url = `/api/storagelocation?GroupId=${groupId}&StorageType=NORMAL&LocationType=STORAGELOCATION&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&IsActive=true&CompanyId=`;
-    console.log('API URL:', url); // URL bhi console pe dekh lo
+    console.log('API URL:', url);
     apiClient.get(url)
       .then((res) => {
-        console.log('STORAGE API response:', res.data); // Yeh pura response console pe print karega
+        console.log('STORAGE API response:', res.data);
         if (res?.data) {
           updateState({
             fielddata: {
@@ -372,10 +337,9 @@ const ReviewForm = () => {
         }
       })
       .catch((error) => {
-        console.error('API error:', error); // Agar koi error aata hai toh usko bhi console pe dekh lo
+        console.error('API error:', error);
       });
   };
-
 
   useEffect(() => {
     if (selectedStorageId) {
@@ -383,8 +347,6 @@ const ReviewForm = () => {
       console.log(' use effect stoarge id', selectedStorageId);
     }
   }, [selectedStorageId]);
-
-
 
   const StorageById = (storageId: string) => {
     const url = `/api/storagelocation/${storageId}`;
@@ -406,7 +368,6 @@ const ReviewForm = () => {
       })
       .catch(console.error);
   };
-
 
   const fetchLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -500,8 +461,6 @@ const ReviewForm = () => {
       Alert.alert('Warning', 'You can enter a maximum of 500 chawls.');
     }
 
-
-
     const numericValue = val.replace(/[^0-9]/g, '');
     updateState({
       form: {
@@ -538,11 +497,11 @@ const ReviewForm = () => {
   };
 
   const handleBinCountChange = (val: string) => {
-
     const noOfBins = parseInt(val) || 0;
 
     if (noOfBins > 500) {
-      Alert.alert('Warning', 'You can enter a maximum of 500 chawls.');
+      Alert.alert('Warning', 'You can enter a maximum of 500 bins.');
+      return;
     }
 
     const numericValue = val.replace(/[^0-9]/g, '');
@@ -555,17 +514,17 @@ const ReviewForm = () => {
 
     let num = parseInt(numericValue);
     if (isNaN(num) || num < 1) {
-      setBinList([{ isCopiedFromFirst: false, length: '', breadth: '', height: '' }]);
+      setBinList([{ isCopiedFromFirst: false, Radius: '', height: '' }]);
       return;
     }
 
-    const updatedList: Chawl[] = Array.from({ length: num }, (_, index) => {
-      return binList[index] || { length: '', breadth: '', height: '' };
+    const updatedList: Bin[] = Array.from({ length: num }, (_, index) => {
+      return binList[index] || { Radius: '', height: '' };
     });
     setBinList(updatedList);
   };
 
-  const handleBinDimensionChange = (index: number, field: keyof Chawl, value: string) => {
+  const handleBinDimensionChange = (index: number, field: keyof Bin, value: string) => {
     const updatedList = [...binList];
     updatedList[index] = {
       ...updatedList[index],
@@ -597,39 +556,53 @@ const ReviewForm = () => {
         formData.append('StaffBehavior', state.form.staffBehavior);
         formData.append('AdditionalComments', state.form.additionalComments);
 
-        // Process Chawl Sizes (only include if ALL dimensions are filled)
-        const chawlSizes = chawlList
-          .filter(chawl => chawl.length && chawl.breadth && chawl.height) // Skip if any dimension is empty
-          .map(chawl => ({
-            chawlType: "Chawl",
-            length: chawl.length,
-            breadth: chawl.breadth,
-            height: chawl.height,
-            quantity: (Number(chawl.height) * Number(chawl.breadth) * Number(chawl.length) * 20 / 1000)
-          }));
+     // Process Chawl Sizes (only include if ALL dimensions are filled)
+const chawlSizes = (chawlList || [])
+  .filter(chawl => chawl.length && chawl.breadth && chawl.height)
+  .map(chawl => ({
+    chawlType: "Chawl",
+    length: chawl.length,
+    breadth: chawl.breadth,
+    height: chawl.height,
+    quantity:
+      (Number(chawl.height) * Number(chawl.breadth) * Number(chawl.length) * 20) /
+      1000,
+  }));
 
-        // Process BIN Sizes (only include if ALL dimensions are filled)
-        const binSizes = (binList || [])
-          .filter(bin => bin.length && bin.breadth && bin.height) // Skip if any dimension is empty
-          .map(bin => ({
-            chawlType: "BIN",
-            length: bin.length,
-            breadth: bin.breadth,
-            height: bin.height,
-            quantity: (Number(bin.height) * Number(bin.breadth) * Number(bin.length) * 20 / 1000)
-          }));
+// Process BIN Sizes (only include if ALL dimensions are filled)
+const binSizes = (binList || [])
+  .filter(bin => bin.Radius && bin.height)
+  .map(bin => {
+    const radius = Number(bin.Radius);
+    const height = Number(bin.height);
+    const quantity = (3.14159 * Math.pow(radius, 2) * height * 20) / 1000;
 
-        // Combine valid Chawl & BIN sizes
-        const allSizes = [...chawlSizes, ...binSizes];
+    return {
+      chawlType: "BIN",
+      radius: bin.Radius,
+      height: bin.height,
+      quantity: quantity,
+    };
+  });
 
-        // Append to formData (only valid entries)
-        allSizes.forEach((item, index) => {
-          formData.append(`ChawlSizes[${index}][chawlType]`, item.chawlType);
-          formData.append(`ChawlSizes[${index}][length]`, item.length);
-          formData.append(`ChawlSizes[${index}][breadth]`, item.breadth);
-          formData.append(`ChawlSizes[${index}][height]`, item.height);
-          formData.append(`ChawlSizes[${index}][quantity]`, item.quantity.toString());
-        });
+// Combine valid Chawl & BIN sizes
+const allSizes = [...chawlSizes, ...binSizes];
+
+// Append to formData (only valid entries)
+allSizes.forEach((item, index) => {
+  formData.append(`ChawlSizes[${index}][chawlType]`, item.chawlType);
+
+  if (item.chawlType === "Chawl" && 'length' in item && 'breadth' in item && 'height' in item) {
+    formData.append(`ChawlSizes[${index}][length]`, item.length);
+    formData.append(`ChawlSizes[${index}][breadth]`, item.breadth);
+    formData.append(`ChawlSizes[${index}][height]`, item.height);
+  } else if (item.chawlType === "BIN" && 'radius' in item && 'height' in item) {
+    formData.append(`ChawlSizes[${index}][radius]`, item.radius);
+    formData.append(`ChawlSizes[${index}][height]`, item.height);
+  }
+
+  formData.append(`ChawlSizes[${index}][quantity]`, item.quantity.toString());
+});
 
         // Append screenshots
         screenshots.forEach((image, index) => {
@@ -683,7 +656,7 @@ const ReviewForm = () => {
         });
 
         setChawlList([]);
-        setBinList([]); // Make sure to also reset binList
+        setBinList([]);
         setImageUri([]);
         setShowInspectionButton(false);
         setCurrentStep(1);
@@ -700,7 +673,6 @@ const ReviewForm = () => {
           error.response &&
           typeof error.response === 'object'
         ) {
-          // Server responded with a status outside the 2xx range
           const status = (error as any).response.status;
 
           if (status === 502) {
@@ -714,7 +686,6 @@ const ReviewForm = () => {
           'request' in error &&
           (error as any).request
         ) {
-          // Request was made but no response received
           errorMessage = 'No response from server. Please check your internet connection.';
         } else if (
           typeof error === 'object' &&
@@ -722,21 +693,15 @@ const ReviewForm = () => {
           'message' in error &&
           typeof (error as any).message === 'string'
         ) {
-          // Something else caused the error
           errorMessage = (error as any).message || errorMessage;
         }
 
         Alert.alert('Error', errorMessage);
-
       }
-
       finally {
-        setIsSubmitted(false); // ✅ Re-enable button, show "Submit"
+        setIsSubmitted(false);
       }
-
-
     }
-
   };
 
   const nextStep = () => {
@@ -747,75 +712,6 @@ const ReviewForm = () => {
         return;
       }
     }
-
-    //   if (currentStep === 2) {
-    //   // Validate chawls
-    //   const chawlCount = parseInt(state.form.noOfChawls) || 0;
-    //   if (chawlCount === 0) {
-    //     Alert.alert('Validation Error', 'Please enter number of chawls');
-    //     return;
-    //   }
-
-    //   if (chawlList.length !== chawlCount) {
-    //     Alert.alert('Validation Error', `Please provide dimensions for all ${chawlCount} chawls`);
-    //     return;
-    //   }
-
-    //   for (let i = 0; i < chawlList.length; i++) {
-    //     const chawl = chawlList[i];
-    //     if (!chawl.length || !chawl.breadth || !chawl.height) {
-    //       Alert.alert('Validation Error', `Please fill all dimensions for Chawl ${i + 1}`);
-    //       return;
-    //     }
-
-
-    //     if (isNaN(parseFloat(chawl.length))) {
-    //       Alert.alert('Validation Error', `Invalid length for Chawl ${i + 1}`);
-    //       return;
-    //     }
-    //     if (isNaN(parseFloat(chawl.breadth))) {
-    //       Alert.alert('Validation Error', `Invalid breadth for Chawl ${i + 1}`);
-    //       return;
-    //     }
-    //     if (isNaN(parseFloat(chawl.height))) {
-    //       Alert.alert('Validation Error', `Invalid height for Chawl ${i + 1}`);
-    //       return;
-    //     }
-    //   }
-
-    //   // Validate bins
-    //   const binCount = parseInt(state.form.noofbins) || 0;
-    //   if (binCount === 0) {
-    //     Alert.alert('Validation Error', 'Please enter number of bins');
-    //     return;
-    //   }
-
-    //   if (binList.length !== binCount) {
-    //     Alert.alert('Validation Error', `Please provide dimensions for all ${binCount} bins`);
-    //     return;
-    //   }
-
-    //   for (let i = 0; i < binList.length; i++) {
-    //     const bin = binList[i];
-    //     if (!bin.length || !bin.breadth || !bin.height) {
-    //       Alert.alert('Validation Error', `Please fill all dimensions for Bin ${i + 1}`);
-    //       return;
-    //     }
-
-    //     if (isNaN(parseFloat(bin.length))) {
-    //       Alert.alert('Validation Error', `Invalid length for Bin ${i + 1}`);
-    //       return;
-    //     }
-    //     if (isNaN(parseFloat(bin.breadth))) {
-    //       Alert.alert('Validation Error', `Invalid breadth for Bin ${i + 1}`);
-    //       return;
-    //     }
-    //     if (isNaN(parseFloat(bin.height))) {
-    //       Alert.alert('Validation Error', `Invalid height for Bin ${i + 1}`);
-    //       return;
-    //     }
-    //   }
-    // }
 
     if (currentStep === 3) {
       const validation = validateStepthree(state.form);
@@ -875,8 +771,8 @@ const ReviewForm = () => {
                     Storagedata: ''
                   },
                 });
-                setSelectedStorageId(''); // Clear storage ID
-                setShowInspectionButton(false); // Hide inspection button
+                setSelectedStorageId('');
+                setShowInspectionButton(false);
               }}
               items={[
                 { label: 'Select Company Name', value: '' },
@@ -1045,8 +941,6 @@ const ReviewForm = () => {
               </>
             )}
 
-
-
             {state.form.option3 && state.fielddata.storageLocation && (
               <CommonPicker
                 label="Select Storage"
@@ -1062,10 +956,7 @@ const ReviewForm = () => {
                   if (value) {
                     setSelectedStorageId(value);
                     setShowInspectionButton(true);
-                  }
-
-
-                  else {
+                  } else {
                     setShowInspectionButton(false);
                   }
                 }}
@@ -1079,7 +970,6 @@ const ReviewForm = () => {
               />
             )}
 
-
             {showInspectionButton && (
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
@@ -1092,10 +982,6 @@ const ReviewForm = () => {
                 </TouchableOpacity>
               </View>
             )}
-
-
-
-
           </View>
         );
       case 2:
@@ -1273,24 +1159,15 @@ const ReviewForm = () => {
                 scrollEnabled={false}
                 renderItem={({ item, index }) => (
                   <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Size of Bins (L x B x H)</Text>
+                    <Text style={styles.label}>Size of Bins (Radius × Height)</Text>
                     <View style={styles.dimensionsContainer}>
                       <TextInput
                         style={[styles.input, styles.dimensionInput]}
-                        placeholder="Length"
+                        placeholder="Radius"
                         placeholderTextColor="#999"
                         keyboardType="numeric"
-                        value={item.length}
-                        onChangeText={(val) => handleBinDimensionChange(index, 'length', val)}
-                      />
-                      <Text style={styles.dimensionSeparator}>×</Text>
-                      <TextInput
-                        style={[styles.input, styles.dimensionInput]}
-                        placeholder="Breadth"
-                        placeholderTextColor="#999"
-                        keyboardType="numeric"
-                        value={item.breadth}
-                        onChangeText={(val) => handleBinDimensionChange(index, 'breadth', val)}
+                        value={item.Radius}
+                        onChangeText={(val) => handleBinDimensionChange(index, 'Radius', val)}
                       />
                       <Text style={styles.dimensionSeparator}>×</Text>
                       <TextInput
@@ -1313,8 +1190,7 @@ const ReviewForm = () => {
                               updatedList[index] = {
                                 ...updatedList[index],
                                 originalValues: {
-                                  length: updatedList[index].length,
-                                  breadth: updatedList[index].breadth,
+                                  Radius: updatedList[index].Radius,
                                   height: updatedList[index].height,
                                 },
                                 ...binList[0],
@@ -1331,8 +1207,7 @@ const ReviewForm = () => {
                               } else {
                                 updatedList[index] = {
                                   ...updatedList[index],
-                                  length: '',
-                                  breadth: '',
+                                  Radius: '',
                                   height: '',
                                   isCopiedFromFirst: false,
                                 };
@@ -1363,8 +1238,7 @@ const ReviewForm = () => {
                                   updatedList[index] = {
                                     ...updatedList[index],
                                     originalValues: {
-                                      length: updatedList[index].length,
-                                      breadth: updatedList[index].breadth,
+                                      Radius: updatedList[index].Radius,
                                       height: updatedList[index].height,
                                     },
                                     ...updatedList[index - 1],
@@ -1381,8 +1255,7 @@ const ReviewForm = () => {
                                   } else {
                                     updatedList[index] = {
                                       ...updatedList[index],
-                                      length: '',
-                                      breadth: '',
+                                      Radius: '',
                                       height: '',
                                       isCopiedFromPrevious: false,
                                     };
@@ -1406,8 +1279,6 @@ const ReviewForm = () => {
                 )}
               />
             </View>
-
-
           </View>
         );
       case 3:
@@ -1523,33 +1394,30 @@ const ReviewForm = () => {
               )}
             </View>
 
-
             <View style={styles.inputContainer}>
-  <Text style={styles.label}>Number of Weighment Slip</Text>
-  <TextInput
-    style={styles.input}
-    placeholder="Enter Number Weighment Slip"
-    placeholderTextColor="#999"
-    keyboardType="numeric"
-    value={state.form.Weighmentslip || ''}
-    onChangeText={(val) => {
-      if (/^\d{0,9}$/.test(val)) {  // sirf 0 se 9 digit tak allow
-        if (state.form.laborRegister !== 'NO') {
-          updateState({ form: { ...state.form, Weighmentslip: val } });
-        }
-      } else {
-        Alert.alert(
-          "Invalid Input",
-          "Number cannot exceed 9 digits",
-          [{ text: "OK" }]
-        );
-      }
-    }}
-  
-    editable={state.form.laborRegister !== 'NO'}
-  />
-</View>
-
+              <Text style={styles.label}>Number of Weighment Slip</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter Number Weighment Slip"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+                value={state.form.Weighmentslip || ''}
+                onChangeText={(val) => {
+                  if (/^\d{0,9}$/.test(val)) {
+                    if (state.form.laborRegister !== 'NO') {
+                      updateState({ form: { ...state.form, Weighmentslip: val } });
+                    }
+                  } else {
+                    Alert.alert(
+                      "Invalid Input",
+                      "Number cannot exceed 9 digits",
+                      [{ text: "OK" }]
+                    );
+                  }
+                }}
+                editable={state.form.laborRegister !== 'NO'}
+              />
+            </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Labor Register Available</Text>
@@ -1670,7 +1538,6 @@ const ReviewForm = () => {
               ))}
             </View>
 
-
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Additional Comments</Text>
               <TextInput
@@ -1692,9 +1559,6 @@ const ReviewForm = () => {
     }
   };
 
-
-
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -1710,25 +1574,19 @@ const ReviewForm = () => {
             });
           }}>
             <Icon name="arrow-back" size={24} color="#fff" />
-
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Review Form</Text>
         </View>
 
-
-        {/* ScrollView with content */}
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {renderStep()}
-
-          {/* Add spacer to prevent content from being hidden behind buttons */}
           <View style={{ height: 80 }} />
         </ScrollView>
 
-        {/* Navigation buttons - moved outside ScrollView */}
         <View style={styles.navigationButtons}>
           {currentStep > 1 && (
             <TouchableOpacity style={styles.prevButton} onPress={prevStep}>
@@ -1755,45 +1613,31 @@ const ReviewForm = () => {
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
-
 };
 
 const styles = StyleSheet.create({
   safeArea: {
-
     backgroundColor: '#ffffff',
     height: '100%',
   },
-  // customHeader: {
-  //   backgroundColor: '#F79B00',
-  //   paddingVertical: 15,
-  //   paddingHorizontal: 20,
-  //   flexDirection: 'row',
-  //   alignItems: 'center',
-  //   justifyContent: 'space-between', // if you want to add a button on right
-  // },
   customHeader: {
     backgroundColor: '#F79B00',
     paddingVertical: 15,
     paddingHorizontal: 20,
-
-    flexDirection: 'row', // row-wise layo
+    flexDirection: 'row',
     alignItems: 'center'
   },
-
-
   headerTitle: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-
   viewShot: {
     width: '100%',
     alignSelf: 'center',
   },
   disabledButton: {
-    backgroundColor: '#cccccc', // Different color when disabled
+    backgroundColor: '#cccccc',
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -1806,9 +1650,8 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: 100, // Extra space for buttons
+    paddingBottom: 100,
     paddingHorizontal: 16,
-
   },
   header: {
     backgroundColor: '#070738',
@@ -1873,15 +1716,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 20,
     paddingHorizontal: 25,
-    paddingBottom: 10, // Add padding at bottom
-    backgroundColor: '#ffffff', // Match background color
+    paddingBottom: 10,
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0', // subtle separator
+    borderTopColor: '#e0e0e0',
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-
   },
   prevButton: {
     backgroundColor: '#fff',

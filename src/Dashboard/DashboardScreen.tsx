@@ -59,8 +59,9 @@ const Dashboard = ({ navigation }: any) => {
 
   const remainingcount = async () => {
     try {
-      const response = await apiClient.get('/api/mobile/inspectionreport/remainingcount');
+      const response = await apiClient.get('/api/InspectionReport/remainingcount');
       if (response.status === 200) {
+        console.log('Remaining Inspection Count:', response.data);
         setRemainingData(response.data);
       } else {
         throw new Error('Failed to fetch inspection count');
